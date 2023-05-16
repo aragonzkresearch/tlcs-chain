@@ -4,6 +4,7 @@ use clap::{arg, ArgAction, ArgMatches, Command};
 use crate::x::{
     auth::client::cli::query::{get_auth_query_command, run_auth_query_command},
     bank::client::cli::query::{get_bank_query_command, run_bank_query_command},
+    tlcs::client::cli::query::{get_tlcs_query_command, run_tlcs_query_command},
 };
 
 pub fn get_query_command() -> Command {
@@ -11,6 +12,7 @@ pub fn get_query_command() -> Command {
         .about("Querying subcommands")
         .subcommand(get_bank_query_command())
         .subcommand(get_auth_query_command())
+        .subcommand(get_tlcs_query_command())
         .subcommand_required(true)
         .arg(
             arg!(--node)
@@ -29,6 +31,7 @@ pub fn run_query_command(matches: &ArgMatches) -> Result<()> {
     let res = match matches.subcommand() {
         Some(("bank", sub_matches)) => run_bank_query_command(sub_matches, node),
         Some(("auth", sub_matches)) => run_auth_query_command(sub_matches, node),
+        Some(("tlcs", sub_matches)) => run_tlcs_query_command(sub_matches, node),
 
         _ => unreachable!("Exhausted list of subcommands and subcommand_required prevents `None`"),
     }?;
