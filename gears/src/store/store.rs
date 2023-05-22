@@ -15,6 +15,7 @@ pub enum Store {
     Bank,
     Auth,
     Params,
+    Tlcs,
 }
 
 //TODO:
@@ -27,6 +28,7 @@ impl Store {
             Store::Bank => "bank",
             Store::Auth => "acc",
             Store::Params => "params",
+            Store::Tlcs => "tlcs",
         }
     }
 }
@@ -36,6 +38,7 @@ pub struct MultiStore<T: DB> {
     bank_store: KVStore<PrefixDB<T>>,
     auth_store: KVStore<PrefixDB<T>>,
     params_store: KVStore<PrefixDB<T>>,
+    tlcs_store: KVStore<PrefixDB<T>>,
     head_version: u32,
     head_commit_hash: [u8; 32],
 }
@@ -55,7 +58,12 @@ impl<T: DB> MultiStore<T> {
         )
         .unwrap();
         let params_store = KVStore::new(
-            PrefixDB::new(db, Store::Params.name().as_bytes().to_vec()),
+            PrefixDB::new(db.clone(), Store::Params.name().as_bytes().to_vec()),
+            None,
+        )
+        .unwrap();
+        let tlcs_store = KVStore::new(
+            PrefixDB::new(db, Store::Tlcs.name().as_bytes().to_vec()),
             None,
         )
         .unwrap();
@@ -75,13 +83,19 @@ impl<T: DB> MultiStore<T> {
             hash: params_store.head_commit_hash(),
         };
 
-        let store_infos = [bank_info, auth_info, params_info].into();
+        let tlcs_info = StoreInfo {
+            name: Store::Tlcs.name().into(),
+            hash: tlcs_store.head_commit_hash(),
+        };
+
+        let store_infos = [bank_info, auth_info, params_info, tlcs_info].into();
 
         MultiStore {
             head_version: bank_store.last_committed_version(),
             bank_store,
             auth_store,
             params_store,
+            tlcs_store,
             head_commit_hash: hash::hash_store_infos(store_infos),
         }
     }
@@ -99,6 +113,7 @@ impl<T: DB> MultiStore<T> {
             Store::Bank => &self.bank_store,
             Store::Auth => &self.auth_store,
             Store::Params => &self.params_store,
+            Store::Tlcs => &self.tlcs_store,
         }
     }
 
@@ -107,6 +122,7 @@ impl<T: DB> MultiStore<T> {
             Store::Bank => &mut self.bank_store,
             Store::Auth => &mut self.auth_store,
             Store::Params => &mut self.params_store,
+            Store::Tlcs => &mut self.tlcs_store,
         }
     }
 
@@ -115,6 +131,7 @@ impl<T: DB> MultiStore<T> {
         self.bank_store.write_then_clear_tx_cache();
         self.auth_store.write_then_clear_tx_cache();
         self.params_store.write_then_clear_tx_cache();
+        self.tlcs_store.write_then_clear_tx_cache();
     }
 
     /// Clears the tx caches
@@ -122,6 +139,7 @@ impl<T: DB> MultiStore<T> {
         self.bank_store.clear_tx_cache();
         self.auth_store.clear_tx_cache();
         self.params_store.clear_tx_cache();
+        self.tlcs_store.clear_tx_cache();
     }
 
     pub fn commit(&mut self) -> [u8; 32] {
@@ -140,7 +158,12 @@ impl<T: DB> MultiStore<T> {
             hash: self.params_store.commit(),
         };
 
-        let store_infos = [bank_info, auth_info, params_info].into();
+        let tlcs_info = StoreInfo {
+            name: Store::Tlcs.name().into(),
+            hash: self.tlcs_store.commit(),
+        };
+
+        let store_infos = [bank_info, auth_info, params_info, tlcs_info].into();
         let hash = hash::hash_store_infos(store_infos);
 
         self.head_commit_hash = hash;

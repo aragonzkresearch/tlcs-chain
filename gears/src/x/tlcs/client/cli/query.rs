@@ -1,23 +1,14 @@
 use anyhow::{anyhow, Result};
-use clap::{Arg, ArgMatches, Command};
-use ibc_proto::protobuf::Protobuf;
-use proto_messages::cosmos::bank::v1beta1::{QueryAllBalancesRequest, QueryAllBalancesResponse};
-use proto_types::AccAddress;
+use clap::{ArgMatches, Command};
+use prost::Message;
+use proto_messages::azkr::tlcs::v1beta1::QueryAllParticipantsContributionsResponse;
 use tendermint_rpc::{Client, HttpClient};
 use tokio::runtime::Runtime;
 
 pub fn get_tlcs_query_command() -> Command {
     Command::new("tlcs")
         .about("Querying commands for the tlcs module")
-        .subcommand(
-            Command::new("participants")
-                .about("Query something about participants")
-                .arg(
-                    Arg::new("address")
-                        .required(true)
-                        .value_parser(clap::value_parser!(AccAddress)),
-                ),
-        )
+        .subcommand(Command::new("participants").about("Query list of participants"))
         .subcommand_required(true)
 }
 
@@ -25,33 +16,22 @@ pub fn run_tlcs_query_command(matches: &ArgMatches, node: &str) -> Result<String
     let client = HttpClient::new(node)?;
 
     match matches.subcommand() {
-        Some(("participants", sub_matches)) => {
-            let address = sub_matches
-                .get_one::<AccAddress>("address")
-                .expect("address argument is required preventing `None`")
-                .to_owned();
-
-            Runtime::new()
-                .expect("unclear why this would ever fail")
-                .block_on(get_balances(client, address))
-        }
+        Some(("participants", _sub_matches)) => Runtime::new()
+            .expect("unclear why this would ever fail")
+            .block_on(get_all_participants_contributions(client)),
         _ => unreachable!("exhausted list of subcommands and subcommand_required prevents `None`"),
     }
 }
 
-pub async fn get_balances(client: HttpClient, address: AccAddress) -> Result<String> {
-    let query = QueryAllBalancesRequest {
-        address,
-        pagination: None,
-    };
+pub async fn get_all_participants_contributions(client: HttpClient) -> Result<String> {
     let res = client
         .abci_query(
             Some(
-                "/cosmos.bank.v1beta1.Query/AllBalances"
+                "/azkr.tlcs.v1beta1.Query/AllParticipantsContributions"
                     .parse()
                     .expect("hard coded path will always succeed"),
             ),
-            query.encode_vec(),
+            vec![],
             None,
             false,
         )
@@ -61,6 +41,6 @@ pub async fn get_balances(client: HttpClient, address: AccAddress) -> Result<Str
         return Err(anyhow!("node returned an error: {}", res.log));
     }
 
-    let res = QueryAllBalancesResponse::decode(&*res.value)?;
+    let res = QueryAllParticipantsContributionsResponse::decode(&*res.value)?;
     Ok(serde_json::to_string_pretty(&res)?)
 }

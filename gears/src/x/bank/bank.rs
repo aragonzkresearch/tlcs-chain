@@ -27,6 +27,7 @@ use super::Params;
 const SUPPLY_KEY: [u8; 1] = [0];
 const ADDRESS_BALANCES_STORE_PREFIX: [u8; 1] = [2];
 
+// TODO: this struct can be removed
 #[derive(Debug, Clone)]
 pub struct Bank {}
 

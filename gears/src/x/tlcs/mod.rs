@@ -1,3 +1,5 @@
 pub mod client;
-pub mod keeper;
+mod keeper;
 pub mod types;
+
+pub use keeper::*;

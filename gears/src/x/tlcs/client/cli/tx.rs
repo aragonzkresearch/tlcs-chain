@@ -12,19 +12,19 @@ use ibc_proto::{
 };
 use ibc_relayer::keyring::{Secp256k1KeyPair, SigningKeyPair};
 use prost::Message;
-use proto_messages::cosmos::{
-    base::v1beta1::{Coin, SendCoins},
-    crypto::secp256k1::v1beta1::{PubKey, RawPubKey},
-    tx::v1beta1::{AuthInfo, Fee, PublicKey, SignerInfo},
+use proto_messages::{
+    azkr::tlcs::v1beta1::MsgParticipantContribution,
+    cosmos::{
+        base::v1beta1::{Coin, SendCoins},
+        crypto::secp256k1::v1beta1::{PubKey, RawPubKey},
+        tx::v1beta1::{AuthInfo, Fee, PublicKey, SignerInfo},
+    },
 };
 use proto_types::AccAddress;
 use tendermint_rpc::{Client, HttpClient};
 use tokio::runtime::Runtime;
 
-use crate::{
-    client::keys::key_store::DiskStore,
-    x::{auth::client::cli::query::get_account, tlcs::types::MsgParticipantContribution},
-};
+use crate::{client::keys::key_store::DiskStore, x::auth::client::cli::query::get_account};
 
 pub fn get_tlcs_tx_command() -> Command {
     Command::new("tlcs")
