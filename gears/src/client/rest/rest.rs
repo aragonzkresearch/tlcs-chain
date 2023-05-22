@@ -8,7 +8,7 @@ use rocket::{
 use super::handlers::{
     get_balances, get_balances_by_denom, node_info, staking_params, supply, txs,
 };
-use crate::app::BaseApp;
+use crate::{app::BaseApp, x::tlcs::client::rest::get_all_participants_contributions};
 
 const DEFAULT_SOCKET: u16 = 1317;
 
@@ -37,7 +37,8 @@ fn rocket_launch(app: BaseApp) {
                 staking_params,
                 supply,
                 get_balances,
-                get_balances_by_denom
+                get_balances_by_denom,
+                get_all_participants_contributions,
             ],
         )
         .attach(CORS)
