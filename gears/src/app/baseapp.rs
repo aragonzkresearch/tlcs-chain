@@ -341,7 +341,7 @@ impl Application for BaseApp {
                         },
                         Err(e) => ResponseQuery {
                             code: 1,
-                            log: e.to_string(),
+                            log: e.to_string(), // TODO: the error message leaks the directory structure in location field
                             info: "".to_string(),
                             index: 0,
                             key: request.data,
@@ -403,7 +403,7 @@ impl Application for BaseApp {
                 ResponseDeliverTx {
                     code: e.code(),
                     data: Bytes::new(),
-                    log: e.to_string(),
+                    log: e.to_string(), // TODO: the error message leaks the directory structure in location field -> each node returns a different log in this case
                     info: "".to_string(),
                     gas_wanted: 0,
                     gas_used: 0,

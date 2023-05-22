@@ -35,7 +35,7 @@ pub fn get_bank_tx_command() -> Command {
             Command::new("send")
                 .about("Send funds from one account to another")
                 .arg(
-                    Arg::new("from_address")
+                    Arg::new("from")
                         .required(true)
                         .value_parser(clap::value_parser!(String)),
                 )
@@ -63,7 +63,7 @@ pub fn run_bank_tx_command(matches: &ArgMatches, node: &str, home: PathBuf) -> R
     match matches.subcommand() {
         Some(("send", sub_matches)) => {
             let from = sub_matches
-                .get_one::<String>("from_address")
+                .get_one::<String>("from")
                 .expect("from address argument is required preventing `None`")
                 .to_owned();
 

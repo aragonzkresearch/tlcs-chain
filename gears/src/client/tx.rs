@@ -5,7 +5,10 @@ use clap::{arg, value_parser, ArgAction, ArgMatches, Command};
 
 use crate::{
     utils::get_default_home_dir,
-    x::bank::client::cli::tx::{get_bank_tx_command, run_bank_tx_command},
+    x::{
+        bank::client::cli::tx::{get_bank_tx_command, run_bank_tx_command},
+        tlcs::client::cli::tx::{get_tlcs_tx_command, run_tlcs_tx_command},
+    },
 };
 
 pub fn run_tx_command(matches: &ArgMatches) -> Result<()> {
@@ -24,6 +27,7 @@ pub fn run_tx_command(matches: &ArgMatches) -> Result<()> {
 
     match matches.subcommand() {
         Some(("bank", sub_matches)) => run_bank_tx_command(sub_matches, node, home),
+        Some(("tlcs", sub_matches)) => run_tlcs_tx_command(sub_matches, node, home),
         _ => unreachable!("Exhausted list of subcommands and subcommand_required prevents `None`"),
     }
 }
@@ -32,6 +36,7 @@ pub fn get_tx_command() -> Command {
     Command::new("tx")
         .about("Transaction subcommands")
         .subcommand(get_bank_tx_command())
+        .subcommand(get_tlcs_tx_command())
         .subcommand_required(true)
         .arg(
             arg!(--node)
