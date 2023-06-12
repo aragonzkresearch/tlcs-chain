@@ -477,6 +477,21 @@ impl Application for BaseApp {
                 .expect("tendermint will send a valid Header struct"),
         );
 
+        let mut multi_store = self
+            .multi_store
+            .write()
+            .expect("RwLock will not be poisoned");
+
+        let mut ctx = TxContext::new(
+            &mut multi_store,
+            self.get_block_height(),
+            self.get_block_header()
+                .expect("block header is set in begin block"),
+            vec![],
+        );
+
+        tlcs::abci::begin_blocker(&mut ctx);
+
         Default::default()
     }
 

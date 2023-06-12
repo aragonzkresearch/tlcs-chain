@@ -1,3 +1,4 @@
+pub mod abci;
 pub mod client;
 pub mod crypto;
 mod keeper;

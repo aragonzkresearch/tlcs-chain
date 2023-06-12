@@ -27,6 +27,10 @@ impl<'a, T: DB> TxContext<'a, T> {
         }
     }
 
+    pub fn get_header(&self) -> &Header {
+        &self.header
+    }
+
     pub fn as_any<'b>(&'b mut self) -> Context<'b, 'a, T> {
         Context::TxContext(self)
     }

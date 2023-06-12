@@ -42,7 +42,7 @@ pub fn verify_participant_data(loe_round: u32, participant_data: Vec<u8>) -> boo
 }
 
 pub fn aggregate_participant_data(
-    number_participants: usize,
+    number_participants: u32,
     all_participant_data: Vec<u8>,
 ) -> Vec<u8> {
     let mut command = Command::new("./src/x/tlcs/crypto/scripts/aggregator4blockchain.sh");
