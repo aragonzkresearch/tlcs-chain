@@ -163,7 +163,7 @@ impl BaseApp {
                 Msg::Send(send_msg) => {
                     Bank::send_coins_from_account_to_account(ctx, send_msg.clone())?
                 }
-                Msg::Participate(msg) => tlcs::append_participant_contribution(ctx, msg)?,
+                Msg::Participate(msg) => tlcs::append_contribution(ctx, msg)?,
             };
         }
 
@@ -265,7 +265,7 @@ impl Application for BaseApp {
                     let store = self.multi_store.read().unwrap();
                     let ctx = QueryContext::new(&store, self.get_block_height());
 
-                    let res = tlcs::query_all_participant_contributions(&ctx).encode_to_vec();
+                    let res = tlcs::query_all_contributions(&ctx).encode_to_vec();
                     ResponseQuery {
                         code: 0,
                         log: "exists".to_string(),

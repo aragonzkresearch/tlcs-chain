@@ -1,4 +1,5 @@
 use std::{path::PathBuf, str::FromStr};
+use std::str;
 
 use anyhow::Result;
 use clap::{arg, Arg, ArgAction, ArgMatches, Command};
@@ -23,6 +24,9 @@ use proto_messages::{
 use proto_types::AccAddress;
 use tendermint_rpc::{Client, HttpClient};
 use tokio::runtime::Runtime;
+use crate::x::tlcs::crypto::{
+    generate_participant_data,
+};
 
 use crate::{client::keys::key_store::DiskStore, x::auth::client::cli::query::get_account};
 
@@ -38,12 +42,17 @@ pub fn get_tlcs_tx_command() -> Command {
                         .value_parser(clap::value_parser!(String)),
                 )
                 .arg(
-                    Arg::new("key")
+                    Arg::new("round")
                         .required(true)
                         .value_parser(clap::value_parser!(String)),
                 )
                 .arg(
-                    Arg::new("value")
+                    Arg::new("scheme")
+                        .required(true)
+                        .value_parser(clap::value_parser!(String)),
+                )
+                .arg(
+                    Arg::new("data")
                         .required(true)
                         .value_parser(clap::value_parser!(String)),
                 )
@@ -65,14 +74,14 @@ pub fn run_tlcs_tx_command(matches: &ArgMatches, node: &str, home: PathBuf) -> R
                 .expect("from address argument is required preventing `None`")
                 .to_owned();
 
-            let key = sub_matches
-                .get_one::<String>("key")
-                .expect("key argument is required preventing `None`")
+            let round = sub_matches
+                .get_one::<u32>("round")
+                .expect("round argument is required preventing `None`")
                 .to_owned();
 
-            let value = sub_matches
-                .get_one::<String>("value")
-                .expect("value argument is required preventing `None`")
+            let scheme = sub_matches
+                .get_one::<u32>("scheme")
+                .expect("scheme argument is required preventing `None`")
                 .to_owned();
 
             let fee = sub_matches.get_one::<Coin>("fee").cloned();
@@ -89,10 +98,17 @@ pub fn run_tlcs_tx_command(matches: &ArgMatches, node: &str, home: PathBuf) -> R
                     AccAddress::from_str(&signing_key.account())?,
                 ))?;
 
+            let round_data_vec = generate_participant_data(round);
+            let round_data = match str::from_utf8(&round_data_vec) {
+                Ok(v) => v,
+                Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
+            };
+
             let tx_raw = create_signed_participate_tx(
                 AccAddress::from_str(&signing_key.account())?,
-                key,
-                value,
+                round,
+                scheme,
+                round_data.to_string(),
                 fee,
                 account.account.get_sequence(),
                 account.account.get_account_number(),
@@ -120,8 +136,9 @@ pub async fn broadcast_tx_commit(client: HttpClient, raw_tx: TxRaw) -> Result<()
 
 pub fn create_signed_participate_tx(
     address: AccAddress,
-    key: String,
-    value: String,
+    round: u32,
+    scheme: u32,
+    data: String,
     fee_amount: Option<Coin>,
     sequence: u64,
     account_number: u64,
@@ -129,8 +146,9 @@ pub fn create_signed_participate_tx(
 ) -> Result<TxRaw> {
     let message = MsgParticipantContribution {
         address,
-        key,
-        value,
+        round,
+        scheme,
+        data,
     };
 
     let tx_body = TxBody {
