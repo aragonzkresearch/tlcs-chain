@@ -2,5 +2,5 @@
 
 set -eux
 
-rm -rf ~/.gears
+rm -rf ~/.tlcs
 cargo run -- init test

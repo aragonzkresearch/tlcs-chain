@@ -8,12 +8,12 @@ test:
 	cargo test
 
 install:
-	cargo install --path ./gears
+	cargo install --path ./tlcs
 
 init:
-	./gears/scripts/init.sh
+	./tlcs/scripts/init.sh
 
 tendermint-start:
-	tendermint start --home ~/.gears
+	tendermint start --home ~/.tlcs
 
 .PHONY: run run-debug test install init tendermint-start
