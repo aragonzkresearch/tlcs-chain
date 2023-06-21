@@ -2,6 +2,9 @@
 
 This repo contains node software for running a Blockchain which provides a Time Lock Cryptography Service.
 
+NOTE: This is a WIP, e.g. it does not contain the necessary CLI commands and REST endpoints to interact with
+the TLCS parts of the chain!
+
 # Getting Started
 
 TLCS uses the [tendermint-abci](https://crates.io/crates/tendermint-abci) crate to communicate with a Tendermint instance which runs as a separate process. This means that to run a full node, Tendermint must be installed and run separately (see instructions below).
