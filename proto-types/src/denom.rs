@@ -13,7 +13,7 @@ use crate::error::Error;
 // a letter, a number or a separator ('/').
 lazy_static! {
     static ref RE: Regex =
-        Regex::new(r"^[a-zA-Z][a-zA-Z0-9/-]{2,127}$").expect("hard coded RE won't fail");
+        Regex::new(r"^[a-zA-Z][a-zA-Z0-9/-]{2,127}$").expect("hard coded Regex won't fail");
 }
 
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Eq, Hash)]

@@ -17,7 +17,8 @@ use serde_with::serde_as;
 use serde_with::DisplayFromStr;
 
 use crate::{
-    azkr::tlcs::v1beta1::MsgParticipantContribution,
+    azkr::tlcs::v1beta1::MsgContribution,
+    azkr::tlcs::v1beta1::MsgLoeData,
     cosmos::base::v1beta1::{Coin, SendCoins},
     cosmos::{
         bank::v1beta1::MsgSend, base::abci::v1beta1::TxResponse,
@@ -91,8 +92,10 @@ impl Protobuf<RawTx> for Tx {}
 pub enum Msg {
     #[serde(rename = "/cosmos.bank.v1beta1.MsgSend")]
     Send(MsgSend),
-    #[serde(rename = "/azkr.tlcs.v1beta1.MsgParticipantContribution")]
-    Participate(MsgParticipantContribution),
+    #[serde(rename = "/azkr.tlcs.v1beta1.MsgContribution")]
+    Participate(MsgContribution),
+    #[serde(rename = "/azkr.tlcs.v1beta1.MsgLoeData")]
+    SubmitLoeData(MsgLoeData),
 }
 
 impl Msg {
@@ -100,6 +103,9 @@ impl Msg {
         match &self {
             Msg::Send(msg) => return vec![&msg.from_address],
             Msg::Participate(msg) => return vec![&msg.address],
+            // TODO verify if this is a problem or not
+            //Msg::SubmitLoeData(msg) => return vec![&msg.address],
+            Msg::SubmitLoeData(_msg) => return vec![],
         }
     }
 
@@ -107,6 +113,7 @@ impl Msg {
         match &self {
             Msg::Send(_) => Ok(()),
             Msg::Participate(_) => Ok(()),
+            Msg::SubmitLoeData(_) => Ok(()),
         }
     }
 }
@@ -119,7 +126,11 @@ impl From<Msg> for Any {
                 value: msg.encode_vec(),
             },
             Msg::Participate(msg) => Any {
-                type_url: "/azkr.tlcs.v1beta1.MsgParticipantContribution".to_string(),
+                type_url: "/azkr.tlcs.v1beta1.MsgContribution".to_string(),
+                value: msg.encode_vec(),
+            },
+            Msg::SubmitLoeData(msg) => Any {
+                type_url: "/azkr.tlcs.v1beta1.MsgLoeData".to_string(),
                 value: msg.encode_vec(),
             },
         }
@@ -169,10 +180,15 @@ impl TryFrom<RawTxBody> for TxBody {
                         .map_err(|e| Error::DecodeGeneral(e.to_string()))?;
                     messages.push(Msg::Send(msg));
                 }
-                "/azkr.tlcs.v1beta1.MsgParticipantContribution" => {
-                    let msg = MsgParticipantContribution::decode::<Bytes>(msg.value.clone().into())
+                "/azkr.tlcs.v1beta1.MsgContribution" => {
+                    let msg = MsgContribution::decode::<Bytes>(msg.value.clone().into())
                         .map_err(|e| Error::DecodeGeneral(e.to_string()))?;
                     messages.push(Msg::Participate(msg));
+                }
+                "/azkr.tlcs.v1beta1.MsgLoeData" => {
+                    let msg = MsgLoeData::decode::<Bytes>(msg.value.clone().into())
+                        .map_err(|e| Error::DecodeGeneral(e.to_string()))?;
+                    messages.push(Msg::SubmitLoeData(msg));
                 }
                 _ => return Err(Error::DecodeGeneral("message type not recognized".into())), // If any message is not recognized then reject the entire Tx
             };

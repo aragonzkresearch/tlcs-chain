@@ -1,3 +1,5 @@
 /target
 tmp
 build
+Cargo.lock
+*.swp

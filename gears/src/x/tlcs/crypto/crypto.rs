@@ -71,7 +71,7 @@ pub fn aggregate_participant_data(
     return hex::decode(output.stdout).expect("will return valid hex");
 }
 
-pub fn invert(
+pub fn make_secret_key(
     all_participant_data: Vec<u8>,
     number_participants: usize,
     loe_round: u32,
@@ -151,7 +151,7 @@ mod tests {
         // retrieved from https://api.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/2
         let signature = hex::decode("a050676d1a1b6ceedb5fb3281cdfe88695199971426ff003c0862460b3a72811328a07ecd53b7d57fc82bb67f35efaf1").unwrap();
 
-        let secret_key = invert(all_participant_data, 2, 2, signature, public_key);
+        let secret_key = make_secret_key(all_participant_data, 2, 2, signature, public_key);
 
         assert!(secret_key.len() == 32)
     }
