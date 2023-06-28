@@ -11,6 +11,7 @@ use crate::app::BaseApp;
 use crate::types::QueryContext;
 
 use crate::client::rest::{Error, Pagination};
+
 use crate::x::tlcs::{
     query_all_contributions,
     query_contributions_by_round,
@@ -131,4 +132,5 @@ pub async fn get_loe_data_by_round(
     let ctx = QueryContext::new(&store, app.get_block_height());
 
     Ok(Json(query_loe_data_by_round(&ctx, round)))
+
 }

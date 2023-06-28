@@ -49,6 +49,7 @@ drand-verify = "0.5.0"
 hex-literal = "0.4.1"
 drand_core = "0.0.7"
 
+
 [dev-dependencies]
 hex = "0.4.3"
 serial_test = "2.0.0"

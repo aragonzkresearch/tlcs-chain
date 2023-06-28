@@ -152,7 +152,6 @@ mod tests {
         let signature = hex::decode("a050676d1a1b6ceedb5fb3281cdfe88695199971426ff003c0862460b3a72811328a07ecd53b7d57fc82bb67f35efaf1").unwrap();
 
         let secret_key = make_secret_key(all_participant_data, 2, 2, signature, public_key);
-
         assert!(secret_key.len() == 32)
     }
 }

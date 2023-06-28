@@ -9,6 +9,7 @@ use proto_messages::azkr::tlcs::v1beta1::{
     QueryRoundRequest,
     QueryRoundSchemeRequest,
 };
+
 use tendermint_rpc::{Client, HttpClient};
 use tokio::runtime::Runtime;
 
@@ -308,5 +309,6 @@ pub async fn get_loe_data_by_round(client: HttpClient, round: u32) -> Result<Str
     }
 
     let res = QueryAllLoeDataResponse::decode(&*res.value)?;
+
     Ok(serde_json::to_string_pretty(&res)?)
 }

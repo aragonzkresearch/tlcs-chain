@@ -31,6 +31,7 @@ const LOE_DATA_KEY: [u8; 1] = [3];
 // TODO eliminate in the future to support multiple schemes
 const TMP_SCHEME_ID: [u8; 1] = [1];
 
+
 pub fn begin_blocker<T: DB>(ctx: &mut TxContext<T>) {
     let last_processed_round = get_last_processed_round(ctx);
     let block_time = ctx.get_header().time.unix_timestamp();
@@ -42,7 +43,7 @@ pub fn begin_blocker<T: DB>(ctx: &mut TxContext<T>) {
     for round in last_processed_round..process_up_to {
         // TODO Add the scheme in here
         let round_all_participant_data = get_this_round_all_participant_data(ctx, round);
-
+      
         let round_data = round_all_participant_data.fold((0, vec![]), |mut acc, e| {
             acc.1.extend(e.1);
             acc.0 += acc.0;
@@ -148,6 +149,7 @@ fn set_last_processed_round<T: DB>(
 
 fn process_up_to(time: i64) -> u32 {
     latest_round_up_to(time) + LOE_PERIOD
+
 }
 
 /// Returns the latest loe round expected before the provided unix time
@@ -192,6 +194,7 @@ fn get_this_round_all_loe_data<'a, T: DB>(
     //    .expect("invalid data in database - possible database corruption");
 
     return loe_data
+
 }
 
 fn get_public_keys_store<'a, T: DB>(
@@ -207,5 +210,4 @@ fn get_public_keys_store<'a, T: DB>(
 
     //tlcs_store.get_mutable_prefix_store(KEYPAIR_DATA_KEY.into())
     tlcs_store.get_mutable_prefix_store(prefix.into())
-
 }

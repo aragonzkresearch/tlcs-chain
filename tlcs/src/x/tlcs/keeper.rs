@@ -69,19 +69,6 @@ pub fn append_contribution<T: DB>(
     let addr: Vec<u8> = msg.address.clone().into();
     store_key.append(&mut addr.to_vec());
 
-    /*
-    //let raw = tlcs_store.range(&store_key);
-    let mut all_responses = match raw {
-        Some(raw) => QueryAllContributionsResponse::decode::<Bytes>(raw.into())
-            .expect("invalid data in database - possible database corruption"),
-        None => QueryAllContributionsResponse {
-            contributions: vec![],
-        },
-    };
-
-    all_responses.contributions.push(msg.to_owned().into());
-    */
-
     // TODO Check for closed round
 
     //let verified = verify_participant_data(msg.round, msg.data.clone());
@@ -117,47 +104,7 @@ pub fn query_all_contributions<T: DB>(
         contributions.push(contribution);
     }
 
-    //RawMsgContribution
-    // TODO create vec of rawmsgcontribution 
-    /*
-    let contrib_data = all_raw_data.fold((0, vec![]), |mut acc, e| {
-        acc.1.extend(e.1);
-        acc.0 += acc.0;
-        acc
-    });
-    */
-
-    // TODO pick a method
-    /*
-    let account_store = bank_store.get_immutable_prefix_store(prefix);
-
-    let mut balances = vec![];
-
-    for (_, coin) in account_store.range(..) {
-        let coin: Coin = Coin::decode::<Bytes>(coin.to_owned().into())
-            .expect("invalid data in database - possible database corruption");
-        balances.push(coin);
-    }
-
-    QueryAllBalancesResponse {
-        balances,
-        pagination: None,
-    }
-    */
-    // End pick method
-
-    /*
-    let newdata = MsgContribution {
-            address: AccAddress,
-            round: u32,
-            scheme: u32,
-            data: Vec<u8>,
-    */
-
-    //QueryAllContributionsResponse::decode::<Bytes>(contrib_data.into())
-    QueryAllContributionsResponse {
-        contributions,
-    }
+    QueryAllContributionsResponse { contributions }
 }
 
 pub fn query_contributions_by_round<T: DB>(
@@ -414,4 +361,5 @@ fn test_round_signature() {
     let signature: Vec<u8> = "86f91b1eec7b22ecce1385ec1cc4861f43507fa897cad686e44a87986a7ce18a94fa7128d6f76d6b950bb4e559472539".into();
     let round: u32 = 3276594;
     assert!(loe_signature_is_valid(round, randomness, signature));
+
 }

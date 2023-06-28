@@ -443,7 +443,6 @@ impl Application for BaseApp {
                         codespace: "".to_string(),
                     }
                 }
-
                 "/cosmos.bank.v1beta1.Query/AllBalances" => {
                     let data = request.data.clone();
                     let req = QueryAllBalancesRequest::decode(data).unwrap();

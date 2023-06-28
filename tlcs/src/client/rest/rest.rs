@@ -8,6 +8,7 @@ use rocket::{
 use super::handlers::{
     get_balances, get_balances_by_denom, node_info, staking_params, supply, txs,
 };
+
 use crate::{
     app::BaseApp,
     x::tlcs::client::rest::get_all_contributions,
@@ -54,6 +55,7 @@ fn rocket_launch(app: BaseApp, port: u16) {
                 get_keypairs_by_round_and_scheme,
                 get_all_loe_data,
                 get_loe_data_by_round,
+
             ],
         )
         .attach(CORS)
