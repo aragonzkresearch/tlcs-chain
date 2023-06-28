@@ -8,7 +8,18 @@ use rocket::{
 use super::handlers::{
     get_balances, get_balances_by_denom, node_info, staking_params, supply, txs,
 };
-use crate::{app::BaseApp, x::tlcs::client::rest::get_all_participants_contributions};
+
+use crate::{
+    app::BaseApp,
+    x::tlcs::client::rest::get_all_contributions,
+    x::tlcs::client::rest::get_contributions_by_round,
+    x::tlcs::client::rest::get_contributions_by_round_and_scheme,
+    x::tlcs::client::rest::get_all_keypairs,
+    x::tlcs::client::rest::get_keypairs_by_round,
+    x::tlcs::client::rest::get_keypairs_by_round_and_scheme,
+    x::tlcs::client::rest::get_all_loe_data,
+    x::tlcs::client::rest::get_loe_data_by_round,
+};
 
 fn rocket_launch(app: BaseApp, port: u16) {
     // Disable rocket catching signals to prevent it interfering with the rest
@@ -36,7 +47,15 @@ fn rocket_launch(app: BaseApp, port: u16) {
                 supply,
                 get_balances,
                 get_balances_by_denom,
-                get_all_participants_contributions,
+                get_all_contributions,
+                get_contributions_by_round,
+                get_contributions_by_round_and_scheme,
+                get_all_keypairs,
+                get_keypairs_by_round,
+                get_keypairs_by_round_and_scheme,
+                get_all_loe_data,
+                get_loe_data_by_round,
+
             ],
         )
         .attach(CORS)

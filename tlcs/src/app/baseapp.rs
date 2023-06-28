@@ -10,6 +10,12 @@ use bytes::Bytes;
 use proto_messages::cosmos::auth::v1beta1::QueryAccountRequest;
 use proto_messages::cosmos::bank::v1beta1::QueryAllBalancesRequest;
 use proto_messages::cosmos::tx::v1beta1::Msg;
+
+use proto_messages::azkr::tlcs::v1beta1::{
+    QueryRoundSchemeRequest,
+    QueryRoundRequest,
+};
+
 use tendermint_abci::Application;
 use tendermint_informal::block::Header;
 use tendermint_proto::abci::{
@@ -163,7 +169,8 @@ impl BaseApp {
                 Msg::Send(send_msg) => {
                     Bank::send_coins_from_account_to_account(ctx, send_msg.clone())?
                 }
-                Msg::Participate(msg) => tlcs::append_participant_contribution(ctx, msg)?,
+                Msg::Participate(msg) => tlcs::append_contribution(ctx, msg)?,
+                Msg::SubmitLoeData(msg) => tlcs::append_loe_data(ctx, msg)?,
             };
         }
 
@@ -261,11 +268,166 @@ impl Application for BaseApp {
             }
         } else {
             match request.path.as_str() {
-                "/azkr.tlcs.v1beta1.Query/AllParticipantsContributions" => {
+                "/azkr.tlcs.v1beta1.Query/AllContributions" => {
                     let store = self.multi_store.read().unwrap();
                     let ctx = QueryContext::new(&store, self.get_block_height());
 
-                    let res = tlcs::query_all_participant_contributions(&ctx).encode_to_vec();
+                    let res = tlcs::query_all_contributions(&ctx).encode_to_vec();
+                    ResponseQuery {
+                        code: 0,
+                        log: "exists".to_string(),
+                        info: "".to_string(),
+                        index: 0,
+                        key: request.data,
+                        value: res.into(),
+                        proof_ops: None,
+                        height: self
+                            .get_block_height()
+                            .try_into()
+                            .expect("can't believe we made it this far"),
+                        codespace: "".to_string(),
+                    }
+                }
+                "/azkr.tlcs.v1beta1.Query/AllContributionsByRound" => {
+                    let data = request.data.clone();
+                    let req = QueryRoundRequest::decode(data).unwrap();
+
+                    let store = self.multi_store.read().unwrap();
+                    let ctx = QueryContext::new(&store, self.get_block_height());
+
+                    let res = tlcs::query_contributions_by_round(&ctx, req.round).encode_to_vec();
+                    ResponseQuery {
+                        code: 0,
+                        log: "exists".to_string(),
+                        info: "".to_string(),
+                        index: 0,
+                        key: request.data,
+                        value: res.into(),
+                        proof_ops: None,
+                        height: self
+                            .get_block_height()
+                            .try_into()
+                            .expect("can't believe we made it this far"),
+                        codespace: "".to_string(),
+                    }
+                }
+                "/azkr.tlcs.v1beta1.Query/AllContributionsByRoundAndScheme" => {
+                    let data = request.data.clone();
+                    let req = QueryRoundSchemeRequest::decode(data).unwrap();
+
+                    let store = self.multi_store.read().unwrap();
+                    let ctx = QueryContext::new(&store, self.get_block_height());
+
+                    let res = tlcs::query_contributions_by_round_and_scheme(&ctx, req.round, req.scheme).encode_to_vec();
+                    ResponseQuery {
+                        code: 0,
+                        log: "exists".to_string(),
+                        info: "".to_string(),
+                        index: 0,
+                        key: request.data,
+                        value: res.into(),
+                        proof_ops: None,
+                        height: self
+                            .get_block_height()
+                            .try_into()
+                            .expect("can't believe we made it this far"),
+                        codespace: "".to_string(),
+                    }
+                }
+                "/azkr.tlcs.v1beta1.Query/AllKeyPairs" => {
+                    let store = self.multi_store.read().unwrap();
+                    let ctx = QueryContext::new(&store, self.get_block_height());
+
+                    let res = tlcs::query_all_keypairs(&ctx).encode_to_vec();
+                    ResponseQuery {
+                        code: 0,
+                        log: "exists".to_string(),
+                        info: "".to_string(),
+                        index: 0,
+                        key: request.data,
+                        value: res.into(),
+                        proof_ops: None,
+                        height: self
+                            .get_block_height()
+                            .try_into()
+                            .expect("can't believe we made it this far"),
+                        codespace: "".to_string(),
+                    }
+                }
+                "/azkr.tlcs.v1beta1.Query/AllKeyPairsByRound" => {
+                    let data = request.data.clone();
+                    let req = QueryRoundRequest::decode(data).unwrap();
+
+                    let store = self.multi_store.read().unwrap();
+                    let ctx = QueryContext::new(&store, self.get_block_height());
+
+                    let res = tlcs::query_keypairs_by_round(&ctx, req.round).encode_to_vec();
+                    ResponseQuery {
+                        code: 0,
+                        log: "exists".to_string(),
+                        info: "".to_string(),
+                        index: 0,
+                        key: request.data,
+                        value: res.into(),
+                        proof_ops: None,
+                        height: self
+                            .get_block_height()
+                            .try_into()
+                            .expect("can't believe we made it this far"),
+                        codespace: "".to_string(),
+                    }
+                }
+                "/azkr.tlcs.v1beta1.Query/AllKeyPairsByRoundAndScheme" => {
+                    let data = request.data.clone();
+                    let req = QueryRoundSchemeRequest::decode(data).unwrap();
+
+                    let store = self.multi_store.read().unwrap();
+                    let ctx = QueryContext::new(&store, self.get_block_height());
+
+                    let res = tlcs::query_keypairs_by_round_and_scheme(&ctx, req.round, req.scheme).encode_to_vec();
+                    ResponseQuery {
+                        code: 0,
+                        log: "exists".to_string(),
+                        info: "".to_string(),
+                        index: 0,
+                        key: request.data,
+                        value: res.into(),
+                        proof_ops: None,
+                        height: self
+                            .get_block_height()
+                            .try_into()
+                            .expect("can't believe we made it this far"),
+                        codespace: "".to_string(),
+                    }
+                }
+                "/azkr.tlcs.v1beta1.Query/AllLoeData" => {
+                    let store = self.multi_store.read().unwrap();
+                    let ctx = QueryContext::new(&store, self.get_block_height());
+
+                    let res = tlcs::query_all_loe_data(&ctx).encode_to_vec();
+                    ResponseQuery {
+                        code: 0,
+                        log: "exists".to_string(),
+                        info: "".to_string(),
+                        index: 0,
+                        key: request.data,
+                        value: res.into(),
+                        proof_ops: None,
+                        height: self
+                            .get_block_height()
+                            .try_into()
+                            .expect("can't believe we made it this far"),
+                        codespace: "".to_string(),
+                    }
+                }
+                "/azkr.tlcs.v1beta1.Query/AllLoeDataByRound" => {
+                    let data = request.data.clone();
+                    let req = QueryRoundRequest::decode(data).unwrap();
+
+                    let store = self.multi_store.read().unwrap();
+                    let ctx = QueryContext::new(&store, self.get_block_height());
+
+                    let res = tlcs::query_loe_data_by_round(&ctx, req.round).encode_to_vec();
                     ResponseQuery {
                         code: 0,
                         log: "exists".to_string(),
@@ -374,7 +536,6 @@ impl Application for BaseApp {
                         },
                     }
                 }
-
                 _ => ResponseQuery {
                     code: 1,
                     log: "unrecognized query".to_string(),

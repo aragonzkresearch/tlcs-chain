@@ -4,6 +4,9 @@ run-debug:
 run:
 	cargo run -- run
 
+build:
+	cargo build --release --target-dir ./build
+
 test:
 	cargo test
 
@@ -16,4 +19,4 @@ init:
 tendermint-start:
 	tendermint start --home ~/.tlcs
 
-.PHONY: run run-debug test install init tendermint-start
+.PHONY: build run run-debug test install init tendermint-start
