@@ -19,6 +19,7 @@ use crate::x::tlcs::{
     query_all_keypairs,
     query_keypairs_by_round,
     query_keypairs_by_round_and_scheme,
+    query_keypairs_by_time,
     query_all_loe_data,
     query_loe_data_by_round,
 };
@@ -90,6 +91,20 @@ pub async fn get_keypairs_by_round(
     let ctx = QueryContext::new(&store, app.get_block_height());
 
     Ok(Json(query_keypairs_by_round(&ctx, round)))
+}
+
+/// Get all keys for a given round
+#[get("/azkr/tlcs/v1beta1/keypairs/<time>?<pagination>")]
+#[allow(unused_variables)]
+pub async fn get_keypairs_by_time(
+    app: &State<BaseApp>,
+    time: i64,
+    pagination: Pagination,
+) -> Result<Json<QueryAllKeyPairsResponse>, Error> {
+    let store = app.multi_store.read().expect("RwLock will not be poisoned");
+    let ctx = QueryContext::new(&store, app.get_block_height());
+
+    Ok(Json(query_keypairs_by_time(&ctx, time)))
 }
 
 /// Get all keys for a given round and scheme

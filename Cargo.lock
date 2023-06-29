@@ -4661,8 +4661,6 @@ dependencies = [
  "hdpath",
  "hex",
  "hex-literal",
- "hdpath",
- "hex",
  "human-panic",
  "ibc",
  "ibc-proto 0.31.0-alpha.2",
