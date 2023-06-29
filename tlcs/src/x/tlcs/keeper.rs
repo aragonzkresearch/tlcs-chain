@@ -74,7 +74,7 @@ pub fn append_contribution<T: DB>(
     // TODO Check for closed round
 
     //let verified = verify_participant_data(msg.round, msg.data.clone());
-    if verify_participant_data(msg.round, msg.data.clone()) {
+    if round_is_valid(msg.round) && round_is_open(ctx, msg.round) && verify_participant_data(msg.round, msg.data.clone()) {
         tlcs_store.set(store_key.into(), msg.data.encode_to_vec());
     } else {
         return Err(AppError::InvalidRequest(
@@ -376,6 +376,27 @@ fn loe_signature_is_valid(
             }
         }
     }
+}
+
+/// Valid rounds are each round that is exact X amount of time period since genesis
+/// The X is = 1 hour
+fn round_is_valid(
+    round: u32,
+) -> bool {
+    //let block_time = ctx.get_header().time.unix_timestamp();
+    //(block_time as u32 - LOE_GENESIS_TIME) / LOE_PERIOD
+    
+    let rounds_per_hour = 3600 / LOE_PERIOD;
+    (round % rounds_per_hour) == 0
+}
+
+fn round_is_open<T: DB>(
+    ctx: &mut TxContext<T>,
+    round: u32,
+) -> bool {
+    let block_time = ctx.get_header().time.unix_timestamp();
+    let rounds_per_hour = 3600 / LOE_PERIOD;
+    round > (block_time - (rounds_per_hour / 2))
 }
 
 #[test]
