@@ -33,7 +33,7 @@ use crate::{
     app::{ante::AnteHandler, params},
     error::AppError,
     store::MultiStore,
-    types::{Context, DecodedTx, QueryContext},
+    types::{DecodedTx, QueryContext},
     x::{auth::Auth, bank::Bank},
 };
 
