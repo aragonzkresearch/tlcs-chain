@@ -12,9 +12,7 @@ use proto_messages::cosmos::bank::v1beta1::QueryAllBalancesRequest;
 use proto_messages::cosmos::tx::v1beta1::Msg;
 
 use proto_messages::azkr::tlcs::v1beta1::{
-    QueryRoundSchemeRequest,
-    QueryRoundRequest,
-    QueryTimeRequest,
+    QueryRoundRequest, QueryRoundSchemeRequest, QueryTimeRequest,
 };
 
 use tendermint_abci::Application;
@@ -35,7 +33,7 @@ use crate::{
     app::{ante::AnteHandler, params},
     error::AppError,
     store::MultiStore,
-    types::{Context, DecodedTx, QueryContext},
+    types::{DecodedTx, QueryContext},
     x::{auth::Auth, bank::Bank},
 };
 
@@ -151,7 +149,7 @@ impl BaseApp {
             raw.into(),
         );
 
-        match BaseApp::run_msgs(&mut ctx.as_any(), tx.get_msgs()) {
+        match BaseApp::run_msgs(&mut ctx, tx.get_msgs()) {
             Ok(_) => {
                 let events = ctx.events;
                 multi_store.write_then_clear_tx_caches();
@@ -164,14 +162,14 @@ impl BaseApp {
         }
     }
 
-    fn run_msgs<T: DB>(ctx: &mut Context<T>, msgs: &Vec<Msg>) -> Result<(), AppError> {
+    fn run_msgs<T: DB>(ctx: &mut TxContext<T>, msgs: &Vec<Msg>) -> Result<(), AppError> {
         for msg in msgs {
             match msg {
                 Msg::Send(send_msg) => {
-                    Bank::send_coins_from_account_to_account(ctx, send_msg.clone())?
+                    Bank::send_coins_from_account_to_account(&mut ctx.as_any(), send_msg.clone())?
                 }
                 Msg::Participate(msg) => tlcs::append_contribution(ctx, msg)?,
-                Msg::SubmitLoeData(msg) => tlcs::append_loe_data(ctx, msg)?,
+                Msg::SubmitLoeData(msg) => tlcs::append_loe_data(&mut ctx.as_any(), msg)?,
             };
         }
 
@@ -319,7 +317,9 @@ impl Application for BaseApp {
                     let store = self.multi_store.read().unwrap();
                     let ctx = QueryContext::new(&store, self.get_block_height());
 
-                    let res = tlcs::query_contributions_by_round_and_scheme(&ctx, req.round, req.scheme).encode_to_vec();
+                    let res =
+                        tlcs::query_contributions_by_round_and_scheme(&ctx, req.round, req.scheme)
+                            .encode_to_vec();
                     ResponseQuery {
                         code: 0,
                         log: "exists".to_string(),
@@ -385,7 +385,8 @@ impl Application for BaseApp {
                     let store = self.multi_store.read().unwrap();
                     let ctx = QueryContext::new(&store, self.get_block_height());
 
-                    let res = tlcs::query_keypairs_by_round_and_scheme(&ctx, req.round, req.scheme).encode_to_vec();
+                    let res = tlcs::query_keypairs_by_round_and_scheme(&ctx, req.round, req.scheme)
+                        .encode_to_vec();
                     ResponseQuery {
                         code: 0,
                         log: "exists".to_string(),
