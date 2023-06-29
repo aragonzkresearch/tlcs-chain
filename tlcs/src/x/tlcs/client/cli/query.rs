@@ -8,6 +8,7 @@ use proto_messages::azkr::tlcs::v1beta1::{
     QueryAllLoeDataResponse,
     QueryRoundRequest,
     QueryRoundSchemeRequest,
+    QueryTimeRequest,
 };
 
 use tendermint_rpc::{Client, HttpClient};
@@ -38,6 +39,12 @@ pub fn get_tlcs_query_command() -> Command {
                 .arg( Arg::new("round")
                         .required(true)
                         .value_parser(clap::value_parser!(u32)),
+                ),
+        )
+        .subcommand(Command::new("keypairs_by_time") .about("Query for keypairs by time")
+                .arg( Arg::new("time")
+                        .required(true)
+                        .value_parser(clap::value_parser!(i64)),
                 ),
         )
         .subcommand(Command::new("keypairs_by_round_and_scheme") .about("Query for keypairs by round and scheme")
@@ -100,6 +107,15 @@ pub fn run_tlcs_query_command(matches: &ArgMatches, node: &str) -> Result<String
             Runtime::new()
                 .expect("unclear why this would ever fail")
                 .block_on(get_keypairs_by_round(client, round))
+        }
+        Some(("keypairs_by_time", sub_matches)) => {
+            let time = sub_matches
+                .get_one::<i64>("time")
+                .expect("address argument is required preventing `None`")
+                .to_owned();
+            Runtime::new()
+                .expect("unclear why this would ever fail")
+                .block_on(get_keypairs_by_time(client, time))
         }
         Some(("keypairs_by_round_and_scheme", sub_matches)) => {
             let round = sub_matches
@@ -251,6 +267,28 @@ pub async fn get_keypairs_by_round_and_scheme(client: HttpClient, round: u32, sc
     let res = client
         .abci_query(
             Some("/azkr.tlcs.v1beta1.Query/AllKeyPairsByRoundAndScheme"
+                    .parse()
+                    .expect("hard coded path will always succeed"),
+            ),
+            query.encode_vec(),
+            None,
+            false,
+        )
+        .await?;
+
+    if res.code.is_err() {
+        return Err(anyhow!("node returned an error: {}", res.log));
+    }
+
+    let res = QueryAllKeyPairsResponse::decode(&*res.value)?;
+    Ok(serde_json::to_string_pretty(&res)?)
+}
+
+pub async fn get_keypairs_by_time(client: HttpClient, time: i64) -> Result<String> {
+    let query = QueryTimeRequest { time };
+    let res = client
+        .abci_query(
+            Some("/azkr.tlcs.v1beta1.Query/AllKeyPairsByTime"
                     .parse()
                     .expect("hard coded path will always succeed"),
             ),
