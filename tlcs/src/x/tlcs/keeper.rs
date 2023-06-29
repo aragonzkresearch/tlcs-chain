@@ -4,35 +4,22 @@ use prost::Message;
 //use proto_types::AccAddress;
 
 use proto_messages::azkr::tlcs::v1beta1::{
-    RawMsgContribution,
-    MsgContribution,
-    QueryAllContributionsResponse,
-    RawMsgKeyPair,
-    MsgKeyPair,
-    QueryAllKeyPairsResponse,
+    MsgContribution, MsgKeyPair, MsgLoeData, QueryAllContributionsResponse,
+    QueryAllKeyPairsResponse, QueryAllLoeDataResponse, RawMsgContribution, RawMsgKeyPair,
     RawMsgLoeData,
-    MsgLoeData,
-    QueryAllLoeDataResponse,
 };
 
 use crate::{
     error::AppError,
     store::Store,
-    types::{Context, QueryContext},
+    types::{Context, QueryContext, TxContext},
 };
 
-use crate::x::tlcs::crypto::{
-    verify_participant_data,
-};
+use crate::x::tlcs::crypto::verify_participant_data;
 
 // For LOE data verification
+use drand_verify::{derive_randomness, verify, G2Pubkey, Pubkey};
 use hex_literal::hex;
-use drand_verify::{
-    derive_randomness,
-    verify,
-    G2Pubkey,
-    Pubkey
-};
 
 const PARTICIPANT_DATA_KEY: [u8; 1] = [1];
 const KEYPAIR_DATA_KEY: [u8; 1] = [2];
@@ -52,18 +39,17 @@ pub fn build_data_key(round: u8, scheme: Vec<u8>, addr: AccAddress) -> Vec<u8> {
     let mut addr: Vec<u8> = addr.into();
 
     prefix.append(addr.to_vec());
-                                           
+
     return prefix;
 }
 */
 
 pub fn append_contribution<T: DB>(
-    ctx: &mut Context<T>,
+    ctx: &mut TxContext<T>,
     msg: &MsgContribution,
 ) -> Result<(), AppError> {
-    let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
     //let store_key = build_data_key(msg.round, TMP_SCHEME_ID, msg.address);
-    
+
     let mut store_key = PARTICIPANT_DATA_KEY.to_vec();
     store_key.append(&mut msg.round.to_le_bytes().to_vec());
     store_key.append(&mut TMP_SCHEME_ID.to_vec());
@@ -74,20 +60,22 @@ pub fn append_contribution<T: DB>(
     // TODO Check for closed round
 
     //let verified = verify_participant_data(msg.round, msg.data.clone());
-    if round_is_valid(msg.round) && round_is_open(ctx, msg.round) && verify_participant_data(msg.round, msg.data.clone()) {
+    if round_is_valid(msg.round)
+        && round_is_open(ctx, msg.round)
+        && verify_participant_data(msg.round, msg.data.clone())
+    {
+        let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
         tlcs_store.set(store_key.into(), msg.data.encode_to_vec());
     } else {
         return Err(AppError::InvalidRequest(
-                   "the provided data is invalid for the given round".into(),
-               ));
+            "the provided data is invalid for the given round".into(),
+        ));
     }
 
     Ok(())
 }
 
-pub fn query_all_contributions<T: DB>(
-    ctx: &QueryContext<T>,
-) -> QueryAllContributionsResponse {
+pub fn query_all_contributions<T: DB>(ctx: &QueryContext<T>) -> QueryAllContributionsResponse {
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
     let store_key = PARTICIPANT_DATA_KEY.to_vec();
 
@@ -126,11 +114,8 @@ pub fn query_contributions_by_round<T: DB>(
         let contribution: RawMsgContribution = RawMsgContribution::decode::<Bytes>(row.into())
             .expect("invalid data in database - possible database corruption");
         contributions.push(contribution);
-
     }
-    QueryAllContributionsResponse {
-        contributions,
-    }
+    QueryAllContributionsResponse { contributions }
 }
 
 pub fn query_contributions_by_round_and_scheme<T: DB>(
@@ -151,21 +136,15 @@ pub fn query_contributions_by_round_and_scheme<T: DB>(
         let contribution: RawMsgContribution = RawMsgContribution::decode::<Bytes>(row.into())
             .expect("invalid data in database - possible database corruption");
         contributions.push(contribution);
-
     }
-    QueryAllContributionsResponse {
-        contributions,
-    }
+    QueryAllContributionsResponse { contributions }
 }
 
 // Keypair section
 
 // TODO maybe use this from the endblocker so all of the save/query functions are in the keeper
 #[allow(dead_code)]
-pub fn append_keypair<T: DB>(
-    ctx: &mut Context<T>,
-    msg: &MsgKeyPair,
-) -> Result<(), AppError> {
+pub fn append_keypair<T: DB>(ctx: &mut Context<T>, msg: &MsgKeyPair) -> Result<(), AppError> {
     let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
     let mut prefix = LOE_DATA_KEY.to_vec();
     prefix.append(&mut msg.round.to_le_bytes().to_vec());
@@ -175,9 +154,7 @@ pub fn append_keypair<T: DB>(
     let mut all_responses = match raw {
         Some(raw) => QueryAllKeyPairsResponse::decode::<Bytes>(raw.into())
             .expect("invalid data in database - possible database corruption"),
-        None => QueryAllKeyPairsResponse {
-            keypairs: vec![],
-        },
+        None => QueryAllKeyPairsResponse { keypairs: vec![] },
     };
 
     all_responses.keypairs.push(msg.to_owned().into());
@@ -186,9 +163,7 @@ pub fn append_keypair<T: DB>(
     Ok(())
 }
 
-pub fn query_all_keypairs<T: DB>(
-    ctx: &QueryContext<T>,
-) -> QueryAllKeyPairsResponse {
+pub fn query_all_keypairs<T: DB>(ctx: &QueryContext<T>) -> QueryAllKeyPairsResponse {
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
     let store_key = KEYPAIR_DATA_KEY.to_vec();
 
@@ -200,11 +175,8 @@ pub fn query_all_keypairs<T: DB>(
         let keypair: RawMsgKeyPair = RawMsgKeyPair::decode::<Bytes>(row.into())
             .expect("invalid data in database - possible database corruption");
         keypairs.push(keypair);
-
     }
-    QueryAllKeyPairsResponse {
-        keypairs,
-    }
+    QueryAllKeyPairsResponse { keypairs }
 }
 
 pub fn query_keypairs_by_round<T: DB>(
@@ -222,17 +194,11 @@ pub fn query_keypairs_by_round<T: DB>(
         let keypair: RawMsgKeyPair = RawMsgKeyPair::decode::<Bytes>(row.into())
             .expect("invalid data in database - possible database corruption");
         keypairs.push(keypair);
-
     }
-    QueryAllKeyPairsResponse {
-        keypairs,
-    }
+    QueryAllKeyPairsResponse { keypairs }
 }
 
-pub fn query_keypairs_by_time<T: DB>(
-    ctx: &QueryContext<T>,
-    time: i64,
-) -> QueryAllKeyPairsResponse {
+pub fn query_keypairs_by_time<T: DB>(ctx: &QueryContext<T>, time: i64) -> QueryAllKeyPairsResponse {
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
     let mut store_key = KEYPAIR_DATA_KEY.to_vec();
 
@@ -247,7 +213,6 @@ pub fn query_keypairs_by_time<T: DB>(
         let keypair: RawMsgKeyPair = RawMsgKeyPair::decode::<Bytes>(row.into())
             .expect("invalid data in database - possible database corruption");
         keypairs.push(keypair);
-
     }
     QueryAllKeyPairsResponse { keypairs }
 }
@@ -274,32 +239,30 @@ pub fn query_keypairs_by_round_and_scheme<T: DB>(
     QueryAllKeyPairsResponse { keypairs }
 }
 
-pub fn append_loe_data<T: DB>(
-    ctx: &mut Context<T>,
-    msg: &MsgLoeData,
-) -> Result<(), AppError> {
+pub fn append_loe_data<T: DB>(ctx: &mut Context<T>, msg: &MsgLoeData) -> Result<(), AppError> {
     let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
-    
+
     let mut store_key = LOE_DATA_KEY.to_vec();
     store_key.append(&mut msg.round.to_le_bytes().to_vec());
 
     // TODO Check for closed round
-    
+
     if loe_signature_is_valid(msg.round, msg.randomness.clone(), msg.signature.clone()) {
         //tlcs_store.set(store_key.into(), msg.randomness.encode_to_vec());
-        tlcs_store.set(store_key.into(), <MsgLoeData as Into<RawMsgLoeData>>::into(msg.to_owned()).encode_to_vec());
+        tlcs_store.set(
+            store_key.into(),
+            <MsgLoeData as Into<RawMsgLoeData>>::into(msg.to_owned()).encode_to_vec(),
+        );
     } else {
         return Err(AppError::InvalidRequest(
-                   "the provided data is invalid for the given round".into(),
-               ));
+            "the provided data is invalid for the given round".into(),
+        ));
     }
 
     Ok(())
 }
 
-pub fn query_all_loe_data<T: DB>(
-    ctx: &QueryContext<T>,
-) -> QueryAllLoeDataResponse {
+pub fn query_all_loe_data<T: DB>(ctx: &QueryContext<T>) -> QueryAllLoeDataResponse {
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
     let store_key = LOE_DATA_KEY.to_vec();
     let all_raw_data = tlcs_store.range(store_key..);
@@ -332,7 +295,6 @@ pub fn query_loe_data_by_round<T: DB>(
         let loe_data: RawMsgLoeData = RawMsgLoeData::decode::<Bytes>(row.into())
             .expect("invalid data in database - possible database corruption");
         randomnesses.push(loe_data);
-
     }
 
     QueryAllLoeDataResponse { randomnesses }
@@ -346,11 +308,7 @@ pub fn query_loe_data_by_round<T: DB>(
 // The LOE data is from https://api.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/{round}
 // {"round":3276594,"randomness":"f282310f131ed63e0342cd7e47f9e4317b20fb6f652b03ce81378cf825227212","signature":"86f91b1eec7b22ecce1385ec1cc4861f43507fa897cad686e44a87986a7ce18a94fa7128d6f76d6b950bb4e559472539"}
 
-fn loe_signature_is_valid(
-    round: u32,
-    randomness: Vec<u8>,
-    signature: Vec<u8>,
-) -> bool {
+fn loe_signature_is_valid(round: u32, randomness: Vec<u8>, signature: Vec<u8>) -> bool {
     let pk2 = G2Pubkey::from_fixed(LOE_PUBLIC_KEY).unwrap();
 
     // See https://api.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/1 for example data of the three inputs
@@ -361,18 +319,16 @@ fn loe_signature_is_valid(
 
     let randomness_check = derive_randomness(&hex_signature);
     if !(hex_randomness == randomness_check) {
-       return false
+        return false;
     }
 
     match verify(&pk2, round as u64, &nil, &hex_signature) {
-        Err(_err) => {
-            return false
-        }
+        Err(_err) => return false,
         Ok(valid) => {
             if valid {
-                return true
+                return true;
             } else {
-                return false
+                return false;
             }
         }
     }
@@ -380,32 +336,27 @@ fn loe_signature_is_valid(
 
 /// Valid rounds are each round that is exact X amount of time period since genesis
 /// The X is = 1 hour
-fn round_is_valid(
-    round: u32,
-) -> bool {
+fn round_is_valid(round: u32) -> bool {
     //let block_time = ctx.get_header().time.unix_timestamp();
     //(block_time as u32 - LOE_GENESIS_TIME) / LOE_PERIOD
-    
+
     let rounds_per_hour = 3600 / LOE_PERIOD;
     (round % rounds_per_hour) == 0
 }
 
-fn round_is_open<T: DB>(
-    ctx: &mut TxContext<T>,
-    round: u32,
-) -> bool {
+fn round_is_open<T: DB>(ctx: &mut TxContext<T>, round: u32) -> bool {
     let block_time = ctx.get_header().time.unix_timestamp();
-    let rounds_per_hour = 3600 / LOE_PERIOD;
-    round > (block_time - (rounds_per_hour / 2))
+    let rounds_per_hour = 3600 / LOE_PERIOD as i64;
+    round as i64 > (block_time - (rounds_per_hour / 2))
 }
 
 #[test]
 fn test_round_signature() {
     //let signature: String = "9544ddce2fdbe8688d6f5b4f98eed5d63eee3902e7e162050ac0f45905a55657714880adabe3c3096b92767d886567d0".to_string();
     //let round: u32 = 1;
-    let randomness: Vec<u8> = "f282310f131ed63e0342cd7e47f9e4317b20fb6f652b03ce81378cf825227212".into();
+    let randomness: Vec<u8> =
+        "f282310f131ed63e0342cd7e47f9e4317b20fb6f652b03ce81378cf825227212".into();
     let signature: Vec<u8> = "86f91b1eec7b22ecce1385ec1cc4861f43507fa897cad686e44a87986a7ce18a94fa7128d6f76d6b950bb4e559472539".into();
     let round: u32 = 3276594;
     assert!(loe_signature_is_valid(round, randomness, signature));
-
 }
