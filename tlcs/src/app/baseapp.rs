@@ -14,6 +14,7 @@ use proto_messages::cosmos::tx::v1beta1::Msg;
 use proto_messages::azkr::tlcs::v1beta1::{
     QueryRoundSchemeRequest,
     QueryRoundRequest,
+    QueryTimeRequest,
 };
 
 use tendermint_abci::Application;
@@ -385,6 +386,29 @@ impl Application for BaseApp {
                     let ctx = QueryContext::new(&store, self.get_block_height());
 
                     let res = tlcs::query_keypairs_by_round_and_scheme(&ctx, req.round, req.scheme).encode_to_vec();
+                    ResponseQuery {
+                        code: 0,
+                        log: "exists".to_string(),
+                        info: "".to_string(),
+                        index: 0,
+                        key: request.data,
+                        value: res.into(),
+                        proof_ops: None,
+                        height: self
+                            .get_block_height()
+                            .try_into()
+                            .expect("can't believe we made it this far"),
+                        codespace: "".to_string(),
+                    }
+                }
+                "/azkr.tlcs.v1beta1.Query/AllKeyPairsByTime" => {
+                    let data = request.data.clone();
+                    let req = QueryTimeRequest::decode(data).unwrap();
+
+                    let store = self.multi_store.read().unwrap();
+                    let ctx = QueryContext::new(&store, self.get_block_height());
+
+                    let res = tlcs::query_keypairs_by_time(&ctx, req.time).encode_to_vec();
                     ResponseQuery {
                         code: 0,
                         log: "exists".to_string(),

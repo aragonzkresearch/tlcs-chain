@@ -37,7 +37,6 @@ use crate::{client::keys::key_store::DiskStore, x::auth::client::cli::query::get
 
 const LOE_URL: &str = "https://api.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/";
 
-
 pub fn get_tlcs_tx_command() -> Command {
     Command::new("tlcs")
         .about("Tlcs transaction subcommands")
@@ -60,7 +59,6 @@ pub fn get_tlcs_tx_command() -> Command {
                         .value_parser(clap::value_parser!(String)),
                 )
                 .arg(
-
                     Arg::new("data")
                         .required(true)
                         .value_parser(clap::value_parser!(String)),
@@ -101,6 +99,8 @@ pub fn get_tlcs_tx_command() -> Command {
                         .value_parser(clap::value_parser!(Coin)),
                 ),
         )
+        .subcommand_required(true)
+}
 
 pub fn run_tlcs_tx_command(matches: &ArgMatches, node: &str, home: PathBuf) -> Result<()> {
     match matches.subcommand() {
@@ -306,7 +306,6 @@ pub fn create_signed_loe_data_tx(
         round,
         randomness,
         signature,
-
     };
 
     let tx_body = TxBody {

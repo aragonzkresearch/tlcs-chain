@@ -223,6 +223,38 @@ pub mod tlcs {
     
         impl Protobuf<RawQueryRoundSchemeRequest> for QueryRoundSchemeRequest {}
 
+        /// QueryTimeRequest is the request type for the Query/KeyPair RPC method.
+        #[derive(Serialize, Deserialize, Clone, Message)]
+        pub struct RawQueryTimeRequest {
+            #[prost(int64, tag = "1")]
+            pub time: i64,
+        }
+
+        #[derive(Clone, PartialEq, Serialize, Deserialize)]
+        pub struct QueryTimeRequest {
+            pub time: i64,
+        }
+    
+        impl TryFrom<RawQueryTimeRequest> for QueryTimeRequest {
+            type Error = Error;
+        
+            fn try_from(raw: RawQueryTimeRequest) -> Result<Self, Self::Error> {
+                Ok(QueryTimeRequest {
+                    time: raw.time,
+                })
+            }
+        }
+    
+        impl From<QueryTimeRequest> for RawQueryTimeRequest {
+            fn from(query: QueryTimeRequest) -> RawQueryTimeRequest {
+                RawQueryTimeRequest {
+                    time: query.time,
+                }
+            }
+        }
+    
+        impl Protobuf<RawQueryTimeRequest> for QueryTimeRequest {}
+
         /////////////////////////////////////////////////////////////////////////////////////
         // LOE Data input structs
         /////////////////////////////////////////////////////////////////////////////////////

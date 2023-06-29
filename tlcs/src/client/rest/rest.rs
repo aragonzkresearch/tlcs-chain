@@ -17,6 +17,7 @@ use crate::{
     x::tlcs::client::rest::get_all_keypairs,
     x::tlcs::client::rest::get_keypairs_by_round,
     x::tlcs::client::rest::get_keypairs_by_round_and_scheme,
+    x::tlcs::client::rest::get_keypairs_by_time,
     x::tlcs::client::rest::get_all_loe_data,
     x::tlcs::client::rest::get_loe_data_by_round,
 };
@@ -53,6 +54,7 @@ fn rocket_launch(app: BaseApp, port: u16) {
                 get_all_keypairs,
                 get_keypairs_by_round,
                 get_keypairs_by_round_and_scheme,
+                get_keypairs_by_time,
                 get_all_loe_data,
                 get_loe_data_by_round,
 

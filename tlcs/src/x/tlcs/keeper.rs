@@ -39,6 +39,8 @@ const KEYPAIR_DATA_KEY: [u8; 1] = [2];
 const LOE_DATA_KEY: [u8; 1] = [3];
 const TMP_SCHEME_ID: [u8; 1] = [1];
 const LOE_PUBLIC_KEY: [u8; 96] = hex!("a0b862a7527fee3a731bcb59280ab6abd62d5c0b6ea03dc4ddf6612fdfc9d01f01c31542541771903475eb1ec6615f8d0df0b8b6dce385811d6dcf8cbefb8759e5e616a3dfd054c928940766d9a5b9db91e3b697e5d70a975181e007f87fca5e");
+const LOE_GENESIS_TIME: u32 = 1677685200;
+const LOE_PERIOD: u32 = 3;
 
 // Key for KV store for contributions is vector of [PARTICIPANT_DATA_KEY, Round, scheme, address]
 /*
@@ -225,6 +227,29 @@ pub fn query_keypairs_by_round<T: DB>(
     QueryAllKeyPairsResponse {
         keypairs,
     }
+}
+
+pub fn query_keypairs_by_time<T: DB>(
+    ctx: &QueryContext<T>,
+    time: i64,
+) -> QueryAllKeyPairsResponse {
+    let tlcs_store = ctx.get_kv_store(Store::Tlcs);
+    let mut store_key = KEYPAIR_DATA_KEY.to_vec();
+
+    let latest_round = (time as u32 - LOE_GENESIS_TIME) / LOE_PERIOD;
+
+    store_key.append(&mut latest_round.to_le_bytes().to_vec());
+    let all_raw_data = tlcs_store.range(store_key..);
+
+    let mut keypairs = vec![];
+
+    for (_, row) in all_raw_data {
+        let keypair: RawMsgKeyPair = RawMsgKeyPair::decode::<Bytes>(row.into())
+            .expect("invalid data in database - possible database corruption");
+        keypairs.push(keypair);
+
+    }
+    QueryAllKeyPairsResponse { keypairs }
 }
 
 pub fn query_keypairs_by_round_and_scheme<T: DB>(
