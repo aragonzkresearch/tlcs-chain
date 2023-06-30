@@ -80,7 +80,7 @@ pub async fn get_all_keypairs(
 }
 
 /// Get all keys for a given round
-#[get("/azkr/tlcs/v1beta1/keypairs/<round>?<pagination>")]
+#[get("/azkr/tlcs/v1beta1/keypairs/round/<round>?<pagination>")]
 #[allow(unused_variables)]
 pub async fn get_keypairs_by_round(
     app: &State<BaseApp>,
@@ -94,7 +94,7 @@ pub async fn get_keypairs_by_round(
 }
 
 /// Get all keys for a given round
-#[get("/azkr/tlcs/v1beta1/keypairs/<time>?<pagination>")]
+#[get("/azkr/tlcs/v1beta1/keypairs/time/<time>?<pagination>")]
 #[allow(unused_variables)]
 pub async fn get_keypairs_by_time(
     app: &State<BaseApp>,
@@ -108,7 +108,7 @@ pub async fn get_keypairs_by_time(
 }
 
 /// Get all keys for a given round and scheme
-#[get("/azkr/tlcs/v1beta1/keypairs/<round>/<scheme>?<pagination>")]
+#[get("/azkr/tlcs/v1beta1/keypairs/round_and_scheme/<round>/<scheme>?<pagination>")]
 #[allow(unused_variables)]
 pub async fn get_keypairs_by_round_and_scheme(
     app: &State<BaseApp>,
