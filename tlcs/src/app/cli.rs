@@ -104,14 +104,14 @@ pub fn get_run_command() -> Command {
                 .help("Bind the TCP server to this port")
                 .action(ArgAction::Set)
                 .value_parser(value_parser!(u16))
-                .default_value("26658"),
+                .default_value("26618"),
         )
         .arg(
             arg!(--rest_port)
                 .help("Bind the REST server to this port")
                 .action(ArgAction::Set)
                 .value_parser(value_parser!(u16))
-                .default_value("1317"),
+                .default_value("1318"),
         )
         .arg(
             arg!(-r - -read_buf_size)

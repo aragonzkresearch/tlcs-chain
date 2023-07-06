@@ -21,13 +21,13 @@ pub fn get_tlcs_query_command() -> Command {
         .subcommand(Command::new("contributions_by_round") .about("Query for contributions by round")
                 .arg( Arg::new("round")
                         .required(true)
-                        .value_parser(clap::value_parser!(u32)),
+                        .value_parser(clap::value_parser!(u64)),
                 ),
         )
         .subcommand(Command::new("contributions_by_round_and_scheme") .about("Query for contributions by round and scheme")
                 .arg( Arg::new("round")
                         .required(true)
-                        .value_parser(clap::value_parser!(u32)),
+                        .value_parser(clap::value_parser!(u64)),
                 )
                 .arg( Arg::new("scheme")
                         .required(true)
@@ -38,7 +38,7 @@ pub fn get_tlcs_query_command() -> Command {
         .subcommand(Command::new("keypairs_by_round") .about("Query for keypairs by round")
                 .arg( Arg::new("round")
                         .required(true)
-                        .value_parser(clap::value_parser!(u32)),
+                        .value_parser(clap::value_parser!(u64)),
                 ),
         )
         .subcommand(Command::new("keypairs_by_time") .about("Query for keypairs by time")
@@ -50,7 +50,7 @@ pub fn get_tlcs_query_command() -> Command {
         .subcommand(Command::new("keypairs_by_round_and_scheme") .about("Query for keypairs by round and scheme")
                 .arg( Arg::new("round")
                         .required(true)
-                        .value_parser(clap::value_parser!(u32)),
+                        .value_parser(clap::value_parser!(u64)),
                 )
                 .arg( Arg::new("scheme")
                         .required(true)
@@ -61,7 +61,7 @@ pub fn get_tlcs_query_command() -> Command {
         .subcommand(Command::new("loe_data_by_round") .about("Query for LOE data by round")
                 .arg( Arg::new("round")
                         .required(true)
-                        .value_parser(clap::value_parser!(u32)),
+                        .value_parser(clap::value_parser!(u64)),
                 ),
         )
         .subcommand_required(true)
@@ -76,7 +76,7 @@ pub fn run_tlcs_query_command(matches: &ArgMatches, node: &str) -> Result<String
             .block_on(get_all_contributions(client)),
         Some(("contributions_by_round", sub_matches)) => {
             let round = sub_matches
-                .get_one::<u32>("round")
+                .get_one::<u64>("round")
                 .expect("address argument is required preventing `None`")
                 .to_owned();
             Runtime::new()
@@ -85,7 +85,7 @@ pub fn run_tlcs_query_command(matches: &ArgMatches, node: &str) -> Result<String
         }
         Some(("contributions_by_round_and_scheme", sub_matches)) => {
             let round = sub_matches
-                .get_one::<u32>("round")
+                .get_one::<u64>("round")
                 .expect("address argument is required preventing `None`")
                 .to_owned();
             let scheme = sub_matches
@@ -101,7 +101,7 @@ pub fn run_tlcs_query_command(matches: &ArgMatches, node: &str) -> Result<String
             .block_on(get_all_keypairs(client)),
         Some(("keypairs_by_round", sub_matches)) => {
             let round = sub_matches
-                .get_one::<u32>("round")
+                .get_one::<u64>("round")
                 .expect("address argument is required preventing `None`")
                 .to_owned();
             Runtime::new()
@@ -119,7 +119,7 @@ pub fn run_tlcs_query_command(matches: &ArgMatches, node: &str) -> Result<String
         }
         Some(("keypairs_by_round_and_scheme", sub_matches)) => {
             let round = sub_matches
-                .get_one::<u32>("round")
+                .get_one::<u64>("round")
                 .expect("address argument is required preventing `None`")
                 .to_owned();
             let scheme = sub_matches
@@ -135,7 +135,7 @@ pub fn run_tlcs_query_command(matches: &ArgMatches, node: &str) -> Result<String
             .block_on(get_all_loe_data(client)),
         Some(("loe_data_by_round", sub_matches)) => {
             let round = sub_matches
-                .get_one::<u32>("round")
+                .get_one::<u64>("round")
                 .expect("address argument is required preventing `None`")
                 .to_owned();
             Runtime::new()
@@ -168,7 +168,7 @@ pub async fn get_all_contributions(client: HttpClient) -> Result<String> {
     Ok(serde_json::to_string_pretty(&res)?)
 }
 
-pub async fn get_contributions_by_round(client: HttpClient, round: u32) -> Result<String> {
+pub async fn get_contributions_by_round(client: HttpClient, round: u64) -> Result<String> {
     let query = QueryRoundRequest { round };
     let res = client
         .abci_query(
@@ -190,7 +190,7 @@ pub async fn get_contributions_by_round(client: HttpClient, round: u32) -> Resul
     Ok(serde_json::to_string_pretty(&res)?)
 }
 
-pub async fn get_contributions_by_round_and_scheme(client: HttpClient, round: u32, scheme: u32) -> Result<String> {
+pub async fn get_contributions_by_round_and_scheme(client: HttpClient, round: u64, scheme: u32) -> Result<String> {
     let query = QueryRoundSchemeRequest {
         round,
         scheme,
@@ -237,7 +237,7 @@ pub async fn get_all_keypairs(client: HttpClient) -> Result<String> {
     Ok(serde_json::to_string_pretty(&res)?)
 }
 
-pub async fn get_keypairs_by_round(client: HttpClient, round: u32) -> Result<String> {
+pub async fn get_keypairs_by_round(client: HttpClient, round: u64) -> Result<String> {
     let query = QueryRoundRequest { round };
     let res = client
         .abci_query(
@@ -259,7 +259,7 @@ pub async fn get_keypairs_by_round(client: HttpClient, round: u32) -> Result<Str
     Ok(serde_json::to_string_pretty(&res)?)
 }
 
-pub async fn get_keypairs_by_round_and_scheme(client: HttpClient, round: u32, scheme: u32) -> Result<String> {
+pub async fn get_keypairs_by_round_and_scheme(client: HttpClient, round: u64, scheme: u32) -> Result<String> {
     let query = QueryRoundSchemeRequest {
         round,
         scheme,
@@ -328,7 +328,7 @@ pub async fn get_all_loe_data(client: HttpClient) -> Result<String> {
     Ok(serde_json::to_string_pretty(&res)?)
 }
 
-pub async fn get_loe_data_by_round(client: HttpClient, round: u32) -> Result<String> {
+pub async fn get_loe_data_by_round(client: HttpClient, round: u64) -> Result<String> {
     let query = QueryRoundRequest { round };
     let res = client
         .abci_query(

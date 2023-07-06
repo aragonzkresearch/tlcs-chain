@@ -94,19 +94,23 @@ The balance of this address was set to 34 in the genesis file.
 3. Import the key corresponding to the above address into the tlcs key store:
 
 ```console
-echo "race draft rival universe maid cheese steel logic crowd fork comic easy truth drift tomorrow eye buddy head time cash swing swift midnight borrow" | tlcs keys add alice
+echo "race draft rival universe maid cheese steel logic crowd fork comic easy truth drift tomorrow eye buddy head time cash swing swift midnight borrow" | tlcs keys add kevin
+echo "people science parent angry trick crater confirm appear rural stadium song soft stay dutch drama depth hat vicious final social noodle write dance misery" | tlcs keys add bob
+echo "lab stove level ill document survey slice employ measure rebuild code better patrol approve imitate spread online cabin canyon echo like antenna used crack" | tlcs keys add alex
 ```
 
 4. Send tokens:
 
 ```console
-tlcs tx bank send alice cosmos180tr8wmsk8ugt32yynj8efqwg3yglmpwp22rut 10uatom --fee 1uatom
+tlcs tx bank send kevin cosmos180tr8wmsk8ugt32yynj8efqwg3yglmpwp22rut 10uatom --fee 1uatom
 ```
 
 5. Query the address balance and observe that it has decreased by 11uatom which is the sum of the amount transferred and the fee:
 
 ```console
 tlcs query bank balances cosmos1syavy2npfyt9tcncdtsdzf7kny9lh777pahuux
+tlcs query bank balances cosmos12sq96jeylnw2n3rwwndm83sfz8m8h8u0wua8sn
+tlcs query bank balances cosmos178k9xr0nfvd28f8gjww4euv2mtqqcfvp7vtvez
 ```
 
 Which returns:

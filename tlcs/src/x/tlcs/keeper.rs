@@ -15,7 +15,10 @@ use crate::{
     types::{Context, QueryContext, TxContext},
 };
 
-use crate::x::tlcs::crypto::verify_participant_data;
+use crate::x::tlcs::crypto::{
+    verify_participant_data,
+    //generate_participant_data,
+};
 
 // For LOE data verification
 use drand_verify::{derive_randomness, verify, G2Pubkey, Pubkey};
@@ -57,18 +60,36 @@ pub fn append_contribution<T: DB>(
     let addr: Vec<u8> = msg.address.clone().into();
     store_key.append(&mut addr.to_vec());
 
-    // TODO Check for closed round
-
-    //let verified = verify_participant_data(msg.round, msg.data.clone());
-    if round_is_valid(msg.round)
-        && round_is_open(ctx, msg.round)
-        && verify_participant_data(msg.round, msg.data.clone())
+    /*
     {
+        const LOE_GENESIS_TIME: u32 = 1677685200;
+        const LOE_PERIOD: u32 = 3;
+        let block_time = ctx.get_header().time.unix_timestamp();
+        let round_to_time = LOE_GENESIS_TIME as u64 + (msg.round * LOE_PERIOD as u64);
+        let mut feedback: String = block_time.to_string();
+        feedback.push_str(":");
+        feedback.push_str(&round_to_time.to_string());
+
+        return Err(AppError::InvalidRequest(
+            round_is_open(ctx, msg.round).to_string().into()
+            //feedback.into(),
+        ));
+    }
+    */
+
+    if !round_is_open(ctx, msg.round) {
+        return Err(AppError::InvalidRequest(
+            "The round is no longer open for contributions".into(),
+        ));
+    }
+
+    if verify_participant_data(msg.round, msg.data.clone()) {
         let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
-        tlcs_store.set(store_key.into(), msg.data.encode_to_vec());
+        let chain_data: RawMsgContribution = msg.to_owned().into();
+        tlcs_store.set(store_key.into(), chain_data.encode_to_vec());
     } else {
         return Err(AppError::InvalidRequest(
-            "the provided data is invalid for the given round".into(),
+            "The contribution data is invalid for the given round".into(),
         ));
     }
 
@@ -99,7 +120,7 @@ pub fn query_all_contributions<T: DB>(ctx: &QueryContext<T>) -> QueryAllContribu
 
 pub fn query_contributions_by_round<T: DB>(
     ctx: &QueryContext<T>,
-    round: u32,
+    round: u64,
 ) -> QueryAllContributionsResponse {
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
 
@@ -120,7 +141,7 @@ pub fn query_contributions_by_round<T: DB>(
 
 pub fn query_contributions_by_round_and_scheme<T: DB>(
     ctx: &QueryContext<T>,
-    round: u32,
+    round: u64,
     _scheme: u32, // TODO: make use of this
 ) -> QueryAllContributionsResponse {
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
@@ -181,7 +202,7 @@ pub fn query_all_keypairs<T: DB>(ctx: &QueryContext<T>) -> QueryAllKeyPairsRespo
 
 pub fn query_keypairs_by_round<T: DB>(
     ctx: &QueryContext<T>,
-    round: u32,
+    round: u64,
 ) -> QueryAllKeyPairsResponse {
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
     let mut store_key = KEYPAIR_DATA_KEY.to_vec();
@@ -219,7 +240,7 @@ pub fn query_keypairs_by_time<T: DB>(ctx: &QueryContext<T>, time: i64) -> QueryA
 
 pub fn query_keypairs_by_round_and_scheme<T: DB>(
     ctx: &QueryContext<T>,
-    round: u32,
+    round: u64,
     _scheme: u32, // TODO: make use of this
 ) -> QueryAllKeyPairsResponse {
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
@@ -255,7 +276,7 @@ pub fn append_loe_data<T: DB>(ctx: &mut Context<T>, msg: &MsgLoeData) -> Result<
         );
     } else {
         return Err(AppError::InvalidRequest(
-            "the provided data is invalid for the given round".into(),
+            "the loe data is invalid for the given round".into(),
         ));
     }
 
@@ -280,27 +301,46 @@ pub fn query_all_loe_data<T: DB>(ctx: &QueryContext<T>) -> QueryAllLoeDataRespon
 
 pub fn query_loe_data_by_round<T: DB>(
     ctx: &QueryContext<T>,
-    round: u32,
+    round: u64,
 ) -> QueryAllLoeDataResponse {
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
-
-    let mut store_key = LOE_DATA_KEY.to_vec();
+    let mut store_key = KEYPAIR_DATA_KEY.to_vec();
     store_key.append(&mut round.to_le_bytes().to_vec());
-
     let all_raw_data = tlcs_store.range(store_key..);
 
     let mut randomnesses = vec![];
 
     for (_, row) in all_raw_data {
-        let loe_data: RawMsgLoeData = RawMsgLoeData::decode::<Bytes>(row.into())
+        let rand: RawMsgLoeData = RawMsgLoeData::decode::<Bytes>(row.into())
             .expect("invalid data in database - possible database corruption");
-        randomnesses.push(loe_data);
+        randomnesses.push(rand);
     }
 
     QueryAllLoeDataResponse { randomnesses }
 }
 
-// The LOE data is from https://api.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/info
+pub fn query_loe_data_by_round_and_scheme<T: DB>(
+    ctx: &QueryContext<T>,
+    round: u64,
+    scheme: u32,
+) -> QueryAllLoeDataResponse {
+    let tlcs_store = ctx.get_kv_store(Store::Tlcs);
+    let mut store_key = KEYPAIR_DATA_KEY.to_vec();
+    store_key.append(&mut round.to_le_bytes().to_vec());
+    store_key.append(&mut scheme.to_le_bytes().to_vec());
+    let all_raw_data = tlcs_store.range(store_key..);
+
+    let mut randomnesses = vec![];
+
+    for (_, row) in all_raw_data {
+        let rand: RawMsgLoeData = RawMsgLoeData::decode::<Bytes>(row.into())
+            .expect("invalid data in database - possible database corruption");
+        randomnesses.push(rand);
+    }
+
+    QueryAllLoeDataResponse { randomnesses }
+}
+
 // {"public_key":"a0b862a7527fee3a731bcb59280ab6abd62d5c0b6ea03dc4ddf6612fdfc9d01f01c31542541771903475eb1ec6615f8d0df0b8b6dce385811d6dcf8cbefb8759e5e616a3dfd054c928940766d9a5b9db91e3b697e5d70a975181e007f87fca5e","period":3,"genesis_time":1677685200,"hash":"dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493","groupHash":"a81e9d63f614ccdb144b8ff79fbd4d5a2d22055c0bfe4ee9a8092003dab1c6c0","schemeID":"bls-unchained-on-g1","metadata":{"beaconID":"fastnet"}}
 // const LOE_PUBLIC_KEY: String = "a0b862a7527fee3a731bcb59280ab6abd62d5c0b6ea03dc4ddf6612fdfc9d01f01c31542541771903475eb1ec6615f8d0df0b8b6dce385811d6dcf8cbefb8759e5e616a3dfd054c928940766d9a5b9db91e3b697e5d70a975181e007f87fca5e";
 // The LOE data is from https://api.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/latest
@@ -308,7 +348,7 @@ pub fn query_loe_data_by_round<T: DB>(
 // The LOE data is from https://api.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/{round}
 // {"round":3276594,"randomness":"f282310f131ed63e0342cd7e47f9e4317b20fb6f652b03ce81378cf825227212","signature":"86f91b1eec7b22ecce1385ec1cc4861f43507fa897cad686e44a87986a7ce18a94fa7128d6f76d6b950bb4e559472539"}
 
-fn loe_signature_is_valid(round: u32, randomness: Vec<u8>, signature: Vec<u8>) -> bool {
+fn loe_signature_is_valid(round: u64, randomness: Vec<u8>, signature: Vec<u8>) -> bool {
     let pk2 = G2Pubkey::from_fixed(LOE_PUBLIC_KEY).unwrap();
 
     // See https://api.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/1 for example data of the three inputs
@@ -322,7 +362,7 @@ fn loe_signature_is_valid(round: u32, randomness: Vec<u8>, signature: Vec<u8>) -
         return false;
     }
 
-    match verify(&pk2, round as u64, &nil, &hex_signature) {
+    match verify(&pk2, round, &nil, &hex_signature) {
         Err(_err) => return false,
         Ok(valid) => {
             if valid {
@@ -334,20 +374,14 @@ fn loe_signature_is_valid(round: u32, randomness: Vec<u8>, signature: Vec<u8>) -
     }
 }
 
-/// Valid rounds are each round that is exact X amount of time period since genesis
-/// The X is = 1 hour
-fn round_is_valid(round: u32) -> bool {
-    //let block_time = ctx.get_header().time.unix_timestamp();
-    //(block_time as u32 - LOE_GENESIS_TIME) / LOE_PERIOD
-
-    let rounds_per_hour = 3600 / LOE_PERIOD;
-    (round % rounds_per_hour) == 0
-}
-
-fn round_is_open<T: DB>(ctx: &mut TxContext<T>, round: u32) -> bool {
+fn round_is_open<T: DB>(ctx: &mut TxContext<T>, round: u64) -> bool {
     let block_time = ctx.get_header().time.unix_timestamp();
-    let rounds_per_hour = 3600 / LOE_PERIOD as i64;
-    round as i64 > (block_time - (rounds_per_hour / 2))
+    let rounds_per_hour: i64 = 3600 / LOE_PERIOD as i64;
+    let round_to_time = LOE_GENESIS_TIME as u64 + (round * LOE_PERIOD as u64);
+
+    let round_time_limit: i64 = round_to_time as i64 - (rounds_per_hour / 2);
+
+    block_time < round_time_limit
 }
 
 #[test]
@@ -357,6 +391,6 @@ fn test_round_signature() {
     let randomness: Vec<u8> =
         "f282310f131ed63e0342cd7e47f9e4317b20fb6f652b03ce81378cf825227212".into();
     let signature: Vec<u8> = "86f91b1eec7b22ecce1385ec1cc4861f43507fa897cad686e44a87986a7ce18a94fa7128d6f76d6b950bb4e559472539".into();
-    let round: u32 = 3276594;
+    let round: u64 = 3276594;
     assert!(loe_signature_is_valid(round, randomness, signature));
 }

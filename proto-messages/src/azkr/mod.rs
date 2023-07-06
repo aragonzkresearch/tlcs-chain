@@ -21,8 +21,8 @@ pub mod tlcs {
         pub struct RawMsgContribution {
             #[prost(string, tag = "1")]
             pub address: String,
-            #[prost(uint32, tag = "2")]
-            pub round: u32,
+            #[prost(uint64, tag = "2")]
+            pub round: u64,
             #[prost(uint32, tag = "3")]
             pub scheme: u32,
             #[prost(bytes, tag = "4")]
@@ -32,7 +32,7 @@ pub mod tlcs {
         #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
         pub struct MsgContribution {
             pub address: AccAddress,
-            pub round: u32,
+            pub round: u64,
             pub scheme: u32,
             pub data: Vec<u8>,
         }
@@ -88,8 +88,8 @@ pub mod tlcs {
         
         #[derive(Serialize, Deserialize, Clone, Message)]
         pub struct RawMsgKeyPair {
-            #[prost(uint32, tag = "1")]
-            pub round: u32,
+            #[prost(uint64, tag = "1")]
+            pub round: u64,
             #[prost(uint32, tag = "2")]
             pub scheme: u32,
             #[prost(bytes, tag = "3")]
@@ -100,7 +100,7 @@ pub mod tlcs {
 
         #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
         pub struct MsgKeyPair {
-            pub round: u32,
+            pub round: u64,
             pub scheme: u32,
             pub public_key: Vec<u8>,
             pub private_key: Vec<u8>,
@@ -155,13 +155,13 @@ pub mod tlcs {
         /// QueryRoundRequest is the request type for the Query/KeyPair RPC method.
         #[derive(Serialize, Deserialize, Clone, Message)]
         pub struct RawQueryRoundRequest {
-            #[prost(uint32, tag = "1")]
-            pub round: u32,
+            #[prost(uint64, tag = "1")]
+            pub round: u64,
         }
 
         #[derive(Clone, PartialEq, Serialize, Deserialize)]
         pub struct QueryRoundRequest {
-            pub round: u32,
+            pub round: u64,
         }
     
         impl TryFrom<RawQueryRoundRequest> for QueryRoundRequest {
@@ -187,15 +187,15 @@ pub mod tlcs {
         /// QueryRoundSchemeRequest is the request type for the Query/KeyPair RPC method.
         #[derive(Serialize, Deserialize, Clone, Message)]
         pub struct RawQueryRoundSchemeRequest {
-            #[prost(uint32, tag = "1")]
-            pub round: u32,
+            #[prost(uint64, tag = "1")]
+            pub round: u64,
             #[prost(uint32, tag = "2")]
             pub scheme: u32,
         }
 
         #[derive(Clone, PartialEq, Serialize, Deserialize)]
         pub struct QueryRoundSchemeRequest {
-            pub round: u32,
+            pub round: u64,
             pub scheme: u32,
         }
     
@@ -263,8 +263,8 @@ pub mod tlcs {
         pub struct RawMsgLoeData {
             //#[prost(string, tag = "1")]
             //pub address: String,
-            #[prost(uint32, tag = "1")]
-            pub round: u32,
+            #[prost(uint64, tag = "1")]
+            pub round: u64,
             #[prost(bytes, tag = "2")]
             pub randomness: Vec<u8>,
             #[prost(bytes, tag = "3")]
@@ -274,7 +274,7 @@ pub mod tlcs {
         #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
         pub struct MsgLoeData {
             //pub address: AccAddress,
-            pub round: u32,
+            pub round: u64,
             pub randomness: Vec<u8>,
             pub signature: Vec<u8>,
         }

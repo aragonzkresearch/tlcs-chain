@@ -13,8 +13,8 @@ use proto_messages::azkr::tlcs::v1beta1::{RawMsgKeyPair, RawMsgLoeData};
 
 use super::crypto::{aggregate_participant_data, make_secret_key};
 
-const LOE_GENESIS_TIME: u32 = 1677685200;
-const LOE_PERIOD: u32 = 3;
+const LOE_GENESIS_TIME: u64 = 1677685200;
+const LOE_PERIOD: u64 = 3;
 
 const LAST_PROCESSED_ROUND_KEY: [u8; 1] = [0];
 
@@ -44,7 +44,8 @@ pub fn begin_blocker<T: DB>(ctx: &mut TxContext<T>) {
         });
 
         if round_data.0 > 0 {
-            let public_key = aggregate_participant_data(round_data.0, round_data.1);
+            //let public_key = aggregate_participant_data(round_data.0, round_data.1);
+            let public_key = aggregate_participant_data(round_data.1);
 
             //let mut public_keys_store = get_public_keys_store(ctx);
             let tmp_scheme: u32 = 1;
@@ -86,7 +87,7 @@ fn make_keys<'a, T: DB>(ctx: &'a mut TxContext<T>, time: i64) {
 
             let secret_key = make_secret_key(
                 round_data.1,
-                round_data.0,
+                //round_data.0,
                 key_round,
                 loe_round_data.signature,
                 the_keys.public_key.clone(),
@@ -109,30 +110,30 @@ fn make_keys<'a, T: DB>(ctx: &'a mut TxContext<T>, time: i64) {
     }
 }
 
-fn keypair_key_to_round(key: Vec<u8>) -> u32 {
+fn keypair_key_to_round(key: Vec<u8>) -> u64 {
     // Get rid of first part. That is the KEYPAIR_DATA_KEY
     let (_, rest) = key.split_at(1);
     let short_key = rest.to_vec();
-    let (int_bytes, _) = short_key.split_at(std::mem::size_of::<u32>());
-    u32::from_le_bytes(int_bytes.try_into().unwrap())
+    let (int_bytes, _) = short_key.split_at(std::mem::size_of::<u64>());
+    u64::from_le_bytes(int_bytes.try_into().unwrap())
 }
 
 // TODO: move to keeper
 /// Returns the last loe round that was processed
-fn get_last_processed_round<T: DB>(ctx: &mut TxContext<T>) -> u32 {
+fn get_last_processed_round<T: DB>(ctx: &mut TxContext<T>) -> u64 {
     let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
     let last_processed_round = tlcs_store.get(&LAST_PROCESSED_ROUND_KEY);
 
     match last_processed_round {
         None => 0, //initialize (initializing to zero means that round zero can never be processed!)
-        Some(num) => u32::decode::<Bytes>(num.to_owned().into())
+        Some(num) => u64::decode::<Bytes>(num.to_owned().into())
             .expect("invalid data in database - possible database corruption"),
     }
 }
 
 fn set_last_processed_round<T: DB>(
     ctx: &mut TxContext<T>,
-    last_round: u32,
+    last_round: u64,
 ) -> Result<(), AppError> {
     let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
     let prefix = LAST_PROCESSED_ROUND_KEY.to_vec();
@@ -141,18 +142,18 @@ fn set_last_processed_round<T: DB>(
     Ok(())
 }
 
-fn process_up_to(time: i64) -> u32 {
+fn process_up_to(time: i64) -> u64 {
     latest_round_up_to(time) + LOE_PERIOD
 }
 
 /// Returns the latest loe round expected before the provided unix time
-fn latest_round_up_to(time: i64) -> u32 {
-    (time as u32 - LOE_GENESIS_TIME) / LOE_PERIOD
+fn latest_round_up_to(time: i64) -> u64 {
+    (time as u64 - LOE_GENESIS_TIME) / LOE_PERIOD
 }
 
 fn get_this_round_all_participant_data<'a, T: DB>(
     ctx: &'a TxContext<T>,
-    round: u32,
+    round: u64,
 ) -> trees::iavl::Range<'a, RangeFrom<Vec<u8>>, PrefixDB<T>> {
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
 
@@ -162,7 +163,7 @@ fn get_this_round_all_participant_data<'a, T: DB>(
     tlcs_store.range(prefix..)
 }
 
-fn get_this_round_all_loe_data<'a, T: DB>(ctx: &'a TxContext<T>, round: u32) -> RawMsgLoeData {
+fn get_this_round_all_loe_data<'a, T: DB>(ctx: &'a TxContext<T>, round: u64) -> RawMsgLoeData {
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
 
     let mut prefix = LOE_DATA_KEY.to_vec();
@@ -188,7 +189,7 @@ fn get_this_round_all_loe_data<'a, T: DB>(ctx: &'a TxContext<T>, round: u32) -> 
 
 fn get_public_keys_store<'a, T: DB>(
     ctx: &'a mut TxContext<T>,
-    round: u32,
+    round: u64,
     scheme: u32,
 ) -> MutablePrefixStore<'a, PrefixDB<T>> {
     let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
