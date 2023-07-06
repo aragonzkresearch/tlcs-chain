@@ -41,7 +41,7 @@ pub fn get_tx_command() -> Command {
         .arg(
             arg!(--node)
                 .help("<host>:<port> to Tendermint RPC interface for this chain")
-                .default_value("http://localhost:26657")
+                .default_value("http://localhost:26617")
                 .action(ArgAction::Set)
                 .global(true),
         )

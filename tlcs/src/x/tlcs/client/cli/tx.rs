@@ -29,6 +29,8 @@ use tendermint_rpc::{Client, HttpClient};
 use tokio::runtime::Runtime;
 use crate::x::tlcs::crypto::{
     generate_participant_data,
+    //verify_participant_data,
+    //aggregate_participant_data,
 };
 
 use drand_core::HttpClient as DrandHttpClient;
@@ -51,18 +53,20 @@ pub fn get_tlcs_tx_command() -> Command {
                 .arg(
                     Arg::new("round")
                         .required(true)
-                        .value_parser(clap::value_parser!(String)),
+                        .value_parser(clap::value_parser!(u64)),
                 )
                 .arg(
                     Arg::new("scheme")
                         .required(true)
-                        .value_parser(clap::value_parser!(String)),
+                        .value_parser(clap::value_parser!(u32)),
                 )
+                /*
                 .arg(
                     Arg::new("data")
                         .required(true)
                         .value_parser(clap::value_parser!(String)),
                 )
+                */
                 .arg(
                     arg!(--fee)
                         .help(format!("Fee to pay along with transaction"))
@@ -81,7 +85,7 @@ pub fn get_tlcs_tx_command() -> Command {
                 .arg(
                     Arg::new("round")
                         .required(true)
-                        .value_parser(clap::value_parser!(String)),
+                        .value_parser(clap::value_parser!(u64)),
                 )
                 // TODO make this so that a value can be passed in and not automatically retrieved
                 // here (well, below)
@@ -111,7 +115,7 @@ pub fn run_tlcs_tx_command(matches: &ArgMatches, node: &str, home: PathBuf) -> R
                 .to_owned();
 
             let round = sub_matches
-                .get_one::<u32>("round")
+                .get_one::<u64>("round")
                 .expect("round argument is required preventing `None`")
                 .to_owned();
 
@@ -136,6 +140,14 @@ pub fn run_tlcs_tx_command(matches: &ArgMatches, node: &str, home: PathBuf) -> R
 
             let round_data_vec = generate_participant_data(round);
 
+            /*
+            if verify_participant_data(round, round_data_vec.clone()) {
+                println!("Good data created. Len: {}", round_data_vec.len());
+            } else {
+                println!("Bad Data generation error!!!");
+            }
+            */
+
             let tx_raw = create_signed_participate_tx(
                 AccAddress::from_str(&signing_key.account())?,
                 round,
@@ -159,7 +171,7 @@ pub fn run_tlcs_tx_command(matches: &ArgMatches, node: &str, home: PathBuf) -> R
                 .to_owned();
 
             let round = sub_matches
-                .get_one::<u32>("round")
+                .get_one::<u64>("round")
                 .expect("round argument is required preventing `None`")
                 .to_owned();
 
@@ -200,11 +212,11 @@ pub fn run_tlcs_tx_command(matches: &ArgMatches, node: &str, home: PathBuf) -> R
 }
 
 pub async fn get_loe_data(
-    round: u32
+    round: u64
 ) -> (Vec<u8>, Vec<u8>) {
     // Create a new client and retrieve the latest beacon. By default, it verifies its signature against the chain info.
     let client: DrandHttpClient = LOE_URL.try_into().unwrap();
-    let loe = client.get(round as u64).await.unwrap();
+    let loe = client.get(round).await.unwrap();
     // If you just want the latest use this instead
     //let latest = client.latest().await.unwrap();
     //let round = latest.round();
@@ -224,7 +236,7 @@ pub async fn broadcast_tx_commit(client: HttpClient, raw_tx: TxRaw) -> Result<()
 
 pub fn create_signed_participate_tx(
     address: AccAddress,
-    round: u32,
+    round: u64,
     scheme: u32,
     data: Vec<u8>,
     fee_amount: Option<Coin>,
@@ -237,7 +249,6 @@ pub fn create_signed_participate_tx(
         round,
         scheme,
         data,
-        //data.into(),
     };
 
     let tx_body = TxBody {
@@ -294,7 +305,7 @@ pub fn create_signed_participate_tx(
 }
 
 pub fn create_signed_loe_data_tx(
-    round: u32,
+    round: u64,
     randomness: Vec<u8>,
     signature: Vec<u8>,
     fee_amount: Option<Coin>,

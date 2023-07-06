@@ -22,6 +22,7 @@ use crate::x::tlcs::{
     query_keypairs_by_time,
     query_all_loe_data,
     query_loe_data_by_round,
+    query_loe_data_by_round_and_scheme,
 };
 
 /// Get all contributions
@@ -42,7 +43,7 @@ pub async fn get_all_contributions(
 #[allow(unused_variables)]
 pub async fn get_contributions_by_round(
     app: &State<BaseApp>,
-    round: u32,
+    round: u64,
     pagination: Pagination,
 ) -> Result<Json<QueryAllContributionsResponse>, Error> {
     let store = app.multi_store.read().expect("RwLock will not be poisoned");
@@ -56,7 +57,7 @@ pub async fn get_contributions_by_round(
 #[allow(unused_variables)]
 pub async fn get_contributions_by_round_and_scheme(
     app: &State<BaseApp>,
-    round: u32,
+    round: u64,
     scheme: u32,
     pagination: Pagination,
 ) -> Result<Json<QueryAllContributionsResponse>, Error> {
@@ -84,7 +85,7 @@ pub async fn get_all_keypairs(
 #[allow(unused_variables)]
 pub async fn get_keypairs_by_round(
     app: &State<BaseApp>,
-    round: u32,
+    round: u64,
     pagination: Pagination,
 ) -> Result<Json<QueryAllKeyPairsResponse>, Error> {
     let store = app.multi_store.read().expect("RwLock will not be poisoned");
@@ -112,7 +113,7 @@ pub async fn get_keypairs_by_time(
 #[allow(unused_variables)]
 pub async fn get_keypairs_by_round_and_scheme(
     app: &State<BaseApp>,
-    round: u32,
+    round: u64,
     scheme: u32,
     pagination: Pagination,
 ) -> Result<Json<QueryAllKeyPairsResponse>, Error> {
@@ -136,16 +137,30 @@ pub async fn get_all_loe_data(
 }
 
 /// Get all loe_data by round
-#[get("/azkr/tlcs/v1beta1/loe_data_by_round/<round>?<pagination>")]
+#[get("/azkr/tlcs/v1beta1/loe_data/round/<round>?<pagination>")]
 #[allow(unused_variables)]
 pub async fn get_loe_data_by_round(
     app: &State<BaseApp>,
-    round: u32,
+    round: u64,
     pagination: Pagination,
 ) -> Result<Json<QueryAllLoeDataResponse>, Error> {
     let store = app.multi_store.read().expect("RwLock will not be poisoned");
     let ctx = QueryContext::new(&store, app.get_block_height());
 
     Ok(Json(query_loe_data_by_round(&ctx, round)))
+}
 
+/// Get all loe_data by round
+#[get("/azkr/tlcs/v1beta1/loe_data/round_and_scheme/<round>/<scheme>?<pagination>")]
+#[allow(unused_variables)]
+pub async fn get_loe_data_by_round_and_scheme(
+    app: &State<BaseApp>,
+    round: u64,
+    scheme: u32,
+    pagination: Pagination,
+) -> Result<Json<QueryAllLoeDataResponse>, Error> {
+    let store = app.multi_store.read().expect("RwLock will not be poisoned");
+    let ctx = QueryContext::new(&store, app.get_block_height());
+
+    Ok(Json(query_loe_data_by_round_and_scheme(&ctx, round, scheme)))
 }

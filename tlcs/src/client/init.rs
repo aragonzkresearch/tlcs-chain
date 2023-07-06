@@ -100,7 +100,8 @@ pub fn run_init_command(sub_matches: &ArgMatches) {
     // TODO: get defaults from the modules
     let app_state = GenesisState {
         bank: crate::x::bank::GenesisState {
-            balances: vec![crate::x::bank::Balance {
+            balances: vec![
+                crate::x::bank::Balance {
                 address: proto_types::AccAddress::from_bech32(
                     "cosmos1syavy2npfyt9tcncdtsdzf7kny9lh777pahuux",
                 )
@@ -109,13 +110,35 @@ pub fn run_init_command(sub_matches: &ArgMatches) {
                     denom: proto_types::Denom::try_from(String::from("uatom")).unwrap(),
                     amount: cosmwasm_std::Uint256::from_u128(34),
                 }],
-            }],
+            },
+                crate::x::bank::Balance {
+                address: proto_types::AccAddress::from_bech32(
+                    "cosmos12sq96jeylnw2n3rwwndm83sfz8m8h8u0wua8sn"
+                )
+                .unwrap(),
+                coins: vec![proto_messages::cosmos::base::v1beta1::Coin {
+                    denom: proto_types::Denom::try_from(String::from("uatom")).unwrap(),
+                    amount: cosmwasm_std::Uint256::from_u128(55),
+                }],
+            },
+                crate::x::bank::Balance {
+                address: proto_types::AccAddress::from_bech32(
+                    "cosmos178k9xr0nfvd28f8gjww4euv2mtqqcfvp7vtvez"
+                )
+                .unwrap(),
+                coins: vec![proto_messages::cosmos::base::v1beta1::Coin {
+                    denom: proto_types::Denom::try_from(String::from("uatom")).unwrap(),
+                    amount: cosmwasm_std::Uint256::from_u128(55),
+                }],
+            },
+            ],
             params: crate::x::bank::Params {
                 default_send_enabled: true,
             },
         },
         auth: crate::x::auth::GenesisState {
-            accounts: vec![proto_messages::cosmos::auth::v1beta1::BaseAccount {
+            accounts: vec![
+            proto_messages::cosmos::auth::v1beta1::BaseAccount {
                 address: proto_types::AccAddress::from_bech32(
                     "cosmos1syavy2npfyt9tcncdtsdzf7kny9lh777pahuux",
                 )
@@ -123,7 +146,26 @@ pub fn run_init_command(sub_matches: &ArgMatches) {
                 pub_key: None,
                 account_number: 0,
                 sequence: 0,
-            }],
+            },
+            proto_messages::cosmos::auth::v1beta1::BaseAccount {
+                address: proto_types::AccAddress::from_bech32(
+                    "cosmos12sq96jeylnw2n3rwwndm83sfz8m8h8u0wua8sn"
+                )
+                .unwrap(),
+                pub_key: None,
+                account_number: 0,
+                sequence: 0,
+            },
+            proto_messages::cosmos::auth::v1beta1::BaseAccount {
+                address: proto_types::AccAddress::from_bech32(
+                    "cosmos178k9xr0nfvd28f8gjww4euv2mtqqcfvp7vtvez"
+                )
+                .unwrap(),
+                pub_key: None,
+                account_number: 0,
+                sequence: 0,
+            },
+            ],
             params: crate::x::auth::Params {
                 max_memo_characters: 256,
                 tx_sig_limit: 7,

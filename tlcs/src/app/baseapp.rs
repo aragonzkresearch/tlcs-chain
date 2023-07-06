@@ -468,6 +468,29 @@ impl Application for BaseApp {
                         codespace: "".to_string(),
                     }
                 }
+                "/azkr.tlcs.v1beta1.Query/AllLoeDataByRoundAndScheme" => {
+                    let data = request.data.clone();
+                    let req = QueryRoundSchemeRequest::decode(data).unwrap();
+
+                    let store = self.multi_store.read().unwrap();
+                    let ctx = QueryContext::new(&store, self.get_block_height());
+
+                    let res = tlcs::query_loe_data_by_round_and_scheme(&ctx, req.round, req.scheme).encode_to_vec();
+                    ResponseQuery {
+                        code: 0,
+                        log: "exists".to_string(),
+                        info: "".to_string(),
+                        index: 0,
+                        key: request.data,
+                        value: res.into(),
+                        proof_ops: None,
+                        height: self
+                            .get_block_height()
+                            .try_into()
+                            .expect("can't believe we made it this far"),
+                        codespace: "".to_string(),
+                    }
+                }
                 "/cosmos.bank.v1beta1.Query/AllBalances" => {
                     let data = request.data.clone();
                     let req = QueryAllBalancesRequest::decode(data).unwrap();
