@@ -92,7 +92,7 @@ impl Auth {
             });
         }
 
-        return Err(AppError::AccountNotFound);
+        return Err(AppError::AccountNotFound("Auth 2".into()));
     }
 
     fn get_next_account_number<T: DB>(ctx: &mut Context<T>) -> u64 {
@@ -212,7 +212,7 @@ mod tests {
 
     #[test]
     fn query_account_on_unseen_account_works() {
-        let expected = AppError::AccountNotFound;
+        let expected = AppError::AccountNotFound("Auth 1".into());
 
         let req = QueryAccountRequest {
             address: AccAddress::from_bech32(

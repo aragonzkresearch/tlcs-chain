@@ -261,19 +261,19 @@ pub mod tlcs {
         
         #[derive(Serialize, Deserialize, Clone, Message)]
         pub struct RawMsgLoeData {
-            //#[prost(string, tag = "1")]
-            //pub address: String,
-            #[prost(uint64, tag = "1")]
+            #[prost(string, tag = "1")]
+            pub address: String,
+            #[prost(uint64, tag = "2")]
             pub round: u64,
-            #[prost(bytes, tag = "2")]
-            pub randomness: Vec<u8>,
             #[prost(bytes, tag = "3")]
+            pub randomness: Vec<u8>,
+            #[prost(bytes, tag = "4")]
             pub signature: Vec<u8>,
         }
 
         #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
         pub struct MsgLoeData {
-            //pub address: AccAddress,
+            pub address: AccAddress,
             pub round: u64,
             pub randomness: Vec<u8>,
             pub signature: Vec<u8>,
@@ -283,7 +283,11 @@ pub mod tlcs {
             type Error = Error;
 
             fn try_from(raw: RawMsgLoeData) -> Result<Self, Self::Error> {
+                let address = AccAddress::from_bech32(&raw.address)
+                    .map_err(|e| Error::DecodeAddress(e.to_string()))?;
+
                 Ok(MsgLoeData {
+                    address,
                     round: raw.round,
                     randomness: raw.randomness,
                     signature: raw.signature,
@@ -294,6 +298,7 @@ pub mod tlcs {
         impl From<MsgLoeData> for RawMsgLoeData {
             fn from(msg: MsgLoeData) -> RawMsgLoeData {
                 RawMsgLoeData {
+                    address: msg.address.into(),
                     round: msg.round,
                     randomness: msg.randomness,
                     signature: msg.signature,

@@ -55,7 +55,7 @@ fn validate_basic_ante_handler(tx: &DecodedTx) -> Result<(), AppError> {
 
     if sigs.len() != tx.get_signers().len() {
         return Err(AppError::TxValidation(format!(
-            "wrong number of signatures; expected {}, got {}",
+            "wrong number of signatures supplied; expected {}, got {}",
             tx.get_signers().len(),
             sigs.len()
         )));
@@ -103,7 +103,7 @@ fn deduct_fee_ante_handler<T: DB>(ctx: &mut Context<T>, tx: &DecodedTx) -> Resul
     let fee_payer = tx.get_fee_payer();
 
     if !Auth::has_account(ctx, fee_payer) {
-        return Err(AppError::AccountNotFound);
+        return Err(AppError::AccountNotFound("Ante 1".into()));
     }
 
     if let Some(fee) = fee {
@@ -139,7 +139,7 @@ fn set_pub_key_ante_handler<T: DB>(ctx: &mut Context<T>, tx: &DecodedTx) -> Resu
                 return Err(AppError::InvalidPublicKey);
             }
 
-            let mut acct = Auth::get_account(ctx, &addr).ok_or(AppError::AccountNotFound)?;
+            let mut acct = Auth::get_account(ctx, &addr).ok_or(AppError::AccountNotFound("Ante 2".into()))?;
 
             if acct.get_public_key().is_some() {
                 continue;
@@ -160,7 +160,7 @@ fn sig_verification_handler<T: DB>(ctx: &mut Context<T>, tx: &DecodedTx) -> Resu
     // NOTE: this is also checked in validate_basic_ante_handler
     if signature_data.len() != signers.len() {
         return Err(AppError::TxValidation(format!(
-            "wrong number of signatures; expected {}, got {}",
+            "the wrong number of signatures; expected {}, got {}",
             signers.len(),
             signature_data.len()
         )));
@@ -170,7 +170,7 @@ fn sig_verification_handler<T: DB>(ctx: &mut Context<T>, tx: &DecodedTx) -> Resu
         let signer = signers[i];
 
         // check sequence number
-        let acct = Auth::get_account(ctx, signer).ok_or(AppError::AccountNotFound)?;
+        let acct = Auth::get_account(ctx, signer).ok_or(AppError::AccountNotFound("Ante 3".into()))?;
         let account_seq = acct.get_sequence();
         if account_seq != signature_data.sequence {
             return Err(AppError::TxValidation(format!(
@@ -219,7 +219,7 @@ fn increment_sequence_ante_handler<T: DB>(
     tx: &DecodedTx,
 ) -> Result<(), AppError> {
     for signer in tx.get_signers() {
-        let mut acct = Auth::get_account(ctx, signer).ok_or(AppError::AccountNotFound)?;
+        let mut acct = Auth::get_account(ctx, signer).ok_or(AppError::AccountNotFound("Ante 4".into()))?;
         acct.increment_sequence();
         Auth::set_account(ctx, acct)
     }

@@ -32,50 +32,16 @@ const LOE_PUBLIC_KEY: [u8; 96] = hex!("a0b862a7527fee3a731bcb59280ab6abd62d5c0b6
 const LOE_GENESIS_TIME: u32 = 1677685200;
 const LOE_PERIOD: u32 = 3;
 
-// Key for KV store for contributions is vector of [PARTICIPANT_DATA_KEY, Round, scheme, address]
-/*
-pub fn build_data_key(round: u8, scheme: Vec<u8>, addr: AccAddress) -> Vec<u8> {
-    let mut prefix = PARTICIPANT_DATA_KEY.to_vec();
-    prefix.append(&mut round.to_le_bytes().to_vec());
-    prefix.append(&mut scheme.to_vec());
-
-    let mut addr: Vec<u8> = addr.into();
-
-    prefix.append(addr.to_vec());
-
-    return prefix;
-}
-*/
-
 pub fn append_contribution<T: DB>(
     ctx: &mut TxContext<T>,
     msg: &MsgContribution,
 ) -> Result<(), AppError> {
-    //let store_key = build_data_key(msg.round, TMP_SCHEME_ID, msg.address);
-
     let mut store_key = PARTICIPANT_DATA_KEY.to_vec();
     store_key.append(&mut msg.round.to_le_bytes().to_vec());
     store_key.append(&mut TMP_SCHEME_ID.to_vec());
 
     let addr: Vec<u8> = msg.address.clone().into();
     store_key.append(&mut addr.to_vec());
-
-    /*
-    {
-        const LOE_GENESIS_TIME: u32 = 1677685200;
-        const LOE_PERIOD: u32 = 3;
-        let block_time = ctx.get_header().time.unix_timestamp();
-        let round_to_time = LOE_GENESIS_TIME as u64 + (msg.round * LOE_PERIOD as u64);
-        let mut feedback: String = block_time.to_string();
-        feedback.push_str(":");
-        feedback.push_str(&round_to_time.to_string());
-
-        return Err(AppError::InvalidRequest(
-            round_is_open(ctx, msg.round).to_string().into()
-            //feedback.into(),
-        ));
-    }
-    */
 
     if !round_is_open(ctx, msg.round) {
         return Err(AppError::InvalidRequest(
@@ -97,19 +63,15 @@ pub fn append_contribution<T: DB>(
 }
 
 pub fn query_all_contributions<T: DB>(ctx: &QueryContext<T>) -> QueryAllContributionsResponse {
-    let tlcs_store = ctx.get_kv_store(Store::Tlcs);
     let store_key = PARTICIPANT_DATA_KEY.to_vec();
 
+    let tlcs_store = ctx.get_kv_store(Store::Tlcs);
     let all_raw_data = tlcs_store.range(store_key..);
+    //let all_raw_data = ctx.get_kv_store(store_key).range(..);
 
     let mut contributions = vec![];
 
     for (_, row) in all_raw_data {
-        /* Maybe the right way
-        let msg = MsgContribution::decode::<Bytes>(msg.value.clone().into())
-                        .map_err(|e| Error::DecodeGeneral(e.to_string()))?;
-                    messages.push(Msg::Participate(msg));
-                    */
         let contribution: RawMsgContribution = RawMsgContribution::decode::<Bytes>(row.into())
             .expect("invalid data in database - possible database corruption");
         contributions.push(contribution);
@@ -165,21 +127,15 @@ pub fn query_contributions_by_round_and_scheme<T: DB>(
 
 // TODO maybe use this from the endblocker so all of the save/query functions are in the keeper
 #[allow(dead_code)]
-pub fn append_keypair<T: DB>(ctx: &mut Context<T>, msg: &MsgKeyPair) -> Result<(), AppError> {
-    let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
-    let mut prefix = LOE_DATA_KEY.to_vec();
+pub fn append_keypair<T: DB>(ctx: &mut TxContext<T>, msg: &MsgKeyPair) -> Result<(), AppError> {
+    let mut prefix = KEYPAIR_DATA_KEY.to_vec();
     prefix.append(&mut msg.round.to_le_bytes().to_vec());
     prefix.append(&mut TMP_SCHEME_ID.to_vec());
-    let raw = tlcs_store.get(&prefix);
 
-    let mut all_responses = match raw {
-        Some(raw) => QueryAllKeyPairsResponse::decode::<Bytes>(raw.into())
-            .expect("invalid data in database - possible database corruption"),
-        None => QueryAllKeyPairsResponse { keypairs: vec![] },
-    };
+    let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
 
-    all_responses.keypairs.push(msg.to_owned().into());
-    tlcs_store.set(KEYPAIR_DATA_KEY.into(), all_responses.encode_to_vec());
+    let key_data: RawMsgKeyPair = msg.to_owned().into();
+    tlcs_store.set(prefix.into(), key_data.encode_to_vec());
 
     Ok(())
 }
@@ -265,8 +221,6 @@ pub fn append_loe_data<T: DB>(ctx: &mut Context<T>, msg: &MsgLoeData) -> Result<
 
     let mut store_key = LOE_DATA_KEY.to_vec();
     store_key.append(&mut msg.round.to_le_bytes().to_vec());
-
-    // TODO Check for closed round
 
     if loe_signature_is_valid(msg.round, msg.randomness.clone(), msg.signature.clone()) {
         //tlcs_store.set(store_key.into(), msg.randomness.encode_to_vec());
@@ -374,7 +328,7 @@ fn loe_signature_is_valid(round: u64, randomness: Vec<u8>, signature: Vec<u8>) -
     }
 }
 
-fn round_is_open<T: DB>(ctx: &mut TxContext<T>, round: u64) -> bool {
+pub fn round_is_open<T: DB>(ctx: &mut TxContext<T>, round: u64) -> bool {
     let block_time = ctx.get_header().time.unix_timestamp();
     let rounds_per_hour: i64 = 3600 / LOE_PERIOD as i64;
     let round_to_time = LOE_GENESIS_TIME as u64 + (round * LOE_PERIOD as u64);

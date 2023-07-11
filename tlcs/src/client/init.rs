@@ -113,17 +113,7 @@ pub fn run_init_command(sub_matches: &ArgMatches) {
             },
                 crate::x::bank::Balance {
                 address: proto_types::AccAddress::from_bech32(
-                    "cosmos12sq96jeylnw2n3rwwndm83sfz8m8h8u0wua8sn"
-                )
-                .unwrap(),
-                coins: vec![proto_messages::cosmos::base::v1beta1::Coin {
-                    denom: proto_types::Denom::try_from(String::from("uatom")).unwrap(),
-                    amount: cosmwasm_std::Uint256::from_u128(55),
-                }],
-            },
-                crate::x::bank::Balance {
-                address: proto_types::AccAddress::from_bech32(
-                    "cosmos178k9xr0nfvd28f8gjww4euv2mtqqcfvp7vtvez"
+                    "cosmos1skgmlw2j4qupafzcg5qvacd76mfzfe69la0hxz"
                 )
                 .unwrap(),
                 coins: vec![proto_messages::cosmos::base::v1beta1::Coin {
@@ -149,16 +139,7 @@ pub fn run_init_command(sub_matches: &ArgMatches) {
             },
             proto_messages::cosmos::auth::v1beta1::BaseAccount {
                 address: proto_types::AccAddress::from_bech32(
-                    "cosmos12sq96jeylnw2n3rwwndm83sfz8m8h8u0wua8sn"
-                )
-                .unwrap(),
-                pub_key: None,
-                account_number: 0,
-                sequence: 0,
-            },
-            proto_messages::cosmos::auth::v1beta1::BaseAccount {
-                address: proto_types::AccAddress::from_bech32(
-                    "cosmos178k9xr0nfvd28f8gjww4euv2mtqqcfvp7vtvez"
+                    "cosmos1skgmlw2j4qupafzcg5qvacd76mfzfe69la0hxz"
                 )
                 .unwrap(),
                 pub_key: None,

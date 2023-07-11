@@ -104,8 +104,8 @@ impl Msg {
             Msg::Send(msg) => return vec![&msg.from_address],
             Msg::Participate(msg) => return vec![&msg.address],
             // TODO verify if this is a problem or not
-            //Msg::SubmitLoeData(msg) => return vec![&msg.address],
-            Msg::SubmitLoeData(_msg) => return vec![],
+            Msg::SubmitLoeData(msg) => return vec![&msg.address],
+            //Msg::SubmitLoeData(_msg) => return vec![],
         }
     }
 
