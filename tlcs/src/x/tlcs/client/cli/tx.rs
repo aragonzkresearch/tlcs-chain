@@ -140,14 +140,6 @@ pub fn run_tlcs_tx_command(matches: &ArgMatches, node: &str, home: PathBuf) -> R
 
             let round_data_vec = generate_participant_data(round);
 
-            /*
-            if verify_participant_data(round, round_data_vec.clone()) {
-                println!("Good data created. Len: {}", round_data_vec.len());
-            } else {
-                println!("Bad Data generation error!!!");
-            }
-            */
-
             let tx_raw = create_signed_participate_tx(
                 AccAddress::from_str(&signing_key.account())?,
                 round,
@@ -188,11 +180,17 @@ pub fn run_tlcs_tx_command(matches: &ArgMatches, node: &str, home: PathBuf) -> R
                     AccAddress::from_str(&signing_key.account())?,
                 ))?;
 
+            println!("Retrieving LOE Data from API");
             let loe_data = Runtime::new()
                 .expect("unclear why this would ever fail")
                 .block_on(get_loe_data(round));
 
+            //println!("Round: {:?}", round);
+            //println!("Sig: {:?}", loe_data.0);
+            //println!("Rand: {:?}", loe_data.1);
+
             let tx_raw = create_signed_loe_data_tx(
+                AccAddress::from_str(&signing_key.account())?,
                 round,
                 loe_data.0,
                 loe_data.1,
@@ -225,10 +223,14 @@ pub async fn get_loe_data(
 }
 
 pub async fn broadcast_tx_commit(client: HttpClient, raw_tx: TxRaw) -> Result<()> {
-    let res = client
-        .broadcast_tx_commit(raw_tx.encode_to_vec())
-        .await
-        .unwrap(); //TODO: remove unwrap
+    let res = match client.broadcast_tx_commit(raw_tx.encode_to_vec()).await {
+        Ok(dat) => dat,
+        Err(error) => panic!("Unable to submit transaction: {:?}", error),
+    };
+    //let res = client
+    //    .broadcast_tx_commit(raw_tx.encode_to_vec())
+    //    .await
+    //    .unwrap(); //TODO: remove unwrap
 
     println!("{}", serde_json::to_string_pretty(&res)?);
     Ok(())
@@ -305,18 +307,20 @@ pub fn create_signed_participate_tx(
 }
 
 pub fn create_signed_loe_data_tx(
+    address: AccAddress,
     round: u64,
     randomness: Vec<u8>,
-    signature: Vec<u8>,
+    loe_signature: Vec<u8>,
     fee_amount: Option<Coin>,
     sequence: u64,
     account_number: u64,
     signing_key: Secp256k1KeyPair,
 ) -> Result<TxRaw> {
     let message = MsgLoeData {
+        address,
         round,
         randomness,
-        signature,
+        signature: loe_signature,
     };
 
     let tx_body = TxBody {

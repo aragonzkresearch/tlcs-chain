@@ -95,8 +95,7 @@ The balance of this address was set to 34 in the genesis file.
 
 ```console
 echo "race draft rival universe maid cheese steel logic crowd fork comic easy truth drift tomorrow eye buddy head time cash swing swift midnight borrow" | tlcs keys add kevin
-echo "people science parent angry trick crater confirm appear rural stadium song soft stay dutch drama depth hat vicious final social noodle write dance misery" | tlcs keys add bob
-echo "lab stove level ill document survey slice employ measure rebuild code better patrol approve imitate spread online cabin canyon echo like antenna used crack" | tlcs keys add alex
+echo "all victory hero talent forget twice quote you office vacant sleep kangaroo disorder scorpion humble gorilla coast pudding edge garlic bid dutch excuse magic" | tlcs keys add alice
 ```
 
 4. Send tokens:
@@ -109,8 +108,7 @@ tlcs tx bank send kevin cosmos180tr8wmsk8ugt32yynj8efqwg3yglmpwp22rut 10uatom --
 
 ```console
 tlcs query bank balances cosmos1syavy2npfyt9tcncdtsdzf7kny9lh777pahuux
-tlcs query bank balances cosmos12sq96jeylnw2n3rwwndm83sfz8m8h8u0wua8sn
-tlcs query bank balances cosmos178k9xr0nfvd28f8gjww4euv2mtqqcfvp7vtvez
+tlcs query bank balances cosmos1skgmlw2j4qupafzcg5qvacd76mfzfe69la0hxz
 ```
 
 Which returns:
