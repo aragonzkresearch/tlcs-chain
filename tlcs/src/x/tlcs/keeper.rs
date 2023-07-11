@@ -15,10 +15,7 @@ use crate::{
     types::{Context, QueryContext, TxContext},
 };
 
-use crate::x::tlcs::crypto::{
-    verify_participant_data,
-    //generate_participant_data,
-};
+use crate::x::tlcs::crypto::verify_participant_data;
 
 // For LOE data verification
 use drand_verify::{derive_randomness, verify, G2Pubkey, Pubkey};
@@ -66,7 +63,7 @@ pub fn query_all_contributions<T: DB>(ctx: &QueryContext<T>) -> QueryAllContribu
     let store_key = PARTICIPANT_DATA_KEY.to_vec();
 
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
-    let all_raw_data = tlcs_store.range(store_key..);
+    let all_raw_data = tlcs_store.get_immutable_prefix_store(store_key).range(..);
     //let all_raw_data = ctx.get_kv_store(store_key).range(..);
 
     let mut contributions = vec![];
@@ -89,7 +86,7 @@ pub fn query_contributions_by_round<T: DB>(
     let mut store_key = PARTICIPANT_DATA_KEY.to_vec();
     store_key.append(&mut round.to_le_bytes().to_vec());
 
-    let all_raw_data = tlcs_store.range(store_key..);
+    let all_raw_data = tlcs_store.get_immutable_prefix_store(store_key).range(..);
 
     let mut contributions = vec![];
 
@@ -111,7 +108,7 @@ pub fn query_contributions_by_round_and_scheme<T: DB>(
     store_key.append(&mut round.to_le_bytes().to_vec());
     store_key.append(&mut TMP_SCHEME_ID.to_vec());
 
-    let all_raw_data = tlcs_store.range(store_key..);
+    let all_raw_data = tlcs_store.get_immutable_prefix_store(store_key).range(..);
 
     let mut contributions = vec![];
 
@@ -144,7 +141,7 @@ pub fn query_all_keypairs<T: DB>(ctx: &QueryContext<T>) -> QueryAllKeyPairsRespo
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
     let store_key = KEYPAIR_DATA_KEY.to_vec();
 
-    let all_raw_data = tlcs_store.range(store_key..);
+    let all_raw_data = tlcs_store.get_immutable_prefix_store(store_key).range(..);
 
     let mut keypairs = vec![];
 
@@ -163,7 +160,7 @@ pub fn query_keypairs_by_round<T: DB>(
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
     let mut store_key = KEYPAIR_DATA_KEY.to_vec();
     store_key.append(&mut round.to_le_bytes().to_vec());
-    let all_raw_data = tlcs_store.range(store_key..);
+    let all_raw_data = tlcs_store.get_immutable_prefix_store(store_key).range(..);
 
     let mut keypairs = vec![];
 
@@ -182,7 +179,7 @@ pub fn query_keypairs_by_time<T: DB>(ctx: &QueryContext<T>, time: i64) -> QueryA
     let latest_round = (time as u32 - LOE_GENESIS_TIME) / LOE_PERIOD;
 
     store_key.append(&mut latest_round.to_le_bytes().to_vec());
-    let all_raw_data = tlcs_store.range(store_key..);
+    let all_raw_data = tlcs_store.get_immutable_prefix_store(store_key).range(..);
 
     let mut keypairs = vec![];
 
@@ -203,7 +200,7 @@ pub fn query_keypairs_by_round_and_scheme<T: DB>(
     let mut store_key = KEYPAIR_DATA_KEY.to_vec();
     store_key.append(&mut round.to_le_bytes().to_vec());
     store_key.append(&mut TMP_SCHEME_ID.to_vec());
-    let all_raw_data = tlcs_store.range(store_key..);
+    let all_raw_data = tlcs_store.get_immutable_prefix_store(store_key).range(..);
 
     let mut keypairs = vec![];
 
@@ -240,7 +237,7 @@ pub fn append_loe_data<T: DB>(ctx: &mut Context<T>, msg: &MsgLoeData) -> Result<
 pub fn query_all_loe_data<T: DB>(ctx: &QueryContext<T>) -> QueryAllLoeDataResponse {
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
     let store_key = LOE_DATA_KEY.to_vec();
-    let all_raw_data = tlcs_store.range(store_key..);
+    let all_raw_data = tlcs_store.get_immutable_prefix_store(store_key).range(..);
 
     let mut randomnesses = vec![];
 
@@ -260,7 +257,7 @@ pub fn query_loe_data_by_round<T: DB>(
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
     let mut store_key = KEYPAIR_DATA_KEY.to_vec();
     store_key.append(&mut round.to_le_bytes().to_vec());
-    let all_raw_data = tlcs_store.range(store_key..);
+    let all_raw_data = tlcs_store.get_immutable_prefix_store(store_key).range(..);
 
     let mut randomnesses = vec![];
 
@@ -282,7 +279,7 @@ pub fn query_loe_data_by_round_and_scheme<T: DB>(
     let mut store_key = KEYPAIR_DATA_KEY.to_vec();
     store_key.append(&mut round.to_le_bytes().to_vec());
     store_key.append(&mut scheme.to_le_bytes().to_vec());
-    let all_raw_data = tlcs_store.range(store_key..);
+    let all_raw_data = tlcs_store.get_immutable_prefix_store(store_key).range(..);
 
     let mut randomnesses = vec![];
 

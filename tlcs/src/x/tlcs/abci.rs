@@ -1,12 +1,9 @@
 use std::{collections::HashMap, ops::RangeFrom};
-use tracing::{
-    //error,
-    info,
-};
+use tracing::info;
 
 use crate::{
     error::AppError,
-    store::{MutablePrefixStore, Store},
+    store::{MutablePrefixStore, PrefixRange, Store},
     types::TxContext,
 };
 use bytes::Bytes;
@@ -14,18 +11,12 @@ use database::{PrefixDB, DB};
 use prost::Message;
 
 use proto_messages::azkr::tlcs::v1beta1::{
-    MsgKeyPair,
-    RawMsgKeyPair,
-    RawMsgLoeData,
-    RawMsgContribution
+    MsgKeyPair, RawMsgContribution, RawMsgKeyPair, RawMsgLoeData,
 };
 
 use super::crypto::{aggregate_participant_data, make_secret_key};
 
-use super::{
-    append_keypair,
-    round_is_open,
-};
+use super::{append_keypair, round_is_open};
 
 const LOE_GENESIS_TIME: u64 = 1677685200;
 const LOE_PERIOD: u64 = 3;
@@ -49,7 +40,7 @@ pub fn begin_blocker<T: DB>(ctx: &mut TxContext<T>) {
 
     // TODO Later this should be added
     //for scheme in LIST_OF_SCHEMES {
-    
+
     let mut new_key_list: Vec<MsgKeyPair> = Vec::new();
 
     //info!("BEGINBLOCKER: Start processing");
@@ -69,14 +60,14 @@ pub fn begin_blocker<T: DB>(ctx: &mut TxContext<T>) {
         for (_, row) in round_all_participant_data {
             let contribution: RawMsgContribution = RawMsgContribution::decode::<Bytes>(row.into())
                 .expect("invalid data in database - possible database corruption");
-            
+
             if cur_round != contribution.round && cur_round != 0 {
                 let public_key = aggregate_participant_data(cur_data.clone());
-                new_key_list.push(MsgKeyPair{
-                                    round: cur_round,
-                                    scheme: 1,
-                                    public_key: public_key,
-                                    private_key: Vec::new(),
+                new_key_list.push(MsgKeyPair {
+                    round: cur_round,
+                    scheme: 1,
+                    public_key: public_key,
+                    private_key: Vec::new(),
                 });
             }
 
@@ -86,14 +77,12 @@ pub fn begin_blocker<T: DB>(ctx: &mut TxContext<T>) {
 
         if cur_round != 0 {
             let public_key = aggregate_participant_data(cur_data.clone());
-            new_key_list.push(
-                           MsgKeyPair{
-                                round: cur_round,
-                                scheme: 1,
-                                public_key: public_key,
-                                private_key: Vec::new(),
-                           }
-            );
+            new_key_list.push(MsgKeyPair {
+                round: cur_round,
+                scheme: 1,
+                public_key: public_key,
+                private_key: Vec::new(),
+            });
         }
 
         for pair in &new_key_list {
@@ -102,7 +91,7 @@ pub fn begin_blocker<T: DB>(ctx: &mut TxContext<T>) {
 
             // TODO Check for errors
             //let _ = append_keypair(ctx, &pair);
-            
+
             let mut prefix = KEYPAIR_DATA_KEY.to_vec();
             prefix.append(&mut pair.round.to_le_bytes().to_vec());
             prefix.append(&mut TMP_SCHEME_ID.to_vec());
@@ -112,7 +101,6 @@ pub fn begin_blocker<T: DB>(ctx: &mut TxContext<T>) {
             let key_data: RawMsgKeyPair = pair.to_owned().into();
             tlcs_store.set(prefix.into(), key_data.encode_to_vec());
         }
-        
 
         /*
         let round_data = round_all_participant_data.fold((0, vec![]), |mut acc, e| {
@@ -161,7 +149,7 @@ pub fn begin_blocker<T: DB>(ctx: &mut TxContext<T>) {
 fn make_keys<'a, T: DB>(ctx: &'a mut TxContext<T>, time: i64) {
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
     let store_key = KEYPAIR_DATA_KEY.to_vec();
-    let keypairs = tlcs_store.range(store_key..);
+    let keypairs = tlcs_store.get_immutable_prefix_store(store_key).range(..);
     let mut tmp_store: HashMap<Vec<u8>, Vec<u8>> = HashMap::new();
 
     let latest_round = latest_round_up_to(time);
@@ -219,8 +207,8 @@ fn keypair_key_to_round(key: Vec<u8>) -> u64 {
 // TODO: move to keeper
 /// Returns the last loe round that was processed
 fn get_last_processed_round<T: DB>(ctx: &mut TxContext<T>) -> u64 {
-//let store = self.multi_store.read().unwrap();
-//let ctx = QueryContext::new(&store, self.get_block_height());
+    //let store = self.multi_store.read().unwrap();
+    //let ctx = QueryContext::new(&store, self.get_block_height());
 
     let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
     let last_processed_round = tlcs_store.get(&LAST_PROCESSED_ROUND_KEY);
@@ -231,7 +219,6 @@ fn get_last_processed_round<T: DB>(ctx: &mut TxContext<T>) -> u64 {
             .expect("invalid data in database - possible database corruption"),
     }
 }
-
 
 fn set_last_processed_round<T: DB>(
     ctx: &mut TxContext<T>,
@@ -256,13 +243,13 @@ fn latest_round_up_to(time: i64) -> u64 {
 fn get_this_round_all_participant_data<'a, T: DB>(
     ctx: &'a TxContext<T>,
     round: u64,
-) -> trees::iavl::Range<'a, RangeFrom<Vec<u8>>, PrefixDB<T>> {
+) -> PrefixRange<'a, PrefixDB<T>> {
     let mut prefix = PARTICIPANT_DATA_KEY.to_vec();
     prefix.append(&mut round.to_le_bytes().to_vec());
     prefix.append(&mut TMP_SCHEME_ID.to_vec());
 
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
-    tlcs_store.range(prefix..)
+    tlcs_store.get_immutable_prefix_store(prefix).range(..)
 }
 
 fn get_this_round_all_loe_data<'a, T: DB>(ctx: &'a TxContext<T>, round: u64) -> RawMsgLoeData {
