@@ -2,6 +2,7 @@ use bytes::Bytes;
 use database::DB;
 use prost::Message;
 //use proto_types::AccAddress;
+use tracing::info;
 
 use proto_messages::azkr::tlcs::v1beta1::{
     MsgContribution, MsgKeyPair, MsgLoeData, QueryAllContributionsResponse,
@@ -21,9 +22,11 @@ use crate::x::tlcs::crypto::verify_participant_data;
 use drand_verify::{derive_randomness, verify, G2Pubkey, Pubkey};
 use hex_literal::hex;
 
+// Key Prefixes
 const PARTICIPANT_DATA_KEY: [u8; 1] = [1];
 const KEYPAIR_DATA_KEY: [u8; 1] = [2];
 const LOE_DATA_KEY: [u8; 1] = [3];
+
 const TMP_SCHEME_ID: [u8; 1] = [1];
 const LOE_PUBLIC_KEY: [u8; 96] = hex!("a0b862a7527fee3a731bcb59280ab6abd62d5c0b6ea03dc4ddf6612fdfc9d01f01c31542541771903475eb1ec6615f8d0df0b8b6dce385811d6dcf8cbefb8759e5e616a3dfd054c928940766d9a5b9db91e3b697e5d70a975181e007f87fca5e");
 const LOE_GENESIS_TIME: u32 = 1677685200;
@@ -33,6 +36,7 @@ pub fn append_contribution<T: DB>(
     ctx: &mut TxContext<T>,
     msg: &MsgContribution,
 ) -> Result<(), AppError> {
+
     let mut store_key = PARTICIPANT_DATA_KEY.to_vec();
     store_key.append(&mut msg.round.to_le_bytes().to_vec());
     store_key.append(&mut TMP_SCHEME_ID.to_vec());
@@ -40,16 +44,34 @@ pub fn append_contribution<T: DB>(
     let addr: Vec<u8> = msg.address.clone().into();
     store_key.append(&mut addr.to_vec());
 
+    info!("CONTRIB TX: got round data {:?}", msg.round);
+
     if !round_is_open(ctx, msg.round) {
         return Err(AppError::InvalidRequest(
             "The round is no longer open for contributions".into(),
         ));
     }
 
+    info!("CONTRIB TX: round is open");
+
     if verify_participant_data(msg.round, msg.data.clone()) {
         let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
         let chain_data: RawMsgContribution = msg.to_owned().into();
         tlcs_store.set(store_key.into(), chain_data.encode_to_vec());
+
+        // Create empty keypair
+        let mut prefix = KEYPAIR_DATA_KEY.to_vec();
+        prefix.append(&mut msg.round.to_le_bytes().to_vec());
+        prefix.append(&mut TMP_SCHEME_ID.to_vec());
+
+        let key_data: RawMsgKeyPair = RawMsgKeyPair {
+                    round: msg.round,
+                    scheme: 1,
+                    public_key: Vec::new(),
+                    private_key: Vec::new(),
+                };
+        tlcs_store.set(prefix.into(), key_data.encode_to_vec());
+
     } else {
         return Err(AppError::InvalidRequest(
             "The contribution data is invalid for the given round".into(),
@@ -64,7 +86,6 @@ pub fn query_all_contributions<T: DB>(ctx: &QueryContext<T>) -> QueryAllContribu
 
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
     let all_raw_data = tlcs_store.get_immutable_prefix_store(store_key).range(..);
-    //let all_raw_data = ctx.get_kv_store(store_key).range(..);
 
     let mut contributions = vec![];
 
@@ -104,6 +125,7 @@ pub fn query_contributions_by_round_and_scheme<T: DB>(
     _scheme: u32, // TODO: make use of this
 ) -> QueryAllContributionsResponse {
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
+
     let mut store_key = PARTICIPANT_DATA_KEY.to_vec();
     store_key.append(&mut round.to_le_bytes().to_vec());
     store_key.append(&mut TMP_SCHEME_ID.to_vec());
@@ -219,8 +241,12 @@ pub fn append_loe_data<T: DB>(ctx: &mut Context<T>, msg: &MsgLoeData) -> Result<
     let mut store_key = LOE_DATA_KEY.to_vec();
     store_key.append(&mut msg.round.to_le_bytes().to_vec());
 
+        tlcs_store.set(
+            store_key.into(),
+            <MsgLoeData as Into<RawMsgLoeData>>::into(msg.to_owned()).encode_to_vec(),
+        );
+        /*
     if loe_signature_is_valid(msg.round, msg.randomness.clone(), msg.signature.clone()) {
-        //tlcs_store.set(store_key.into(), msg.randomness.encode_to_vec());
         tlcs_store.set(
             store_key.into(),
             <MsgLoeData as Into<RawMsgLoeData>>::into(msg.to_owned()).encode_to_vec(),
@@ -230,6 +256,7 @@ pub fn append_loe_data<T: DB>(ctx: &mut Context<T>, msg: &MsgLoeData) -> Result<
             "the loe data is invalid for the given round".into(),
         ));
     }
+    */
 
     Ok(())
 }
@@ -304,16 +331,14 @@ fn loe_signature_is_valid(round: u64, randomness: Vec<u8>, signature: Vec<u8>) -
 
     // See https://api.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/1 for example data of the three inputs
     let nil: &mut [u8] = &mut [];
-    // TODO get rid of unwrap because Kevin hates them
-    let hex_signature = hex::decode(signature).unwrap();
-    let hex_randomness = hex::decode(randomness).unwrap();
 
-    let randomness_check = derive_randomness(&hex_signature);
-    if !(hex_randomness == randomness_check) {
+    let randomness_check = derive_randomness(&signature);
+    if !(randomness == randomness_check) {
         return false;
     }
 
-    match verify(&pk2, round, &nil, &hex_signature) {
+    //match verify(&pk2, round, &nil, &hex_signature) {
+    match verify(&pk2, round, &nil, &signature) {
         Err(_err) => return false,
         Ok(valid) => {
             if valid {
@@ -325,23 +350,23 @@ fn loe_signature_is_valid(round: u64, randomness: Vec<u8>, signature: Vec<u8>) -
     }
 }
 
+// Round is open for contributions up to half an hour before round ends
 pub fn round_is_open<T: DB>(ctx: &mut TxContext<T>, round: u64) -> bool {
-    let block_time = ctx.get_header().time.unix_timestamp();
-    let rounds_per_hour: i64 = 3600 / LOE_PERIOD as i64;
+    let cur_time = ctx.get_header().time.unix_timestamp();
+
+    let rounds_per_hour: i64 = 3600 / LOE_PERIOD as i64; // 1200
     let round_to_time = LOE_GENESIS_TIME as u64 + (round * LOE_PERIOD as u64);
+    let round_time_limit: i64 = round_to_time as i64 - (rounds_per_hour / 2); // time limit 30 minutes before round
 
-    let round_time_limit: i64 = round_to_time as i64 - (rounds_per_hour / 2);
-
-    block_time < round_time_limit
+    cur_time < round_time_limit
 }
 
 #[test]
 fn test_round_signature() {
     //let signature: String = "9544ddce2fdbe8688d6f5b4f98eed5d63eee3902e7e162050ac0f45905a55657714880adabe3c3096b92767d886567d0".to_string();
     //let round: u32 = 1;
-    let randomness: Vec<u8> =
-        "f282310f131ed63e0342cd7e47f9e4317b20fb6f652b03ce81378cf825227212".into();
-    let signature: Vec<u8> = "86f91b1eec7b22ecce1385ec1cc4861f43507fa897cad686e44a87986a7ce18a94fa7128d6f76d6b950bb4e559472539".into();
+    let randomness: Vec<u8> = hex::decode("f282310f131ed63e0342cd7e47f9e4317b20fb6f652b03ce81378cf825227212").unwrap();
+    let signature: Vec<u8> = hex::decode("86f91b1eec7b22ecce1385ec1cc4861f43507fa897cad686e44a87986a7ce18a94fa7128d6f76d6b950bb4e559472539").unwrap();
     let round: u64 = 3276594;
     assert!(loe_signature_is_valid(round, randomness, signature));
 }
