@@ -32,6 +32,14 @@ git clone https://github.com/aragonzkresearch/tlcs-chain
 cd tlcs-chain
 ```
 
+1.5 Install TLCS-C binaries
+
+```console
+git clone https://github.com/aragonzkresearch/tlcs-c
+follow instruction in README
+---more instructions to come
+```
+
 2. Initialize a new chain:
 
 ```console
