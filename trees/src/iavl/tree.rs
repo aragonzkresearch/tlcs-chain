@@ -537,6 +537,7 @@ where
             let t3 = y.right_node;
 
             // Perform rotation on z and update height and hash
+            z.left_hash = y.right_hash;
             z.left_node = t3;
             z.height = 1 + cmp::max(
                 z.get_left_node(node_db).get_height(),
@@ -544,7 +545,6 @@ where
             );
             z.size = z.get_left_node(node_db).get_size() + z.get_right_node(node_db).get_size();
             z.version = version;
-            z.left_hash = y.right_hash;
             let z = Node::Inner(z);
 
             // Perform rotation on y, update hash and update height
@@ -579,6 +579,7 @@ where
             let t2 = y.left_node;
 
             // Perform rotation on z and update height and hash
+            z.right_hash = y.left_hash;
             z.right_node = t2;
             z.height = 1 + cmp::max(
                 z.get_left_node(node_db).get_height(),
@@ -586,7 +587,6 @@ where
             );
             z.size = z.get_left_node(node_db).get_size() + z.get_right_node(node_db).get_size();
             z.version = version;
-            z.right_hash = y.left_hash;
             let z = Node::Inner(z);
 
             // Perform rotation on y, update hash and update height
@@ -699,6 +699,7 @@ fn decode_bytes(bz: &[u8]) -> Result<(Vec<u8>, usize), Error> {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
     use database::MemDB;
 
@@ -1189,6 +1190,7 @@ mod tests {
         assert_eq!(deserialized_node, orig_node);
     }
 
+    /// Testing that a previous bug has been fixed
     #[test]
     fn bug_scenario_works() {
         let db = MemDB::new();
@@ -1256,6 +1258,7 @@ mod tests {
         tree.set(vec![0], vec![8, 140, 164, 237, 1]);
         tree.save_version().unwrap();
         tree.set(vec![0], vec![8, 142, 164, 237, 1]);
+
         tree.set(
             vec![
                 1, 174, 86, 59, 0, 0, 0, 0, 0, 1, 129, 58, 194, 42, 97, 73, 22, 85, 226, 120, 106,
@@ -1269,11 +1272,46 @@ mod tests {
             ],
         );
 
+        tree.save_version().unwrap();
+
         let expected = [
-            37, 155, 233, 229, 243, 173, 29, 241, 235, 234, 85, 10, 36, 129, 53, 79, 77, 11, 29,
-            118, 201, 233, 133, 60, 78, 187, 37, 81, 42, 96, 105, 150,
+            136, 164, 1, 21, 163, 66, 127, 238, 197, 107, 178, 152, 75, 8, 254, 220, 62, 141, 140,
+            212, 4, 23, 213, 249, 34, 96, 132, 172, 166, 207, 48, 17,
         ];
 
+        assert!(is_consistent(tree.root.clone().unwrap(), &tree.node_db));
         assert_eq!(expected, tree.root_hash());
+    }
+
+    /// Checks if left/right hash matches the left/right node hash for every inner node in a tree
+    fn is_consistent<T: DB, N>(root: N, node_db: &NodeDB<T>) -> bool
+    where
+        N: AsRef<Node>,
+    {
+        match root.as_ref() {
+            Node::Inner(node) => {
+                let left_node = node.get_left_node(node_db);
+                let right_node = node.get_right_node(node_db);
+
+                if left_node.hash() != node.left_hash {
+                    return false;
+                }
+
+                if right_node.hash() != node.right_hash {
+                    return false;
+                }
+
+                if !is_consistent(left_node, node_db) {
+                    return false;
+                }
+
+                if !is_consistent(right_node, node_db) {
+                    return false;
+                }
+
+                return true;
+            }
+            Node::Leaf(_) => return true,
+        }
     }
 }
