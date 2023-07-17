@@ -499,8 +499,9 @@ where
                         Self::right_rotate(node, version, node_db)
                             .expect("Given the imbalance, expect rotation to always succeed");
                     } else {
+                        //TODO: the example here https://www.geeksforgeeks.org/insertion-in-an-avl-tree/ checks for >, this is >=
                         // Case 2 - Left Right
-                        Self::left_rotate(node, version, node_db)
+                        Self::left_rotate(left_node, version, node_db)
                             .expect("Given the imbalance, expect rotation to always succeed");
                         Self::right_rotate(node, version, node_db)
                             .expect("Given the imbalance, expect rotation to always succeed");
@@ -513,6 +514,7 @@ where
                         Self::left_rotate(node, version, node_db)
                             .expect("Given the imbalance, expect rotation to always succeed");
                     } else {
+                        //TODO: the example here https://www.geeksforgeeks.org/insertion-in-an-avl-tree/ checks for >, this is >=
                         // Case 4 - Right Left
                         Self::right_rotate(right_node, version, node_db)
                             .expect("Given the imbalance, expect rotation to always succeed");
@@ -1277,6 +1279,57 @@ mod tests {
         let expected = [
             136, 164, 1, 21, 163, 66, 127, 238, 197, 107, 178, 152, 75, 8, 254, 220, 62, 141, 140,
             212, 4, 23, 213, 249, 34, 96, 132, 172, 166, 207, 48, 17,
+        ];
+
+        assert!(is_consistent(tree.root.clone().unwrap(), &tree.node_db));
+        assert_eq!(expected, tree.root_hash());
+    }
+
+    /// Testing that a previous bug has been fixed
+    #[test]
+    fn bug_scenario_2_works() {
+        let db = MemDB::new();
+        let mut tree = Tree::new(db, None).unwrap();
+        tree.set(
+            vec![
+                0, 0, 0, 0, 0, 0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 58,
+            ],
+            vec![
+                0, 0, 0, 0, 0, 0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 58,
+            ],
+        );
+
+        tree.set(
+            vec![
+                0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            ],
+            vec![
+                0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            ],
+        );
+        tree.set(
+            vec![
+                0, 0, 0, 0, 0, 0, 0, 0, 58, 0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            ],
+            vec![
+                0, 0, 0, 0, 0, 0, 0, 0, 58, 0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            ],
+        );
+
+        tree.set(
+            vec![
+                0, 0, 0, 0, 0, 0, 0, 36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            ],
+            vec![
+                0, 0, 0, 0, 0, 0, 0, 36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            ],
+        );
+
+        tree.save_version().unwrap();
+
+        let expected = [
+            161, 141, 64, 164, 190, 244, 170, 230, 150, 211, 45, 54, 92, 136, 170, 253, 7, 176,
+            179, 212, 27, 116, 84, 160, 78, 92, 155, 245, 98, 143, 221, 105,
         ];
 
         assert!(is_consistent(tree.root.clone().unwrap(), &tree.node_db));
