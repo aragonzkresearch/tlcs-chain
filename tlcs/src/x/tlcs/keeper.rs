@@ -1,13 +1,21 @@
 use bytes::Bytes;
 use database::DB;
 use prost::Message;
-//use proto_types::AccAddress;
+use proto_types::AccAddress;
 use tracing::info;
 
 use proto_messages::azkr::tlcs::v1beta1::{
-    MsgContribution, MsgKeyPair, MsgLoeData, QueryAllContributionsResponse,
-    QueryAllKeyPairsResponse, QueryAllLoeDataResponse, RawMsgContribution, RawMsgKeyPair,
+    MsgContribution,
+    MsgKeyPair,
+    MsgLoeData,
+    MsgNewProcess,
+    QueryAllContributionsResponse,
+    QueryAllKeyPairsResponse,
+    QueryAllLoeDataResponse,
+    RawMsgContribution,
+    RawMsgKeyPair,
     RawMsgLoeData,
+    //RawMsgNewProcess,
 };
 
 use crate::{
@@ -28,36 +36,67 @@ const KEYPAIR_DATA_KEY: [u8; 1] = [2];
 const LOE_DATA_KEY: [u8; 1] = [3];
 
 const TMP_SCHEME_ID: [u8; 1] = [1];
+
 const LOE_PUBLIC_KEY: [u8; 96] = hex!("a0b862a7527fee3a731bcb59280ab6abd62d5c0b6ea03dc4ddf6612fdfc9d01f01c31542541771903475eb1ec6615f8d0df0b8b6dce385811d6dcf8cbefb8759e5e616a3dfd054c928940766d9a5b9db91e3b697e5d70a975181e007f87fca5e");
 const LOE_GENESIS_TIME: u32 = 1677685200;
 const LOE_PERIOD: u32 = 3;
 
-pub fn append_contribution<T: DB>(
+pub fn valid_scheme(scheme: u32) -> bool {
+    scheme == 1
+}
+
+pub fn open_process_count<T: DB>(ctx: &mut TxContext<T>, round: u64, scheme: u32) -> u32 {
+    let tlcs_store = ctx.get_kv_store(Store::Tlcs);
+
+    // Make store search key
+    let mut store_key = KEYPAIR_DATA_KEY.to_vec();
+    store_key.append(&mut round.to_le_bytes().to_vec());
+    store_key.append(&mut scheme.to_le_bytes().to_vec());
+
+    let the_keys = tlcs_store.get_immutable_prefix_store(store_key).range(..);
+    let keycount = the_keys.count() as u32; // usize
+
+    return keycount;
+}
+
+pub fn open_new_process<T: DB>(
     ctx: &mut TxContext<T>,
-    msg: &MsgContribution,
+    msg: &MsgNewProcess,
 ) -> Result<(), AppError> {
-
-    let mut store_key = PARTICIPANT_DATA_KEY.to_vec();
-    store_key.append(&mut msg.round.to_le_bytes().to_vec());
-    store_key.append(&mut TMP_SCHEME_ID.to_vec());
-
-    let addr: Vec<u8> = msg.address.clone().into();
-    store_key.append(&mut addr.to_vec());
-
-    info!("CONTRIB TX: got round data {:?}", msg.round);
-
-    if !round_is_open(ctx, msg.round) {
-        return Err(AppError::InvalidRequest(
-            "The round is no longer open for contributions".into(),
-        ));
+    if !valid_scheme(msg.scheme) {
+        return Err(AppError::InvalidRequest("Invalid scheme.".into()));
     }
 
-    info!("CONTRIB TX: round is open");
+    info!(
+        "PROCESS TX: new process request. Round: {:?}, Scheme: {:?}",
+        msg.round, msg.scheme
+    );
+
+    let keycount = open_process_count(ctx, msg.round, msg.scheme);
 
     if verify_participant_data(msg.round, msg.data.clone()) {
         let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
-        let chain_data: RawMsgContribution = msg.to_owned().into();
-        tlcs_store.set(store_key.into(), chain_data.encode_to_vec());
+
+        // Save Participant data
+        let mut prefix = PARTICIPANT_DATA_KEY.to_vec();
+        prefix.append(&mut msg.round.to_le_bytes().to_vec());
+        prefix.append(&mut msg.scheme.to_le_bytes().to_vec());
+
+        let addr: Vec<u8> = msg.address.clone().into();
+        prefix.append(&mut addr.to_vec());
+
+        let address = AccAddress::from_bech32(&msg.address.to_string())
+            .map_err(|e| AppError::InvalidRequest(e.to_string()))?;
+        //.map_err(|e| Error::DecodeAddress(e.to_string()))?;
+
+        let contrib_data: RawMsgContribution = RawMsgContribution {
+            address: address.to_string(),
+            round: msg.round,
+            scheme: msg.scheme,
+            id: keycount,
+            data: msg.data.clone(),
+        };
+        tlcs_store.set(prefix.into(), contrib_data.encode_to_vec());
 
         // Create empty keypair
         let mut prefix = KEYPAIR_DATA_KEY.to_vec();
@@ -65,17 +104,62 @@ pub fn append_contribution<T: DB>(
         prefix.append(&mut TMP_SCHEME_ID.to_vec());
 
         let key_data: RawMsgKeyPair = RawMsgKeyPair {
-                    round: msg.round,
-                    scheme: 1,
-                    public_key: Vec::new(),
-                    private_key: Vec::new(),
-                };
+            round: msg.round,
+            scheme: msg.scheme,
+            id: keycount,
+            pubkey_time: msg.pubkey_time,
+            public_key: "".to_string(),
+            private_key: "".to_string(),
+        };
         tlcs_store.set(prefix.into(), key_data.encode_to_vec());
-
     } else {
         return Err(AppError::InvalidRequest(
             "The contribution data is invalid for the given round".into(),
         ));
+    }
+
+    Ok(())
+}
+
+pub fn append_contribution<T: DB>(
+    ctx: &mut TxContext<T>,
+    msg: &MsgContribution,
+) -> Result<(), AppError> {
+    // Make store key
+    let mut store_key = PARTICIPANT_DATA_KEY.to_vec();
+    store_key.append(&mut msg.round.to_le_bytes().to_vec());
+    store_key.append(&mut msg.scheme.to_le_bytes().to_vec());
+
+    let addr: Vec<u8> = msg.address.clone().into();
+    store_key.append(&mut addr.to_vec());
+
+    if !valid_scheme(msg.scheme) {
+        return Err(AppError::InvalidRequest("Invalid scheme.".into()));
+    }
+
+    info!(
+        "CONTRIB TX: new data. Round: {:?}, Scheme: {:?}",
+        msg.round, msg.scheme
+    );
+
+    let keycount = open_process_count(ctx, msg.round, msg.scheme);
+
+    if keycount < 1 {
+        if keycount < msg.id {
+            return Err(AppError::InvalidRequest(
+                "The round is no longer open for contributions".into(),
+            ));
+        }
+
+        if verify_participant_data(msg.round, msg.data.clone()) {
+            let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
+            let chain_data: RawMsgContribution = msg.to_owned().into();
+            tlcs_store.set(store_key.into(), chain_data.encode_to_vec());
+        } else {
+            return Err(AppError::InvalidRequest(
+                "The contribution data is invalid for the given round".into(),
+            ));
+        }
     }
 
     Ok(())
@@ -122,13 +206,13 @@ pub fn query_contributions_by_round<T: DB>(
 pub fn query_contributions_by_round_and_scheme<T: DB>(
     ctx: &QueryContext<T>,
     round: u64,
-    _scheme: u32, // TODO: make use of this
+    scheme: u32,
 ) -> QueryAllContributionsResponse {
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
 
     let mut store_key = PARTICIPANT_DATA_KEY.to_vec();
     store_key.append(&mut round.to_le_bytes().to_vec());
-    store_key.append(&mut TMP_SCHEME_ID.to_vec());
+    store_key.append(&mut scheme.to_le_bytes().to_vec());
 
     let all_raw_data = tlcs_store.get_immutable_prefix_store(store_key).range(..);
 
@@ -149,7 +233,11 @@ pub fn query_contributions_by_round_and_scheme<T: DB>(
 pub fn append_keypair<T: DB>(ctx: &mut TxContext<T>, msg: &MsgKeyPair) -> Result<(), AppError> {
     let mut prefix = KEYPAIR_DATA_KEY.to_vec();
     prefix.append(&mut msg.round.to_le_bytes().to_vec());
-    prefix.append(&mut TMP_SCHEME_ID.to_vec());
+    prefix.append(&mut msg.scheme.to_le_bytes().to_vec());
+
+    if !valid_scheme(msg.scheme) {
+        return Err(AppError::InvalidRequest("Invalid scheme.".into()));
+    }
 
     let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
 
@@ -216,12 +304,14 @@ pub fn query_keypairs_by_time<T: DB>(ctx: &QueryContext<T>, time: i64) -> QueryA
 pub fn query_keypairs_by_round_and_scheme<T: DB>(
     ctx: &QueryContext<T>,
     round: u64,
-    _scheme: u32, // TODO: make use of this
+    scheme: u32,
 ) -> QueryAllKeyPairsResponse {
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
+
     let mut store_key = KEYPAIR_DATA_KEY.to_vec();
     store_key.append(&mut round.to_le_bytes().to_vec());
-    store_key.append(&mut TMP_SCHEME_ID.to_vec());
+    store_key.append(&mut scheme.to_le_bytes().to_vec());
+
     let all_raw_data = tlcs_store.get_immutable_prefix_store(store_key).range(..);
 
     let mut keypairs = vec![];
@@ -241,11 +331,6 @@ pub fn append_loe_data<T: DB>(ctx: &mut Context<T>, msg: &MsgLoeData) -> Result<
     let mut store_key = LOE_DATA_KEY.to_vec();
     store_key.append(&mut msg.round.to_le_bytes().to_vec());
 
-        tlcs_store.set(
-            store_key.into(),
-            <MsgLoeData as Into<RawMsgLoeData>>::into(msg.to_owned()).encode_to_vec(),
-        );
-        /*
     if loe_signature_is_valid(msg.round, msg.randomness.clone(), msg.signature.clone()) {
         tlcs_store.set(
             store_key.into(),
@@ -256,7 +341,6 @@ pub fn append_loe_data<T: DB>(ctx: &mut Context<T>, msg: &MsgLoeData) -> Result<
             "the loe data is invalid for the given round".into(),
         ));
     }
-    */
 
     Ok(())
 }
@@ -284,28 +368,6 @@ pub fn query_loe_data_by_round<T: DB>(
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
     let mut store_key = KEYPAIR_DATA_KEY.to_vec();
     store_key.append(&mut round.to_le_bytes().to_vec());
-    let all_raw_data = tlcs_store.get_immutable_prefix_store(store_key).range(..);
-
-    let mut randomnesses = vec![];
-
-    for (_, row) in all_raw_data {
-        let rand: RawMsgLoeData = RawMsgLoeData::decode::<Bytes>(row.into())
-            .expect("invalid data in database - possible database corruption");
-        randomnesses.push(rand);
-    }
-
-    QueryAllLoeDataResponse { randomnesses }
-}
-
-pub fn query_loe_data_by_round_and_scheme<T: DB>(
-    ctx: &QueryContext<T>,
-    round: u64,
-    scheme: u32,
-) -> QueryAllLoeDataResponse {
-    let tlcs_store = ctx.get_kv_store(Store::Tlcs);
-    let mut store_key = KEYPAIR_DATA_KEY.to_vec();
-    store_key.append(&mut round.to_le_bytes().to_vec());
-    store_key.append(&mut scheme.to_le_bytes().to_vec());
     let all_raw_data = tlcs_store.get_immutable_prefix_store(store_key).range(..);
 
     let mut randomnesses = vec![];
@@ -350,22 +412,12 @@ fn loe_signature_is_valid(round: u64, randomness: Vec<u8>, signature: Vec<u8>) -
     }
 }
 
-// Round is open for contributions up to half an hour before round ends
-pub fn round_is_open<T: DB>(ctx: &mut TxContext<T>, round: u64) -> bool {
-    let cur_time = ctx.get_header().time.unix_timestamp();
-
-    let rounds_per_hour: i64 = 3600 / LOE_PERIOD as i64; // 1200
-    let round_to_time = LOE_GENESIS_TIME as u64 + (round * LOE_PERIOD as u64);
-    let round_time_limit: i64 = round_to_time as i64 - (rounds_per_hour / 2); // time limit 30 minutes before round
-
-    cur_time < round_time_limit
-}
-
 #[test]
 fn test_round_signature() {
     //let signature: String = "9544ddce2fdbe8688d6f5b4f98eed5d63eee3902e7e162050ac0f45905a55657714880adabe3c3096b92767d886567d0".to_string();
     //let round: u32 = 1;
-    let randomness: Vec<u8> = hex::decode("f282310f131ed63e0342cd7e47f9e4317b20fb6f652b03ce81378cf825227212").unwrap();
+    let randomness: Vec<u8> =
+        hex::decode("f282310f131ed63e0342cd7e47f9e4317b20fb6f652b03ce81378cf825227212").unwrap();
     let signature: Vec<u8> = hex::decode("86f91b1eec7b22ecce1385ec1cc4861f43507fa897cad686e44a87986a7ce18a94fa7128d6f76d6b950bb4e559472539").unwrap();
     let round: u64 = 3276594;
     assert!(loe_signature_is_valid(round, randomness, signature));

@@ -7,8 +7,7 @@ use std::{
 // This is hacked code used for prototyping - it should not be used in production.
 
 pub fn generate_participant_data(loe_round: u64) -> Vec<u8> {
-    let output = Command::new("/usr/local/bin/tlcs-ab/chain_prover")
-    //let output = Command::new("/usr/local/bin/tlcs-ab/prover4blockchain.sh")
+    let output = Command::new("/usr/local/bin/tlcs-ab/chain_bjj_prover")
         .arg(loe_round.to_string())
         .current_dir("/usr/local/bin/tlcs-ab")
         .output()
@@ -18,8 +17,7 @@ pub fn generate_participant_data(loe_round: u64) -> Vec<u8> {
 }
 
 pub fn verify_participant_data(loe_round: u64, participant_data: Vec<u8>) -> bool {
-    let mut child = Command::new("/usr/local/bin/tlcs-ab/chain_verifier")
-    //let mut child = Command::new("/usr/local/bin/tlcs-ab/verifier4blockchain.sh")
+    let mut child = Command::new("/usr/local/bin/tlcs-ab/chain_bjj_verifier")
         .arg(loe_round.to_string())
         .current_dir("/usr/local/bin/tlcs-ab")
         .stdin(Stdio::piped())
@@ -45,11 +43,8 @@ pub fn verify_participant_data(loe_round: u64, participant_data: Vec<u8>) -> boo
     false
 }
 
-pub fn aggregate_participant_data(
-    all_participant_data: Vec<u8>,
-) -> Vec<u8> {
-    let mut command = Command::new("/usr/local/bin/tlcs-ab/chain_aggregator");
-    //let mut command = Command::new("/usr/local/bin/tlcs-ab/aggregator4blockchain.sh");
+pub fn aggregate_participant_data(all_participant_data: Vec<u8>) -> String {
+    let mut command = Command::new("/usr/local/bin/tlcs-ab/chain_bjj_aggregator");
 
     let mut child = command
         .current_dir("/usr/local/bin/tlcs-ab")
@@ -69,22 +64,24 @@ pub fn aggregate_participant_data(
         .wait_with_output()
         .expect("will always return a response");
 
-    return hex::decode(output.stdout).expect("will return valid hex");
+    return String::from_utf8_lossy(&output.stdout).to_string();
 }
 
 pub fn make_secret_key(
     all_participant_data: Vec<u8>,
     loe_round: u64,
     signature: Vec<u8>,
-    public_key: Vec<u8>,
-) -> Vec<u8> {
-    let mut command = Command::new("/usr/local/bin/tlcs-ab/chain_invert");
+    public_key: String,
+    //public_key: Vec<u8>,
+) -> String {
+    let mut command = Command::new("/usr/local/bin/tlcs-ab/chain_bjj_invert");
 
     command
         .current_dir("/usr/local/bin/tlcs-ab")
         .arg(loe_round.to_string())
         .arg(hex::encode(signature))
-        .arg(hex::encode(public_key));
+        .arg(public_key);
+    //.arg(hex::encode(public_key));
 
     let mut child = command
         .current_dir("/usr/local/bin/tlcs-ab")
@@ -109,7 +106,7 @@ pub fn make_secret_key(
     secret_key.drain(0..3); //remove sk:
     secret_key.pop(); //remove newline
 
-    return hex::decode(secret_key).expect("will return valid hex");
+    return String::from_utf8_lossy(&secret_key).to_string();
 }
 
 #[cfg(test)]
@@ -134,8 +131,9 @@ mod tests {
         let mut participant_data_2 = generate_participant_data(2);
         all_participant_data.append(&mut participant_data_2);
         let public_key = aggregate_participant_data(all_participant_data);
+        let vec_public_key = hex::decode(public_key).expect("will return valid hex");
 
-        assert!(public_key.len() == 33)
+        assert!(vec_public_key.len() == 33)
     }
 
     #[test]
@@ -150,7 +148,8 @@ mod tests {
         let signature: Vec<u8> = hex::decode("a050676d1a1b6ceedb5fb3281cdfe88695199971426ff003c0862460b3a72811328a07ecd53b7d57fc82bb67f35efaf1").unwrap();
 
         let secret_key = make_secret_key(all_participant_data, 2, signature, public_key);
-        println!("key: {:?}", secret_key);
-        assert!(secret_key.len() == 32)
+        let vec_secret_key = hex::decode(secret_key).expect("will return valid hex");
+
+        assert!(vec_secret_key.len() == 32)
     }
 }
