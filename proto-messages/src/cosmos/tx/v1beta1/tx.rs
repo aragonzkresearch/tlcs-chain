@@ -19,6 +19,7 @@ use serde_with::DisplayFromStr;
 use crate::{
     azkr::tlcs::v1beta1::MsgContribution,
     azkr::tlcs::v1beta1::MsgLoeData,
+    azkr::tlcs::v1beta1::MsgNewProcess,
     cosmos::base::v1beta1::{Coin, SendCoins},
     cosmos::{
         bank::v1beta1::MsgSend, base::abci::v1beta1::TxResponse,
@@ -92,6 +93,8 @@ impl Protobuf<RawTx> for Tx {}
 pub enum Msg {
     #[serde(rename = "/cosmos.bank.v1beta1.MsgSend")]
     Send(MsgSend),
+    #[serde(rename = "/azkr.tlcs.v1beta1.MsgNewProcess")]
+    NewProcess(MsgNewProcess),
     #[serde(rename = "/azkr.tlcs.v1beta1.MsgContribution")]
     Participate(MsgContribution),
     #[serde(rename = "/azkr.tlcs.v1beta1.MsgLoeData")]
@@ -102,16 +105,16 @@ impl Msg {
     pub fn get_signers(&self) -> Vec<&AccAddress> {
         match &self {
             Msg::Send(msg) => return vec![&msg.from_address],
+            Msg::NewProcess(msg) => return vec![&msg.address],
             Msg::Participate(msg) => return vec![&msg.address],
-            // TODO verify if this is a problem or not
             Msg::SubmitLoeData(msg) => return vec![&msg.address],
-            //Msg::SubmitLoeData(_msg) => return vec![],
         }
     }
 
     pub fn validate_basic(&self) -> Result<(), Error> {
         match &self {
             Msg::Send(_) => Ok(()),
+            Msg::NewProcess(_) => Ok(()),
             Msg::Participate(_) => Ok(()),
             Msg::SubmitLoeData(_) => Ok(()),
         }
@@ -123,6 +126,10 @@ impl From<Msg> for Any {
         match msg {
             Msg::Send(msg) => Any {
                 type_url: "/cosmos.bank.v1beta1.MsgSend".to_string(),
+                value: msg.encode_vec(),
+            },
+            Msg::NewProcess(msg) => Any {
+                type_url: "/azkr.tlcs.v1beta1.MsgNewProcess".to_string(),
                 value: msg.encode_vec(),
             },
             Msg::Participate(msg) => Any {
@@ -179,6 +186,11 @@ impl TryFrom<RawTxBody> for TxBody {
                     let msg = MsgSend::decode::<Bytes>(msg.value.clone().into())
                         .map_err(|e| Error::DecodeGeneral(e.to_string()))?;
                     messages.push(Msg::Send(msg));
+                }
+                "/azkr.tlcs.v1beta1.MsgNewProcess" => {
+                    let msg = MsgNewProcess::decode::<Bytes>(msg.value.clone().into())
+                        .map_err(|e| Error::DecodeGeneral(e.to_string()))?;
+                    messages.push(Msg::NewProcess(msg));
                 }
                 "/azkr.tlcs.v1beta1.MsgContribution" => {
                     let msg = MsgContribution::decode::<Bytes>(msg.value.clone().into())

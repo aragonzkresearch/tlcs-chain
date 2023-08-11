@@ -1,5 +1,4 @@
-use std::{collections::HashMap};
-use tracing::info;
+use std::collections::HashMap;
 
 use crate::{
     error::AppError,
@@ -10,168 +9,102 @@ use bytes::Bytes;
 use database::{PrefixDB, DB};
 use prost::Message;
 
-use proto_messages::azkr::tlcs::v1beta1::{
-    MsgKeyPair, RawMsgContribution, RawMsgKeyPair, RawMsgLoeData,
-};
+use proto_messages::azkr::tlcs::v1beta1::{RawMsgContribution, RawMsgKeyPair, RawMsgLoeData};
 
 use super::crypto::{aggregate_participant_data, make_secret_key};
 
-use super::{
-    //append_keypair,
-    round_is_open
-};
-
-const LOE_GENESIS_TIME: u64 = 1677685200;
-const LOE_PERIOD: u64 = 3;
-
-const LAST_PROCESSED_ROUND_KEY: [u8; 1] = [0];
+const CONTRIBUTION_THRESHOLD_KEY: [u8; 1] = [0];
 
 const PARTICIPANT_DATA_KEY: [u8; 1] = [1];
 const KEYPAIR_DATA_KEY: [u8; 1] = [2];
 const LOE_DATA_KEY: [u8; 1] = [3];
 
-// TODO eliminate in the future to support multiple schemes
-const TMP_SCHEME_ID: [u8; 1] = [1];
-
 pub fn begin_blocker<T: DB>(ctx: &mut TxContext<T>) {
-    //let _ = set_last_processed_round(ctx, 3852932);
-    //return;
+    //let _ = set_last_processed_round(ctx, 4183720);
+    ////return;
 
-    let last_processed_round = get_last_processed_round(ctx);
+    // TODO: Get this from the number of validators. For now we'll just set it here
+    //let _ = set_contribution_threshold(ctx, 2);
+    //let contribution_threshold = get_contribution_threshold(ctx);
+
+    let contribution_threshold: u32 = 2;
     let block_time = ctx.get_header().time.unix_timestamp();
-    let process_up_to = process_up_to(block_time);
-    let latest_round = latest_round_up_to(block_time);
 
-//     info!("BEGINBLOCKER:   process_to: {:?}", process_up_to);
-//     info!("BEGINBLOCKER: latest_round: {:?}", latest_round);
+    //info!("BEGINBLOCKER:   process_to: {:?}", process_up_to);
+    let (need_pub_keys, need_secret_keys) = get_empty_keypairs(ctx);
 
-    // TODO Later this should be added
-    //for scheme in LIST_OF_SCHEMES {
+    make_public_keys(ctx, need_pub_keys, block_time, contribution_threshold);
 
-    let mut new_key_list: Vec<MsgKeyPair> = Vec::new();
-
-    //info!("BEGINBLOCKER: Start processing");
-
-    for round in last_processed_round..process_up_to {
-
-//        info!("BEGINBLOCKER:        round: {:?}", round);
-//        info!("BEGINBLOCKER: round_is_open: {:?}", round_is_open(ctx, round));
-
-        if round_is_open(ctx, round) {
-            continue;
-        }
-
-        let mut cur_round: u64 = 0;
-        let mut cur_data: Vec<u8> = Vec::new();
-
-//        info!("BEGINBLOCKER: round data {:?}", round);
-        
-        // TODO Add the scheme in here
-        let round_all_participant_data = get_this_round_all_participant_data(ctx, round);
-
-        for (_, row) in round_all_participant_data {
-//            info!("BEGINBLOCKER: processing round {:?}", round);
-            let contribution: RawMsgContribution = RawMsgContribution::decode::<Bytes>(row.into())
-                .expect("invalid data in database - possible database corruption");
-
-            if cur_round != contribution.round && cur_round != 0 {
-                info!("BEGINBLOCKER: creating round data for {:?}", round);
-                let public_key = aggregate_participant_data(cur_data.clone());
-                new_key_list.push(MsgKeyPair {
-                    round: cur_round,
-                    scheme: 1,
-                    public_key: public_key,
-                    private_key: Vec::new(),
-                });
-            }
-
-            cur_round = contribution.round;
-            cur_data.extend(contribution.data);
-        }
-
-        if cur_round != 0 {
-            let public_key = aggregate_participant_data(cur_data.clone());
-            new_key_list.push(MsgKeyPair {
-                round: cur_round,
-                scheme: 1,
-                public_key: public_key,
-                private_key: Vec::new(),
-            });
-        }
-
-        for pair in &new_key_list {
-            let mut prefix = KEYPAIR_DATA_KEY.to_vec();
-            prefix.append(&mut pair.round.to_le_bytes().to_vec());
-            prefix.append(&mut TMP_SCHEME_ID.to_vec());
-
-            let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
-
-            let key_data: RawMsgKeyPair = pair.to_owned().into();
-            tlcs_store.set(prefix.into(), key_data.encode_to_vec());
-        }
-    }
-
-    make_keys(ctx, block_time);
-
-    // Maybe do something with the return value?
-    let _ = set_last_processed_round(ctx, process_up_to);
+    make_secret_keys(ctx, need_secret_keys);
 }
 
-fn make_keys<'a, T: DB>(ctx: &'a mut TxContext<T>, time: i64) {
+fn get_empty_keypairs<'a, T: DB>(
+    ctx: &'a mut TxContext<T>,
+) -> (
+    HashMap<Vec<u8>, RawMsgKeyPair>,
+    HashMap<Vec<u8>, RawMsgKeyPair>,
+) {
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
     let store_key = KEYPAIR_DATA_KEY.to_vec();
     let keypairs = tlcs_store.get_immutable_prefix_store(store_key).range(..);
 
+    let mut need_pub_key: HashMap<Vec<u8>, RawMsgKeyPair> = HashMap::new();
+    let mut need_priv_key: HashMap<Vec<u8>, RawMsgKeyPair> = HashMap::new();
+
+    //let mut need_pub_key: Vec<RawMsgKeyPair> = Vec::new();
+    //let mut need_priv_key: Vec<RawMsgKeyPair> = Vec::new();
+
+    for (index, keypair) in keypairs {
+        let the_keys: RawMsgKeyPair = RawMsgKeyPair::decode::<Bytes>(keypair.into())
+            .expect("invalid data in database - possible database corruption");
+        if the_keys.public_key.len() == 0 {
+            need_pub_key.insert(index.into(), the_keys);
+            //need_pub_key.push(the_keys);
+        } else if the_keys.private_key.len() == 0 {
+            need_priv_key.insert(index.into(), the_keys);
+            //need_priv_key.push(the_keys);
+        }
+    }
+
+    return (need_pub_key, need_priv_key);
+}
+
+fn make_public_keys<'a, T: DB>(
+    ctx: &'a mut TxContext<T>,
+    new_key_list: HashMap<Vec<u8>, RawMsgKeyPair>,
+    cur_time: i64,
+    contribution_threshold: u32,
+) {
     let mut tmp_store: HashMap<Vec<u8>, Vec<u8>> = HashMap::new();
 
-    let latest_round = latest_round_up_to(time);
+    for (key, mut keypair) in new_key_list {
+        let mut cur_data: Vec<u8> = Vec::new();
+        let mut contrib_count: u32 = 0;
 
-    for (_, keypair) in keypairs {
-        let mut the_keys: RawMsgKeyPair = RawMsgKeyPair::decode::<Bytes>(keypair.into())
-            .expect("invalid data in database - possible database corruption");
-
-        let key_round = the_keys.round;
-
-//        info!("BEGINBLOCKER: Secret key diff: {:?}, publen: {:?}", (key_round - latest_round), the_keys.public_key.len());
-        // if secret key is blank and round < latest_round
-        if the_keys.private_key.len() == 0 && key_round < latest_round && the_keys.public_key.len() > 0 {
-
-            let all_round_data = get_this_round_all_participant_data(ctx, key_round);
-            let loe_round_data = get_this_round_all_loe_data(ctx, key_round);
-
-            let mut round_data: Vec<u8> = Vec::new();
-            let mut count = 0;
-
-            for (_, row) in all_round_data {
-                let contribution: RawMsgContribution = RawMsgContribution::decode::<Bytes>(row.into())
-                    .expect("invalid data in database - possible database corruption");
-
-                if count == 0 {
-                    round_data = contribution.data.clone();
-                    count = 1;
-                } else {
-                    round_data.append(&mut contribution.data.clone());
-                }
-            }
-
-            if key_round == loe_round_data.round {
-                let secret_key = make_secret_key(
-                    round_data,
-                    key_round,
-                    loe_round_data.signature,
-                    the_keys.public_key.clone(),
-                );
-
-                the_keys.private_key = secret_key;
-
-                // Store public and private keys
-                let mut this_store_key = KEYPAIR_DATA_KEY.to_vec();
-                this_store_key.append(&mut key_round.to_le_bytes().to_vec());
-                this_store_key.append(&mut TMP_SCHEME_ID.to_vec());
-
-                tmp_store.insert(this_store_key.into(), the_keys.encode_to_vec());
-            }
+        if keypair.pubkey_time > cur_time {
+            continue;
         }
+
+        // TODO Add the scheme in here
+        let round_all_participant_data =
+            get_this_round_all_participant_data(ctx, keypair.round, keypair.scheme);
+
+        for (_, row) in round_all_participant_data {
+            let contribution: RawMsgContribution = RawMsgContribution::decode::<Bytes>(row.into())
+                .expect("invalid data in database - possible database corruption");
+
+            cur_data.extend(contribution.data);
+            contrib_count += 1;
+        }
+
+        if contrib_count < contribution_threshold {
+            continue;
+        }
+
+        let public_key = aggregate_participant_data(cur_data.clone());
+        keypair.public_key = public_key;
+
+        tmp_store.insert(key, keypair.encode_to_vec());
     }
 
     let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
@@ -180,52 +113,86 @@ fn make_keys<'a, T: DB>(ctx: &'a mut TxContext<T>, time: i64) {
     }
 }
 
-// TODO: move to keeper
-/// Returns the last loe round that was processed
-fn get_last_processed_round<T: DB>(ctx: &mut TxContext<T>) -> u64 {
-    let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
-    let last_processed_round = tlcs_store.get(&LAST_PROCESSED_ROUND_KEY);
+fn make_secret_keys<'a, T: DB>(
+    ctx: &'a mut TxContext<T>,
+    new_key_list: HashMap<Vec<u8>, RawMsgKeyPair>,
+) {
+    let mut tmp_store: HashMap<Vec<u8>, Vec<u8>> = HashMap::new();
 
-    match last_processed_round {
+    for (key, mut keypair) in new_key_list {
+        let mut cur_data: Vec<u8> = Vec::new();
+        let loe_round_data = get_this_round_all_loe_data(ctx, keypair.round);
+
+        if loe_round_data.signature.len() < 1 {
+            continue;
+        }
+
+        let round_all_participant_data =
+            get_this_round_all_participant_data(ctx, keypair.round, keypair.scheme);
+        for (_, row) in round_all_participant_data {
+            let contribution: RawMsgContribution = RawMsgContribution::decode::<Bytes>(row.into())
+                .expect("invalid data in database - possible database corruption");
+
+            cur_data.extend(contribution.data);
+        }
+
+        let secret_key = make_secret_key(
+            cur_data,
+            keypair.round,
+            loe_round_data.signature,
+            keypair.public_key.clone(),
+        );
+
+        keypair.private_key = secret_key;
+
+        tmp_store.insert(key, keypair.encode_to_vec());
+    }
+
+    let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
+    for (k, v) in tmp_store {
+        tlcs_store.set(k, v)
+    }
+}
+
+// TODO: move to keeper?
+#[allow(dead_code)]
+fn get_contribution_threshold<T: DB>(ctx: &mut TxContext<T>) -> u32 {
+    let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
+    let contribution_threshold = tlcs_store.get(&CONTRIBUTION_THRESHOLD_KEY);
+
+    match contribution_threshold {
         None => 0, //initialize (initializing to zero means that round zero can never be processed!)
-        Some(num) => u64::decode::<Bytes>(num.to_owned().into())
+        Some(num) => u32::decode::<Bytes>(num.to_owned().into())
             .expect("invalid data in database - possible database corruption"),
     }
 }
 
-fn set_last_processed_round<T: DB>(
+#[allow(dead_code)]
+fn set_contribution_threshold<T: DB>(
     ctx: &mut TxContext<T>,
-    last_round: u64,
+    new_threshold: u32,
 ) -> Result<(), AppError> {
     let tlcs_store = ctx.get_mutable_kv_store(Store::Tlcs);
-    let prefix = LAST_PROCESSED_ROUND_KEY.to_vec();
-    tlcs_store.set(prefix.into(), last_round.encode_to_vec());
+    let prefix = CONTRIBUTION_THRESHOLD_KEY.to_vec();
+    tlcs_store.set(prefix.into(), new_threshold.encode_to_vec());
 
     Ok(())
 }
 
-fn process_up_to(time: i64) -> u64 {
-    latest_round_up_to(time) + LOE_PERIOD
-}
-
-/// Returns the latest loe round expected before the provided unix time
-fn latest_round_up_to(time: i64) -> u64 {
-    (time as u64 - LOE_GENESIS_TIME) / LOE_PERIOD
-}
-
 fn get_this_round_all_participant_data<'a, T: DB>(
-    ctx: &'a TxContext<T>,
+    ctx: &'a mut TxContext<T>,
     round: u64,
+    scheme: u32,
 ) -> PrefixRange<'a, PrefixDB<T>> {
     let mut prefix = PARTICIPANT_DATA_KEY.to_vec();
     prefix.append(&mut round.to_le_bytes().to_vec());
-    prefix.append(&mut TMP_SCHEME_ID.to_vec());
+    prefix.append(&mut scheme.to_le_bytes().to_vec());
 
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
     tlcs_store.get_immutable_prefix_store(prefix).range(..)
 }
 
-fn get_this_round_all_loe_data<'a, T: DB>(ctx: &'a TxContext<T>, round: u64) -> RawMsgLoeData {
+fn get_this_round_all_loe_data<'a, T: DB>(ctx: &'a mut TxContext<T>, round: u64) -> RawMsgLoeData {
     let tlcs_store = ctx.get_kv_store(Store::Tlcs);
 
     let mut prefix = LOE_DATA_KEY.to_vec();

@@ -168,6 +168,7 @@ impl BaseApp {
                 Msg::Send(send_msg) => {
                     Bank::send_coins_from_account_to_account(&mut ctx.as_any(), send_msg.clone())?
                 }
+                Msg::NewProcess(msg) => tlcs::open_new_process(ctx, msg)?,
                 Msg::Participate(msg) => tlcs::append_contribution(ctx, msg)?,
                 Msg::SubmitLoeData(msg) => tlcs::append_loe_data(&mut ctx.as_any(), msg)?,
             };
@@ -453,29 +454,6 @@ impl Application for BaseApp {
                     let ctx = QueryContext::new(&store, self.get_block_height());
 
                     let res = tlcs::query_loe_data_by_round(&ctx, req.round).encode_to_vec();
-                    ResponseQuery {
-                        code: 0,
-                        log: "exists".to_string(),
-                        info: "".to_string(),
-                        index: 0,
-                        key: request.data,
-                        value: res.into(),
-                        proof_ops: None,
-                        height: self
-                            .get_block_height()
-                            .try_into()
-                            .expect("can't believe we made it this far"),
-                        codespace: "".to_string(),
-                    }
-                }
-                "/azkr.tlcs.v1beta1.Query/AllLoeDataByRoundAndScheme" => {
-                    let data = request.data.clone();
-                    let req = QueryRoundSchemeRequest::decode(data).unwrap();
-
-                    let store = self.multi_store.read().unwrap();
-                    let ctx = QueryContext::new(&store, self.get_block_height());
-
-                    let res = tlcs::query_loe_data_by_round_and_scheme(&ctx, req.round, req.scheme).encode_to_vec();
                     ResponseQuery {
                         code: 0,
                         log: "exists".to_string(),
