@@ -3,6 +3,8 @@ use database::DB;
 use prost::Message;
 use proto_types::AccAddress;
 use tracing::info;
+// Include to run benchmark and uncomment benchmark in test
+//use std::time::Instant;
 
 use proto_messages::azkr::tlcs::v1beta1::{
     MsgContribution,
@@ -27,7 +29,7 @@ use crate::{
 use crate::x::tlcs::crypto::verify_participant_data;
 
 // For LOE data verification
-use drand_verify::{derive_randomness, verify, G2Pubkey, Pubkey};
+use drand_verify::{verify, G2Pubkey, Pubkey};
 use hex_literal::hex;
 
 // Key Prefixes
@@ -331,7 +333,8 @@ pub fn append_loe_data<T: DB>(ctx: &mut Context<T>, msg: &MsgLoeData) -> Result<
     let mut store_key = LOE_DATA_KEY.to_vec();
     store_key.append(&mut msg.round.to_le_bytes().to_vec());
 
-    if loe_signature_is_valid(msg.round, msg.randomness.clone(), msg.signature.clone()) {
+    //if loe_signature_is_valid(msg.round, msg.randomness.clone(), msg.signature.clone()) {
+    if loe_signature_is_valid(msg.round, msg.signature.clone()) {
         tlcs_store.set(
             store_key.into(),
             <MsgLoeData as Into<RawMsgLoeData>>::into(msg.to_owned()).encode_to_vec(),
@@ -388,16 +391,18 @@ pub fn query_loe_data_by_round<T: DB>(
 // The LOE data is from https://api.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/{round}
 // {"round":3276594,"randomness":"f282310f131ed63e0342cd7e47f9e4317b20fb6f652b03ce81378cf825227212","signature":"86f91b1eec7b22ecce1385ec1cc4861f43507fa897cad686e44a87986a7ce18a94fa7128d6f76d6b950bb4e559472539"}
 
-fn loe_signature_is_valid(round: u64, randomness: Vec<u8>, signature: Vec<u8>) -> bool {
+fn loe_signature_is_valid(round: u64, signature: Vec<u8>) -> bool {
     let pk2 = G2Pubkey::from_fixed(LOE_PUBLIC_KEY).unwrap();
 
     // See https://api.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/1 for example data of the three inputs
     let nil: &mut [u8] = &mut [];
 
+    /*
     let randomness_check = derive_randomness(&signature);
     if !(randomness == randomness_check) {
         return false;
     }
+    */
 
     //match verify(&pk2, round, &nil, &hex_signature) {
     match verify(&pk2, round, &nil, &signature) {
@@ -416,9 +421,18 @@ fn loe_signature_is_valid(round: u64, randomness: Vec<u8>, signature: Vec<u8>) -
 fn test_round_signature() {
     //let signature: String = "9544ddce2fdbe8688d6f5b4f98eed5d63eee3902e7e162050ac0f45905a55657714880adabe3c3096b92767d886567d0".to_string();
     //let round: u32 = 1;
-    let randomness: Vec<u8> =
-        hex::decode("f282310f131ed63e0342cd7e47f9e4317b20fb6f652b03ce81378cf825227212").unwrap();
+    //let randomness: Vec<u8> = hex::decode("f282310f131ed63e0342cd7e47f9e4317b20fb6f652b03ce81378cf825227212").unwrap();
     let signature: Vec<u8> = hex::decode("86f91b1eec7b22ecce1385ec1cc4861f43507fa897cad686e44a87986a7ce18a94fa7128d6f76d6b950bb4e559472539").unwrap();
     let round: u64 = 3276594;
-    assert!(loe_signature_is_valid(round, randomness, signature));
+    /* Benchmark
+    let before = Instant::now();
+    for _i in 0..1000 {
+        //_ = loe_signature_is_valid(round, randomness.clone(), signature.clone());
+        _ = loe_signature_is_valid(round, signature.clone());
+        // some code
+    }
+    println!("Elapsed time(10000): {:.2?}", before.elapsed());
+    */
+    //assert!(loe_signature_is_valid(round, randomness, signature));
+    assert!(loe_signature_is_valid(round, signature));
 }
