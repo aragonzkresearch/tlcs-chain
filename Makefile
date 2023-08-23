@@ -8,7 +8,7 @@ build:
 	cargo build --release --target-dir ./build
 
 test:
-	cargo test
+	cargo test -- --nocapture
 
 install:
 	cargo install --path ./tlcs
