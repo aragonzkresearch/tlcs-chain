@@ -1,9 +1,2 @@
 [workspace]
-members = [
-    "proto-types",
-    "proto-messages",
-    "tlcs",
-    "trees",
-    "database",
-    "tendermint",
-]
+members = ["tlcs", "x/timelock"]

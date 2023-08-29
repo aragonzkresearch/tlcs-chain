@@ -1,80 +1,58 @@
 use anyhow::Result;
-use app::{cli::get_run_command, APP_NAME};
-use clap::{value_parser, Arg, ArgAction, ArgMatches, Command};
-use clap_complete::{generate, Generator, Shell};
-use client::{init::get_init_command, query::get_query_command, tx::get_tx_command};
-use human_panic::setup_panic;
+use auth::cli::query::get_auth_query_command;
+use auth::Keeper as AuthKeeper;
+use bank::cli::query::get_bank_query_command;
+use bank::Keeper as BankKeeper;
+use client::query_command_handler;
+use client::tx_command_handler;
+use gears::app::run;
+use gears::x::params::Keeper as ParamsKeeper;
+use rest::get_router;
 
-use crate::{
-    app::cli::run_run_command,
-    client::{
-        init::run_init_command,
-        keys::{get_keys_command, run_keys_command},
-        query::run_query_command,
-        tx::run_tx_command,
-    },
-};
+use crate::genesis::GenesisState;
+use crate::handler::Handler;
+use crate::store_keys::{TlcsParamsStoreKey, TlcsStoreKey};
 
-mod app;
 mod client;
-mod crypto;
-mod error;
-mod store;
-mod types;
-mod utils;
-mod x;
+mod genesis;
+mod handler;
+mod message;
+mod rest;
+mod store_keys;
 
-const TM_ADDRESS: &str = "http://localhost:26617"; // used by rest service when proxying requests to tendermint // TODO: this needs to be configurable
-
-fn get_completions_command() -> Command {
-    Command::new("completions")
-        .about("Output shell completions")
-        .arg(
-            Arg::new("shell")
-                .required(true)
-                .action(ArgAction::Set)
-                .value_parser(value_parser!(Shell)),
-        )
-}
-
-fn run_completions_command(matches: &ArgMatches) {
-    if let Some(generator) = matches.get_one::<Shell>("shell").copied() {
-        let mut cmd = build_cli();
-        print_completions(generator, &mut cmd);
-    }
-}
-
-fn print_completions<G: Generator>(gen: G, cmd: &mut Command) {
-    generate(gen, cmd, cmd.get_name().to_string(), &mut std::io::stdout());
-}
-
-fn build_cli() -> Command {
-    Command::new(APP_NAME)
-        .version(env!("GIT_HASH"))
-        .subcommand_required(true)
-        .subcommand(get_init_command())
-        .subcommand(get_run_command())
-        .subcommand(get_query_command())
-        .subcommand(get_keys_command())
-        .subcommand(get_tx_command())
-        .subcommand(get_completions_command())
-}
+pub const APP_NAME: &str = env!("CARGO_PKG_NAME");
+pub const VERSION: &str = env!("GIT_HASH");
 
 fn main() -> Result<()> {
-    setup_panic!();
+    let params_keeper = ParamsKeeper::new(TlcsStoreKey::Params);
 
-    let cli = build_cli();
-    let matches = cli.get_matches();
+    let auth_keeper = AuthKeeper::new(
+        TlcsStoreKey::Auth,
+        params_keeper.clone(),
+        TlcsParamsStoreKey::Auth,
+    );
 
-    match matches.subcommand() {
-        Some(("init", sub_matches)) => run_init_command(sub_matches),
-        Some(("run", sub_matches)) => run_run_command(sub_matches),
-        Some(("query", sub_matches)) => run_query_command(sub_matches)?,
-        Some(("keys", sub_matches)) => run_keys_command(sub_matches)?,
-        Some(("tx", sub_matches)) => run_tx_command(sub_matches)?,
-        Some(("completions", sub_matches)) => run_completions_command(sub_matches),
-        _ => unreachable!("exhausted list of subcommands and subcommand_required prevents `None`"),
-    };
+    let bank_keeper = BankKeeper::new(
+        TlcsStoreKey::Bank,
+        params_keeper.clone(),
+        TlcsParamsStoreKey::Bank,
+        auth_keeper.clone(),
+    );
 
-    Ok(())
+    let query_commands = vec![get_bank_query_command(), get_auth_query_command()];
+
+    run(
+        APP_NAME,
+        VERSION,
+        GenesisState::default(),
+        bank_keeper,
+        auth_keeper,
+        params_keeper,
+        TlcsParamsStoreKey::BaseApp,
+        Handler::new(),
+        query_commands,
+        query_command_handler,
+        tx_command_handler,
+        get_router(),
+    )
 }

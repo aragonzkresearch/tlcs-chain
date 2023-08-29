@@ -102,21 +102,20 @@ The balance of this address was set to 34 in the genesis file.
 3. Import the key corresponding to the above address into the tlcs key store:
 
 ```console
-echo "race draft rival universe maid cheese steel logic crowd fork comic easy truth drift tomorrow eye buddy head time cash swing swift midnight borrow" | tlcs keys add kevin
-echo "all victory hero talent forget twice quote you office vacant sleep kangaroo disorder scorpion humble gorilla coast pudding edge garlic bid dutch excuse magic" | tlcs keys add alice
+echo "race draft rival universe maid cheese steel logic crowd fork comic easy truth drift tomorrow eye buddy head time cash swing swift midnight borrow" | tlcs keys add kevin --recover
+echo "all victory hero talent forget twice quote you office vacant sleep kangaroo disorder scorpion humble gorilla coast pudding edge garlic bid dutch excuse magic" | tlcs keys add alice --recover
 ```
 
 4. Send tokens:
 
 ```console
-tlcs tx bank send kevin cosmos180tr8wmsk8ugt32yynj8efqwg3yglmpwp22rut 10uatom --fee 1uatom
+tlcs tx kevin bank send cosmos180tr8wmsk8ugt32yynj8efqwg3yglmpwp22rut 10uatom --fee 1uatom
 ```
 
 5. Query the address balance and observe that it has decreased by 11uatom which is the sum of the amount transferred and the fee:
 
 ```console
 tlcs query bank balances cosmos1syavy2npfyt9tcncdtsdzf7kny9lh777pahuux
-tlcs query bank balances cosmos1skgmlw2j4qupafzcg5qvacd76mfzfe69la0hxz
 ```
 
 Which returns:
@@ -133,3 +132,18 @@ Which returns:
 }
 
 ```
+
+6. Submit participant data:
+
+```console
+tlcs tx tlcs request_keypair kevin 100 1 1692800327 
+```
+
+```console
+tlcs tx tlcs contribute kevin 100 1 0
+```
+
+```console
+tlcs query tlcs contributions_by_round 100
+```
+
