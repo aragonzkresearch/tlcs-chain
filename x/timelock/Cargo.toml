@@ -15,7 +15,7 @@ ibc-proto = { git = "https://github.com/joneskm/ibc-proto-rs" }
 # # this line suggests that v0.28.0 implements Tendermint API v0.34.x 
 # # https://github.com/informalsystems/tendermint-rs/blob/560c852840ac58cb03b55fc376ff0dc2ac089d94/abci/src/codec.rs#L5
 # tendermint-abci = { git = "https://github.com/joneskm/tendermint-rs" }
-# tendermint-proto = { git = "https://github.com/joneskm/tendermint-rs" }
+tendermint-proto = { git = "https://github.com/joneskm/tendermint-rs" }
 # tendermint-informal = { package = "tendermint", git = "https://github.com/joneskm/tendermint-rs" }
 tendermint-rpc = { git = "https://github.com/joneskm/tendermint-rs", features = [
     "http-client",

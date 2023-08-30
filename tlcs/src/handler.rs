@@ -1,13 +1,13 @@
-use gears::x::params::Keeper as ParamsKeeper;
+use gears::{
+    types::context::{InitContext, TxContext},
+    x::params::Keeper as ParamsKeeper,
+};
 use proto_messages::cosmos::base::v1beta1::SendCoins;
 use proto_types::AccAddress;
 use tendermint_proto::abci::RequestQuery;
 
 use database::Database;
-use gears::{
-    error::AppError,
-    types::context::{Context, QueryContext},
-};
+use gears::{error::AppError, types::context::QueryContext};
 
 use crate::{
     genesis::GenesisState,
@@ -19,6 +19,7 @@ use crate::{
 pub struct Handler {
     bank_handler: bank::Handler<TlcsStoreKey, TlcsParamsStoreKey>,
     auth_handler: auth::Handler<TlcsStoreKey, TlcsParamsStoreKey>,
+    timelock_handler: timelock::Handler<TlcsStoreKey>,
 }
 
 impl Handler {
@@ -38,9 +39,12 @@ impl Handler {
             auth_keeper.clone(),
         );
 
+        let timelock_keeper = timelock::Keeper::new(TlcsStoreKey::Timelock);
+
         Handler {
             bank_handler: bank::Handler::new(bank_keeper),
             auth_handler: auth::Handler::new(auth_keeper),
+            timelock_handler: timelock::Handler::new(timelock_keeper),
         }
     }
 }
@@ -48,17 +52,18 @@ impl Handler {
 impl gears::baseapp::Handler<Message, TlcsStoreKey, GenesisState> for Handler {
     fn handle_tx<DB: Database>(
         &self,
-        ctx: &mut Context<DB, TlcsStoreKey>,
+        ctx: &mut TxContext<DB, TlcsStoreKey>,
         msg: &Message,
     ) -> Result<(), AppError> {
         match msg {
             Message::Bank(msg) => self.bank_handler.handle(ctx, msg),
+            Message::Timelock(msg) => self.timelock_handler.handle(ctx, msg),
         }
     }
 
     fn handle_init_genesis<DB: Database>(
         &self,
-        ctx: &mut Context<DB, TlcsStoreKey>,
+        ctx: &mut InitContext<DB, TlcsStoreKey>,
         genesis: GenesisState,
     ) {
         self.bank_handler.init_genesis(ctx, genesis.bank);
@@ -74,6 +79,8 @@ impl gears::baseapp::Handler<Message, TlcsStoreKey, GenesisState> for Handler {
             self.auth_handler.handle_query(ctx, query)
         } else if query.path.starts_with("/cosmos.bank") {
             self.bank_handler.handle_query(ctx, query)
+        } else if query.path.starts_with("/cosmos.tlcs") {
+            self.timelock_handler.handle_query(ctx, query)
         } else {
             Err(AppError::InvalidRequest("query path not found".into()))
         }

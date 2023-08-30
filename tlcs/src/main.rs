@@ -8,6 +8,7 @@ use client::tx_command_handler;
 use gears::app::run;
 use gears::x::params::Keeper as ParamsKeeper;
 use rest::get_router;
+use timelock::client::cli::query::get_timelock_query_command;
 
 use crate::genesis::GenesisState;
 use crate::handler::Handler;
@@ -39,7 +40,11 @@ fn main() -> Result<()> {
         auth_keeper.clone(),
     );
 
-    let query_commands = vec![get_bank_query_command(), get_auth_query_command()];
+    let query_commands = vec![
+        get_bank_query_command(),
+        get_auth_query_command(),
+        get_timelock_query_command(),
+    ];
 
     run(
         APP_NAME,

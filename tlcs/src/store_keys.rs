@@ -7,6 +7,7 @@ pub enum TlcsStoreKey {
     Bank,
     Auth,
     Params,
+    Timelock,
 }
 
 /// WARNING: a key name must not be a prefix of another, there is currently
@@ -17,6 +18,7 @@ impl StoreKey for TlcsStoreKey {
             TlcsStoreKey::Bank => "bank",
             TlcsStoreKey::Auth => "acc",
             TlcsStoreKey::Params => "params",
+            TlcsStoreKey::Timelock => "timelock",
         }
     }
 }

@@ -52,6 +52,10 @@ pub struct Keeper<SK: StoreKey> {
 }
 
 impl<SK: StoreKey> Keeper<SK> {
+    pub fn new(store_key: SK) -> Self {
+        Keeper { store_key }
+    }
+
     pub fn open_process_count<T: Database>(
         &self,
         ctx: &mut TxContext<T, SK>,

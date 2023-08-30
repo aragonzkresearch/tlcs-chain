@@ -7,12 +7,14 @@ use serde::Serialize;
 #[serde(untagged)]
 pub enum Message {
     Bank(bank::Message),
+    Timelock(timelock::Message),
 }
 
 impl From<Message> for Any {
     fn from(msg: Message) -> Self {
         match msg {
             Message::Bank(msg) => msg.into(),
+            Message::Timelock(msg) => msg.into(),
         }
     }
 }
@@ -23,6 +25,8 @@ impl TryFrom<Any> for Message {
     fn try_from(value: Any) -> Result<Self, Self::Error> {
         if value.type_url.starts_with("/cosmos.bank") {
             Ok(Message::Bank(Any::try_into(value)?))
+        } else if value.type_url.starts_with("/cosmos.timelock") {
+            Ok(Message::Timelock(Any::try_into(value)?))
         } else {
             Err(proto_messages::Error::DecodeGeneral(
                 "message type not recognized".into(),
@@ -35,12 +39,14 @@ impl SDKMessage for Message {
     fn get_signers(&self) -> Vec<&AccAddress> {
         match self {
             Message::Bank(msg) => msg.get_signers(),
+            Message::Timelock(msg) => msg.get_signers(),
         }
     }
 
     fn validate_basic(&self) -> std::result::Result<(), String> {
         match self {
             Message::Bank(msg) => msg.validate_basic(),
+            Message::Timelock(msg) => msg.validate_basic(),
         }
     }
 }

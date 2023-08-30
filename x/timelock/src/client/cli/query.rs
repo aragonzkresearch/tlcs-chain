@@ -10,9 +10,9 @@ use prost::Message;
 use tendermint_rpc::{Client, HttpClient};
 use tokio::runtime::Runtime;
 
-pub fn get_tlcs_query_command() -> Command {
-    Command::new("tlcs")
-        .about("Querying commands for the tlcs module")
+pub fn get_timelock_query_command() -> Command {
+    Command::new("timelock")
+        .about("Querying commands for the timelock module")
         .subcommand(Command::new("contributions").about("Query list of all contributions"))
         .subcommand(
             Command::new("contributions_by_round")
@@ -83,7 +83,7 @@ pub fn get_tlcs_query_command() -> Command {
         .subcommand_required(true)
 }
 
-pub fn run_tlcs_query_command(matches: &ArgMatches, node: &str) -> Result<String> {
+pub fn run_timelock_query_command(matches: &ArgMatches, node: &str) -> Result<String> {
     let client = HttpClient::new(node)?;
 
     match matches.subcommand() {

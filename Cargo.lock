@@ -41,9 +41,9 @@ dependencies = [
 
 [[package]]
 name = "aho-corasick"
-version = "1.0.4"
+version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6748e8def348ed4d14996fa801f4122cd763fff530258cdc03f64b25f89d3a5a"
+checksum = "0c378d78423fdad8089616f827526ee33c19f2fddbd5de1629152c9593ba4783"
 dependencies = [
  "memchr",
 ]
@@ -302,7 +302,7 @@ dependencies = [
 [[package]]
 name = "auth"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears#94c5d99df5a8ab1f687bdc1cadf39efd6238f679"
+source = "git+https://github.com/rumos-io/gears#ae26c33f0bd9db4139fe1cea54ca0b705562e300"
 dependencies = [
  "anyhow",
  "bytes",
@@ -395,7 +395,7 @@ dependencies = [
 [[package]]
 name = "bank"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears#94c5d99df5a8ab1f687bdc1cadf39efd6238f679"
+source = "git+https://github.com/rumos-io/gears#ae26c33f0bd9db4139fe1cea54ca0b705562e300"
 dependencies = [
  "anyhow",
  "auth",
@@ -1048,9 +1048,9 @@ dependencies = [
 
 [[package]]
 name = "dashmap"
-version = "5.5.2"
+version = "5.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b101bb8960ab42ada6ae98eb82afcea4452294294c45b681295af26610d6d28"
+checksum = "978747c1d849a7d2ee5e8adc0159961c48fb7e5db2f06af6723b80123bb53856"
 dependencies = [
  "cfg-if 1.0.0",
  "hashbrown 0.14.0",
@@ -1062,7 +1062,7 @@ dependencies = [
 [[package]]
 name = "database"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears#94c5d99df5a8ab1f687bdc1cadf39efd6238f679"
+source = "git+https://github.com/rumos-io/gears#ae26c33f0bd9db4139fe1cea54ca0b705562e300"
 dependencies = [
  "rocksdb",
  "thiserror",
@@ -1544,7 +1544,7 @@ dependencies = [
 [[package]]
 name = "gears"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears#94c5d99df5a8ab1f687bdc1cadf39efd6238f679"
+source = "git+https://github.com/rumos-io/gears#ae26c33f0bd9db4139fe1cea54ca0b705562e300"
 dependencies = [
  "anyhow",
  "axum",
@@ -2445,9 +2445,9 @@ checksum = "60302e4db3a61da70c0cb7991976248362f30319e88850c487b9b95bbf059e00"
 
 [[package]]
 name = "memchr"
-version = "2.6.0"
+version = "2.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76fc44e2588d5b436dbc3c6cf62aef290f90dab6235744a93dfe1cc18f451e2c"
+checksum = "5486aed0026218e61b8a01d5fbd5a0a134649abb71a0e53b7bc088529dced86e"
 
 [[package]]
 name = "memoffset"
@@ -2740,19 +2740,20 @@ checksum = "9b2a4787296e9989611394c33f193f676704af1686e70b8f8033ab5ba9a35a94"
 
 [[package]]
 name = "pest"
-version = "2.7.2"
+version = "2.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1acb4a4365a13f749a93f1a094a7805e5cfa0955373a9de860d962eaa3a5fe5a"
+checksum = "d7a4d085fd991ac8d5b05a147b437791b4260b76326baf0fc60cf7c9c27ecd33"
 dependencies = [
+ "memchr",
  "thiserror",
  "ucd-trie",
 ]
 
 [[package]]
 name = "pest_derive"
-version = "2.7.2"
+version = "2.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "666d00490d4ac815001da55838c500eafb0320019bbaa44444137c48b443a853"
+checksum = "a2bee7be22ce7918f641a33f08e3f43388c7656772244e2bbb2477f44cc9021a"
 dependencies = [
  "pest",
  "pest_generator",
@@ -2760,9 +2761,9 @@ dependencies = [
 
 [[package]]
 name = "pest_generator"
-version = "2.7.2"
+version = "2.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68ca01446f50dbda87c1786af8770d535423fa8a53aec03b8f4e3d7eb10e0929"
+checksum = "d1511785c5e98d79a05e8a6bc34b4ac2168a0e3e92161862030ad84daa223141"
 dependencies = [
  "pest",
  "pest_meta",
@@ -2773,9 +2774,9 @@ dependencies = [
 
 [[package]]
 name = "pest_meta"
-version = "2.7.2"
+version = "2.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56af0a30af74d0445c0bf6d9d051c979b516a1a5af790d251daee76005420a48"
+checksum = "b42f0394d3123e33353ca5e1e89092e533d2cc490389f2bd6131c43c634ebc5f"
 dependencies = [
  "once_cell",
  "pest",
@@ -2911,7 +2912,7 @@ dependencies = [
 [[package]]
 name = "proto-messages"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears#94c5d99df5a8ab1f687bdc1cadf39efd6238f679"
+source = "git+https://github.com/rumos-io/gears#ae26c33f0bd9db4139fe1cea54ca0b705562e300"
 dependencies = [
  "base64 0.21.3",
  "base64-serde",
@@ -2932,7 +2933,7 @@ dependencies = [
 [[package]]
 name = "proto-types"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears#94c5d99df5a8ab1f687bdc1cadf39efd6238f679"
+source = "git+https://github.com/rumos-io/gears#ae26c33f0bd9db4139fe1cea54ca0b705562e300"
 dependencies = [
  "bech32",
  "cosmwasm-std",
@@ -3923,7 +3924,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 [[package]]
 name = "store"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears#94c5d99df5a8ab1f687bdc1cadf39efd6238f679"
+source = "git+https://github.com/rumos-io/gears#ae26c33f0bd9db4139fe1cea54ca0b705562e300"
 dependencies = [
  "database",
  "integer-encoding",
@@ -4038,7 +4039,7 @@ dependencies = [
 [[package]]
 name = "tendermint"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears#94c5d99df5a8ab1f687bdc1cadf39efd6238f679"
+source = "git+https://github.com/rumos-io/gears#ae26c33f0bd9db4139fe1cea54ca0b705562e300"
 dependencies = [
  "ed25519-consensus",
  "handlebars",
@@ -4447,6 +4448,7 @@ dependencies = [
  "serde_json",
  "serial_test",
  "store",
+ "tendermint-proto 0.29.1 (git+https://github.com/joneskm/tendermint-rs)",
  "tendermint-rpc 0.29.1",
  "tokio",
  "tracing",
@@ -4517,6 +4519,7 @@ dependencies = [
  "strum_macros",
  "tendermint 0.29.1 (git+https://github.com/joneskm/tendermint-rs)",
  "tendermint-proto 0.29.1 (git+https://github.com/joneskm/tendermint-rs)",
+ "timelock",
 ]
 
 [[package]]
@@ -4860,7 +4863,7 @@ dependencies = [
 [[package]]
 name = "trees"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears#94c5d99df5a8ab1f687bdc1cadf39efd6238f679"
+source = "git+https://github.com/rumos-io/gears#ae26c33f0bd9db4139fe1cea54ca0b705562e300"
 dependencies = [
  "caches",
  "database",

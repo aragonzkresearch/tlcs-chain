@@ -7,6 +7,7 @@ use bank::cli::{
 use clap::{ArgMatches, Subcommand};
 use proto_types::AccAddress;
 use tendermint_informal::block::Height;
+use timelock::client::cli::query::run_timelock_query_command;
 
 use crate::message::Message;
 
@@ -36,6 +37,7 @@ pub fn query_command_handler(matches: &ArgMatches) -> Result<()> {
     let res = match matches.subcommand() {
         Some(("bank", sub_matches)) => run_bank_query_command(sub_matches, node, Some(height)),
         Some(("auth", sub_matches)) => run_auth_query_command(sub_matches, node),
+        Some(("timelock", sub_matches)) => run_timelock_query_command(sub_matches, node),
 
         _ => unreachable!("Exhausted list of subcommands and subcommand_required prevents `None`"),
     }?;
