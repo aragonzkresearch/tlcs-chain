@@ -2,25 +2,33 @@ use anyhow::Result;
 use auth::cli::query::run_auth_query_command;
 use bank::cli::{
     query::run_bank_query_command,
-    tx::{run_bank_tx_command, Cli},
+    tx::{run_bank_tx_command, Cli as BankCli},
 };
 use clap::{ArgMatches, Subcommand};
 use proto_types::AccAddress;
 use tendermint_informal::block::Height;
-use timelock::client::cli::query::run_timelock_query_command;
+use timelock::client::cli::{
+    query::run_timelock_query_command,
+    tx::{run_timelock_tx_command, Cli as TimelockCli},
+};
 
 use crate::message::Message;
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
     /// Bank transaction subcommands
-    Bank(Cli),
+    Bank(BankCli),
+    /// Timelock transaction subcommands
+    Timelock(TimelockCli),
 }
 
 pub fn tx_command_handler(command: Commands, from_address: AccAddress) -> Result<Message> {
     match command {
         Commands::Bank(args) => {
             run_bank_tx_command(args, from_address).map(|msg| Message::Bank(msg))
+        }
+        Commands::Timelock(args) => {
+            run_timelock_tx_command(args, from_address).map(|msg| Message::Timelock(msg))
         }
     }
 }
