@@ -4,7 +4,7 @@ use gears::{
 };
 use proto_messages::cosmos::base::v1beta1::SendCoins;
 use proto_types::AccAddress;
-use tendermint_proto::abci::RequestQuery;
+use tendermint_proto::abci::{RequestBeginBlock, RequestQuery};
 
 use database::Database;
 use gears::{error::AppError, types::context::QueryContext};
@@ -98,5 +98,13 @@ impl gears::baseapp::Handler<Message, TlcsStoreKey, GenesisState> for Handler {
             .handle_add_genesis_account(&mut genesis_state.bank, address, coins);
 
         Ok(())
+    }
+
+    fn handle_begin_block<DB: Database>(
+        &self,
+        ctx: &mut TxContext<DB, TlcsStoreKey>,
+        request: RequestBeginBlock,
+    ) {
+        self.timelock_handler.handle_begin_block(ctx, request)
     }
 }

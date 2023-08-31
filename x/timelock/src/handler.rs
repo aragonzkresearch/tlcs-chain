@@ -3,6 +3,7 @@ use gears::{error::AppError, types::context::TxContext};
 use ibc_proto::protobuf::Protobuf;
 use prost::Message as ProstMessage;
 use store::StoreKey;
+use tendermint_proto::abci::RequestBeginBlock;
 
 use crate::{
     proto::tlcs::v1beta1::{QueryRoundRequest, QueryRoundSchemeRequest, QueryTimeRequest},
@@ -29,6 +30,30 @@ impl<SK: StoreKey> Handler<SK> {
             Message::Participate(msg) => self.keeper.append_contribution(ctx, msg),
             Message::SubmitLoeData(msg) => self.keeper.append_loe_data(&mut ctx.as_any(), msg),
         }
+    }
+
+    pub fn handle_begin_block<DB: Database>(
+        &self,
+        ctx: &mut TxContext<DB, SK>,
+        _request: RequestBeginBlock,
+    ) {
+        //let _ = set_last_processed_round(ctx, 4183720);
+        ////return;
+
+        // TODO: Get this from the number of validators. For now we'll just set it here
+        //let _ = set_contribution_threshold(ctx, 2);
+        //let contribution_threshold = get_contribution_threshold(ctx);
+
+        let contribution_threshold: u32 = 2;
+        let block_time = ctx.get_header().time.unix_timestamp();
+
+        //info!("BEGINBLOCKER:   process_to: {:?}", process_up_to);
+        let (need_pub_keys, need_secret_keys) = self.keeper.get_empty_keypairs(ctx);
+
+        self.keeper
+            .make_public_keys(ctx, need_pub_keys, block_time, contribution_threshold);
+
+        self.keeper.make_secret_keys(ctx, need_secret_keys);
     }
 
     pub fn handle_query<DB: Database>(

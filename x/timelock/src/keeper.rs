@@ -1,28 +1,33 @@
+use std::collections::HashMap;
+
 use bytes::Bytes;
-use database::Database;
+use database::{Database, PrefixDB};
 use gears::{
     error::AppError,
     types::context::{Context, QueryContext, TxContext},
 };
 use prost::Message;
 use proto_types::AccAddress;
-use store::StoreKey;
+use store::{MutablePrefixStore, PrefixRange, StoreKey};
 use tracing::info;
 // Include to run benchmark and uncomment benchmark in test
 //use std::time::Instant;
 
-use crate::proto::tlcs::v1beta1::{
-    MsgContribution,
-    MsgKeyPair,
-    MsgLoeData,
-    MsgNewProcess,
-    QueryAllContributionsResponse,
-    QueryAllKeyPairsResponse,
-    QueryAllLoeDataResponse,
-    RawMsgContribution,
-    RawMsgKeyPair,
-    RawMsgLoeData,
-    //RawMsgNewProcess,
+use crate::{
+    crypto::{aggregate_participant_data, make_secret_key},
+    proto::tlcs::v1beta1::{
+        MsgContribution,
+        MsgKeyPair,
+        MsgLoeData,
+        MsgNewProcess,
+        QueryAllContributionsResponse,
+        QueryAllKeyPairsResponse,
+        QueryAllLoeDataResponse,
+        RawMsgContribution,
+        RawMsgKeyPair,
+        RawMsgLoeData,
+        //RawMsgNewProcess,
+    },
 };
 
 use crate::crypto::verify_participant_data;
@@ -32,6 +37,7 @@ use drand_verify::{verify, G2Pubkey, Pubkey};
 use hex_literal::hex;
 
 // Key Prefixes
+const CONTRIBUTION_THRESHOLD_KEY: [u8; 1] = [0];
 const PARTICIPANT_DATA_KEY: [u8; 1] = [1];
 const KEYPAIR_DATA_KEY: [u8; 1] = [2];
 const LOE_DATA_KEY: [u8; 1] = [3];
@@ -435,6 +441,213 @@ impl<SK: StoreKey> Keeper<SK> {
         }
 
         QueryAllLoeDataResponse { randomnesses }
+    }
+
+    pub fn get_empty_keypairs<'a, T: Database>(
+        &self,
+        ctx: &'a mut TxContext<T, SK>,
+    ) -> (
+        HashMap<Vec<u8>, RawMsgKeyPair>,
+        HashMap<Vec<u8>, RawMsgKeyPair>,
+    ) {
+        let tlcs_store = ctx.get_kv_store(&self.store_key);
+        let store_key = KEYPAIR_DATA_KEY.to_vec();
+        let prefix_store = tlcs_store.get_immutable_prefix_store(store_key);
+        let keypairs = prefix_store.range(..);
+
+        let mut need_pub_key: HashMap<Vec<u8>, RawMsgKeyPair> = HashMap::new();
+        let mut need_priv_key: HashMap<Vec<u8>, RawMsgKeyPair> = HashMap::new();
+
+        //let mut need_pub_key: Vec<RawMsgKeyPair> = Vec::new();
+        //let mut need_priv_key: Vec<RawMsgKeyPair> = Vec::new();
+
+        for (index, keypair) in keypairs {
+            let the_keys: RawMsgKeyPair = RawMsgKeyPair::decode::<Bytes>(keypair.into())
+                .expect("invalid data in database - possible database corruption");
+            if the_keys.public_key.len() == 0 {
+                need_pub_key.insert(index.into(), the_keys);
+                //need_pub_key.push(the_keys);
+            } else if the_keys.private_key.len() == 0 {
+                need_priv_key.insert(index.into(), the_keys);
+                //need_priv_key.push(the_keys);
+            }
+        }
+
+        return (need_pub_key, need_priv_key);
+    }
+
+    pub fn make_public_keys<'a, T: Database>(
+        &self,
+        ctx: &'a mut TxContext<T, SK>,
+        new_key_list: HashMap<Vec<u8>, RawMsgKeyPair>,
+        cur_time: i64,
+        contribution_threshold: u32,
+    ) {
+        let mut tmp_store: HashMap<Vec<u8>, Vec<u8>> = HashMap::new();
+
+        for (key, mut keypair) in new_key_list {
+            let mut cur_data: Vec<u8> = Vec::new();
+            let mut contrib_count: u32 = 0;
+
+            if keypair.pubkey_time > cur_time {
+                continue;
+            }
+
+            // TODO Add the scheme in here
+            let round_all_participant_data =
+                self.get_this_round_all_participant_data(ctx, keypair.round, keypair.scheme);
+
+            for (_, row) in round_all_participant_data {
+                let contribution: RawMsgContribution =
+                    RawMsgContribution::decode::<Bytes>(row.into())
+                        .expect("invalid data in database - possible database corruption");
+
+                cur_data.extend(contribution.data);
+                contrib_count += 1;
+            }
+
+            if contrib_count < contribution_threshold {
+                continue;
+            }
+
+            let public_key = aggregate_participant_data(cur_data.clone());
+            keypair.public_key = public_key;
+
+            tmp_store.insert(key, keypair.encode_to_vec());
+        }
+
+        let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
+        for (k, v) in tmp_store {
+            tlcs_store.set(k, v)
+        }
+    }
+
+    pub fn make_secret_keys<'a, T: Database>(
+        &self,
+        ctx: &'a mut TxContext<T, SK>,
+        new_key_list: HashMap<Vec<u8>, RawMsgKeyPair>,
+    ) {
+        let mut tmp_store: HashMap<Vec<u8>, Vec<u8>> = HashMap::new();
+
+        for (key, mut keypair) in new_key_list {
+            let mut cur_data: Vec<u8> = Vec::new();
+            let loe_round_data = self.get_this_round_all_loe_data(ctx, keypair.round);
+
+            if loe_round_data.signature.len() < 1 {
+                continue;
+            }
+
+            let round_all_participant_data =
+                self.get_this_round_all_participant_data(ctx, keypair.round, keypair.scheme);
+            for (_, row) in round_all_participant_data {
+                let contribution: RawMsgContribution =
+                    RawMsgContribution::decode::<Bytes>(row.into())
+                        .expect("invalid data in database - possible database corruption");
+
+                cur_data.extend(contribution.data);
+            }
+
+            let secret_key = make_secret_key(
+                cur_data,
+                keypair.round,
+                loe_round_data.signature,
+                keypair.public_key.clone(),
+            );
+
+            keypair.private_key = secret_key;
+
+            tmp_store.insert(key, keypair.encode_to_vec());
+        }
+
+        let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
+        for (k, v) in tmp_store {
+            tlcs_store.set(k, v)
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn get_contribution_threshold<T: Database>(&self, ctx: &mut TxContext<T, SK>) -> u32 {
+        let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
+        let contribution_threshold = tlcs_store.get(&CONTRIBUTION_THRESHOLD_KEY);
+
+        match contribution_threshold {
+            None => 0, //initialize (initializing to zero means that round zero can never be processed!)
+            Some(num) => u32::decode::<Bytes>(num.to_owned().into())
+                .expect("invalid data in database - possible database corruption"),
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn set_contribution_threshold<T: Database>(
+        &self,
+        ctx: &mut TxContext<T, SK>,
+        new_threshold: u32,
+    ) -> Result<(), AppError> {
+        let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
+        let prefix = CONTRIBUTION_THRESHOLD_KEY.to_vec();
+        tlcs_store.set(prefix.into(), new_threshold.encode_to_vec());
+
+        Ok(())
+    }
+
+    pub fn get_this_round_all_participant_data<'a, T: Database>(
+        &self,
+        ctx: &'a mut TxContext<T, SK>,
+        round: u64,
+        scheme: u32,
+    ) -> Vec<(Vec<u8>, Vec<u8>)> {
+        let mut prefix = PARTICIPANT_DATA_KEY.to_vec();
+        prefix.append(&mut round.to_le_bytes().to_vec());
+        prefix.append(&mut scheme.to_le_bytes().to_vec());
+
+        let tlcs_store = ctx.get_kv_store(&self.store_key);
+        tlcs_store
+            .get_immutable_prefix_store(prefix)
+            .range(..)
+            .collect()
+    }
+
+    pub fn get_this_round_all_loe_data<'a, T: Database>(
+        &self,
+        ctx: &'a mut TxContext<T, SK>,
+        round: u64,
+    ) -> RawMsgLoeData {
+        let tlcs_store = ctx.get_kv_store(&self.store_key);
+
+        let mut prefix = LOE_DATA_KEY.to_vec();
+        prefix.append(&mut round.to_le_bytes().to_vec());
+        //prefix.append(&mut TMP_SCHEME_ID.to_vec());
+        let store_data = tlcs_store.get(&prefix);
+
+        let loe_data = match store_data {
+            Some(store_data) => RawMsgLoeData::decode::<Bytes>(store_data.into())
+                .expect("invalid data in database - possible database corruption"),
+            None => RawMsgLoeData {
+                address: "".to_string(),
+                round: 0,
+                randomness: vec![],
+                signature: vec![],
+            },
+        };
+
+        return loe_data;
+    }
+
+    #[allow(dead_code)]
+    pub fn get_public_keys_store<'a, T: Database>(
+        &self,
+        ctx: &'a mut TxContext<T, SK>,
+        round: u64,
+        scheme: u32,
+    ) -> MutablePrefixStore<'a, PrefixDB<T>> {
+        let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
+
+        let mut prefix = KEYPAIR_DATA_KEY.to_vec();
+        prefix.append(&mut round.to_le_bytes().to_vec());
+        prefix.append(&mut scheme.to_le_bytes().to_vec());
+
+        //tlcs_store.get_mutable_prefix_store(KEYPAIR_DATA_KEY.into())
+        tlcs_store.get_mutable_prefix_store(prefix.into())
     }
 }
 
