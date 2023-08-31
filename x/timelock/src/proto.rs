@@ -346,8 +346,6 @@ pub mod tlcs {
             #[prost(uint64, tag = "2")]
             pub round: u64,
             #[prost(bytes, tag = "3")]
-            pub randomness: Vec<u8>,
-            #[prost(bytes, tag = "4")]
             pub signature: Vec<u8>,
         }
 
@@ -355,7 +353,6 @@ pub mod tlcs {
         pub struct MsgLoeData {
             pub address: AccAddress,
             pub round: u64,
-            pub randomness: Vec<u8>,
             pub signature: Vec<u8>,
         }
 
@@ -369,7 +366,6 @@ pub mod tlcs {
                 Ok(MsgLoeData {
                     address,
                     round: raw.round,
-                    randomness: raw.randomness,
                     signature: raw.signature,
                 })
             }
@@ -380,7 +376,6 @@ pub mod tlcs {
                 RawMsgLoeData {
                     address: msg.address.into(),
                     round: msg.round,
-                    randomness: msg.randomness,
                     signature: msg.signature,
                 }
             }

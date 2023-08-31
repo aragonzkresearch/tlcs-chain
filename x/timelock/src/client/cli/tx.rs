@@ -43,8 +43,8 @@ pub enum TimelockCommands {
     Submit {
         /// LOE round number.
         round: u64,
-        /// Randomness.
-        randomness: Option<String>,
+        // Signature.
+        //signature: Option<String>,
     },
 }
 
@@ -75,8 +75,8 @@ pub fn run_timelock_tx_command(args: Cli, from_address: AccAddress) -> Result<Ti
                 data: round_data_vec,
             }))
         }
-        TimelockCommands::Submit { round, randomness } => {
-            // TODO make this so that randomness can be passed in and not automatically retrieved
+        TimelockCommands::Submit { round } => {
+            // TODO make this so that signature can be passed in and not automatically retrieved
 
             println!("Retrieving LOE Data from API");
             let loe_data = match Runtime::new()
@@ -91,25 +91,23 @@ pub fn run_timelock_tx_command(args: Cli, from_address: AccAddress) -> Result<Ti
             };
 
             println!("Round: {:?}", round);
-            println!("Sig: {:?}", loe_data.0);
-            println!("Rand: {:?}", loe_data.1);
+            println!("Sig: {:?}", loe_data);
 
             Ok(TimelockMessage::SubmitLoeData(MsgLoeData {
                 address: from_address,
                 round,
-                randomness: loe_data.0,
-                signature: loe_data.1,
+                signature: loe_data,
             }))
         }
     }
 }
 
-pub async fn get_loe_data(round: u64) -> Result<(Vec<u8>, Vec<u8>)> {
+pub async fn get_loe_data(round: u64) -> Result<Vec<u8>> {
     // Create a new client and retrieve the latest beacon. By default, it verifies its signature against the chain info.
     let client: DrandHttpClient = LOE_URL.try_into().unwrap();
     match client.get(round).await {
         Ok(dat) => {
-            return Ok((dat.randomness(), dat.signature()));
+            return Ok(dat.signature());
         }
         //Err(err) => Error(println!("LOE API connection failed: Error: {}", err)),
         //Err(err) => return Ok((vec![], vec![])),
