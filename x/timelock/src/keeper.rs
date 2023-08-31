@@ -386,7 +386,7 @@ impl<SK: StoreKey> Keeper<SK> {
         let mut store_key = LOE_DATA_KEY.to_vec();
         store_key.append(&mut msg.round.to_le_bytes().to_vec());
 
-        //if loe_signature_is_valid(msg.round, msg.randomness.clone(), msg.signature.clone()) {
+        //if loe_signature_is_valid(msg.round, msg.signature.clone()) {
         if loe_signature_is_valid(msg.round, msg.signature.clone()) {
             tlcs_store.set(
                 store_key.into(),
@@ -625,7 +625,6 @@ impl<SK: StoreKey> Keeper<SK> {
             None => RawMsgLoeData {
                 address: "".to_string(),
                 round: 0,
-                randomness: vec![],
                 signature: vec![],
             },
         };
@@ -663,13 +662,6 @@ fn loe_signature_is_valid(round: u64, signature: Vec<u8>) -> bool {
 
     // See https://api.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/1 for example data of the three inputs
     let nil: &mut [u8] = &mut [];
-
-    /*
-    let randomness_check = derive_randomness(&signature);
-    if !(randomness == randomness_check) {
-        return false;
-    }
-    */
 
     //match verify(&pk2, round, &nil, &hex_signature) {
     match verify(&pk2, round, &nil, &signature) {
