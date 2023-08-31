@@ -8,7 +8,7 @@ use client::tx_command_handler;
 use gears::app::run;
 use gears::x::params::Keeper as ParamsKeeper;
 use rest::get_router;
-use timelock::client::cli::query::get_timelock_query_command;
+use timelock::cli::query::get_timelock_query_command;
 
 use crate::genesis::GenesisState;
 use crate::handler::Handler;

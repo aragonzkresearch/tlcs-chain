@@ -22,5 +22,6 @@ pub fn get_router<
     H: Handler<M, SK, G> + 'static,
     G: DeserializeOwned + Clone + Send + Sync + 'static,
 >() -> Router<BaseApp<SK, PSK, M, BK, AK, H, G>, Body> {
-    Router::new().nest("/bank", bank::rest::get_router())
+    let router = Router::new().nest("/bank", bank::rest::get_router());
+    router.nest("/tlcs", timelock::rest::get_router())
 }

@@ -7,7 +7,7 @@ use bank::cli::{
 use clap::{ArgMatches, Subcommand};
 use proto_types::AccAddress;
 use tendermint_informal::block::Height;
-use timelock::client::cli::{
+use timelock::cli::{
     query::run_timelock_query_command,
     tx::{run_timelock_tx_command, Cli as TimelockCli},
 };

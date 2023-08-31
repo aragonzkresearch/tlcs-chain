@@ -8,7 +8,7 @@ use gears::{
 };
 use prost::Message;
 use proto_types::AccAddress;
-use store::{MutablePrefixStore, PrefixRange, StoreKey};
+use store::{MutablePrefixStore, StoreKey};
 use tracing::info;
 // Include to run benchmark and uncomment benchmark in test
 //use std::time::Instant;
