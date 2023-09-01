@@ -5,7 +5,6 @@ use bank::cli::query::get_bank_query_command;
 use bank::Keeper as BankKeeper;
 use client::query_command_handler;
 use client::tx_command_handler;
-use gears::app::run;
 use gears::x::params::Keeper as ParamsKeeper;
 use rest::get_router;
 use timelock::cli::query::get_timelock_query_command;

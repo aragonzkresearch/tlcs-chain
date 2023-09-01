@@ -4,10 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+gears = { workspace = true }
+proto-types = { workspace = true }
+proto-messages = { workspace = true } # This is needed for the error Type
+database = { workspace = true }
+auth = { workspace = true }
+store = { workspace = true }
+
 prost = { version = "0.11" }
 tracing = { version = "0.1", default-features = false }
-proto-types = { git = "https://github.com/rumos-io/gears" }
-proto-messages = { git = "https://github.com/rumos-io/gears" } # This is needed for the error Type
 ibc-proto = { git = "https://github.com/joneskm/ibc-proto-rs" }
 tendermint-abci = { git = "https://github.com/joneskm/tendermint-rs" }
 tendermint-proto = { git = "https://github.com/joneskm/tendermint-rs" }
@@ -19,16 +24,14 @@ bytes = "1.2.1"
 serde = { version = "1.0", default-features = false }
 serde_json = "1.0.93"
 hex = "0.4.3"
-database = { git = "https://github.com/rumos-io/gears" }
+
 tokio = "1.27.0"
 anyhow = "1.0.70"
 ibc-relayer = "0.23.0"
 drand-verify = "0.5.0"
 hex-literal = "0.4.1"
 drand_core = "0.0.7"
-gears = { git = "https://github.com/rumos-io/gears" }
-auth = { git = "https://github.com/rumos-io/gears" }
-store = { git = "https://github.com/rumos-io/gears" }
+
 strum = "0.24.1"
 axum = "0.6.18"
 

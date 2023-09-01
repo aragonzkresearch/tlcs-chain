@@ -1,2 +1,11 @@
 [workspace]
 members = ["tlcs", "x/timelock"]
+
+[workspace.dependencies]
+gears = { git = "https://github.com/rumos-io/gears", rev = "7bd4903" }
+proto-types = { git = "https://github.com/rumos-io/gears", rev = "7bd4903" }
+proto-messages = { git = "https://github.com/rumos-io/gears", rev = "7bd4903" }
+database = { git = "https://github.com/rumos-io/gears", rev = "7bd4903" }
+auth = { git = "https://github.com/rumos-io/gears", rev = "7bd4903" }
+store = { git = "https://github.com/rumos-io/gears", rev = "7bd4903" }
+bank = { git = "https://github.com/rumos-io/gears", rev = "7bd4903" }
