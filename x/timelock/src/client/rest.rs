@@ -1,7 +1,6 @@
 use bytes::Bytes;
 use ibc_proto::protobuf::Protobuf;
 use prost::Message as ProstMessage;
-use std::hash::Hash;
 use tendermint_abci::Application;
 
 use axum::{
@@ -13,15 +12,13 @@ use axum::{
 use gears::{
     baseapp::{
         ante::{AuthKeeper, BankKeeper},
-        BaseApp, Handler,
+        BaseApp, Genesis, Handler,
     },
     client::rest::{error::Error, Pagination},
     x::params::ParamsSubspaceKey,
 };
 use proto_messages::cosmos::tx::v1beta1::Message;
-use serde::de::DeserializeOwned;
 use store::StoreKey;
-use strum::IntoEnumIterator;
 use tendermint_proto::abci::RequestQuery;
 
 use crate::proto::tlcs::v1beta1::{
@@ -31,13 +28,13 @@ use crate::proto::tlcs::v1beta1::{
 
 /// Get all contributions
 pub async fn get_all_contributions<
-    SK: Hash + Eq + IntoEnumIterator + StoreKey + Clone + Send + Sync + 'static,
-    PSK: ParamsSubspaceKey + Clone + Send + Sync + 'static,
+    SK: StoreKey,
+    PSK: ParamsSubspaceKey,
     M: Message,
-    BK: BankKeeper<SK> + Clone + Send + Sync + 'static,
-    AK: AuthKeeper<SK> + Clone + Send + Sync + 'static,
-    H: Handler<M, SK, G> + 'static,
-    G: DeserializeOwned + Clone + Send + Sync + 'static,
+    BK: BankKeeper<SK>,
+    AK: AuthKeeper<SK>,
+    H: Handler<M, SK, G>,
+    G: Genesis,
 >(
     _pagination: Query<Pagination>,
     State(app): State<BaseApp<SK, PSK, M, BK, AK, H, G>>,
@@ -59,13 +56,13 @@ pub async fn get_all_contributions<
 
 /// Get all contributions by round
 pub async fn get_contributions_by_round<
-    SK: Hash + Eq + IntoEnumIterator + StoreKey + Clone + Send + Sync + 'static,
-    PSK: ParamsSubspaceKey + Clone + Send + Sync + 'static,
+    SK: StoreKey,
+    PSK: ParamsSubspaceKey,
     M: Message,
-    BK: BankKeeper<SK> + Clone + Send + Sync + 'static,
-    AK: AuthKeeper<SK> + Clone + Send + Sync + 'static,
-    H: Handler<M, SK, G> + 'static,
-    G: DeserializeOwned + Clone + Send + Sync + 'static,
+    BK: BankKeeper<SK>,
+    AK: AuthKeeper<SK>,
+    H: Handler<M, SK, G>,
+    G: Genesis,
 >(
     Path(round): Path<u64>,
     _pagination: Query<Pagination>,
@@ -89,13 +86,13 @@ pub async fn get_contributions_by_round<
 
 /// Get all contributions for a round and scheme
 pub async fn get_contributions_by_round_and_scheme<
-    SK: Hash + Eq + IntoEnumIterator + StoreKey + Clone + Send + Sync + 'static,
-    PSK: ParamsSubspaceKey + Clone + Send + Sync + 'static,
+    SK: StoreKey,
+    PSK: ParamsSubspaceKey,
     M: Message,
-    BK: BankKeeper<SK> + Clone + Send + Sync + 'static,
-    AK: AuthKeeper<SK> + Clone + Send + Sync + 'static,
-    H: Handler<M, SK, G> + 'static,
-    G: DeserializeOwned + Clone + Send + Sync + 'static,
+    BK: BankKeeper<SK>,
+    AK: AuthKeeper<SK>,
+    H: Handler<M, SK, G>,
+    G: Genesis,
 >(
     Path(round): Path<u64>,
     Path(scheme): Path<u32>,
@@ -120,13 +117,13 @@ pub async fn get_contributions_by_round_and_scheme<
 
 /// Get all keypairs
 pub async fn get_all_keypairs<
-    SK: Hash + Eq + IntoEnumIterator + StoreKey + Clone + Send + Sync + 'static,
-    PSK: ParamsSubspaceKey + Clone + Send + Sync + 'static,
+    SK: StoreKey,
+    PSK: ParamsSubspaceKey,
     M: Message,
-    BK: BankKeeper<SK> + Clone + Send + Sync + 'static,
-    AK: AuthKeeper<SK> + Clone + Send + Sync + 'static,
-    H: Handler<M, SK, G> + 'static,
-    G: DeserializeOwned + Clone + Send + Sync + 'static,
+    BK: BankKeeper<SK>,
+    AK: AuthKeeper<SK>,
+    H: Handler<M, SK, G>,
+    G: Genesis,
 >(
     _pagination: Query<Pagination>,
     State(app): State<BaseApp<SK, PSK, M, BK, AK, H, G>>,
@@ -148,13 +145,13 @@ pub async fn get_all_keypairs<
 
 /// Get all keys for a given round
 pub async fn get_keypairs_by_round<
-    SK: Hash + Eq + IntoEnumIterator + StoreKey + Clone + Send + Sync + 'static,
-    PSK: ParamsSubspaceKey + Clone + Send + Sync + 'static,
+    SK: StoreKey,
+    PSK: ParamsSubspaceKey,
     M: Message,
-    BK: BankKeeper<SK> + Clone + Send + Sync + 'static,
-    AK: AuthKeeper<SK> + Clone + Send + Sync + 'static,
-    H: Handler<M, SK, G> + 'static,
-    G: DeserializeOwned + Clone + Send + Sync + 'static,
+    BK: BankKeeper<SK>,
+    AK: AuthKeeper<SK>,
+    H: Handler<M, SK, G>,
+    G: Genesis,
 >(
     Path(round): Path<u64>,
     _pagination: Query<Pagination>,
@@ -178,13 +175,13 @@ pub async fn get_keypairs_by_round<
 
 /// Get all keys by time
 pub async fn get_keypairs_by_time<
-    SK: Hash + Eq + IntoEnumIterator + StoreKey + Clone + Send + Sync + 'static,
-    PSK: ParamsSubspaceKey + Clone + Send + Sync + 'static,
+    SK: StoreKey,
+    PSK: ParamsSubspaceKey,
     M: Message,
-    BK: BankKeeper<SK> + Clone + Send + Sync + 'static,
-    AK: AuthKeeper<SK> + Clone + Send + Sync + 'static,
-    H: Handler<M, SK, G> + 'static,
-    G: DeserializeOwned + Clone + Send + Sync + 'static,
+    BK: BankKeeper<SK>,
+    AK: AuthKeeper<SK>,
+    H: Handler<M, SK, G>,
+    G: Genesis,
 >(
     Path(time): Path<i64>,
     _pagination: Query<Pagination>,
@@ -208,13 +205,13 @@ pub async fn get_keypairs_by_time<
 
 /// Get all keys for a given round and scheme
 pub async fn get_keypairs_by_round_and_scheme<
-    SK: Hash + Eq + IntoEnumIterator + StoreKey + Clone + Send + Sync + 'static,
-    PSK: ParamsSubspaceKey + Clone + Send + Sync + 'static,
+    SK: StoreKey,
+    PSK: ParamsSubspaceKey,
     M: Message,
-    BK: BankKeeper<SK> + Clone + Send + Sync + 'static,
-    AK: AuthKeeper<SK> + Clone + Send + Sync + 'static,
-    H: Handler<M, SK, G> + 'static,
-    G: DeserializeOwned + Clone + Send + Sync + 'static,
+    BK: BankKeeper<SK>,
+    AK: AuthKeeper<SK>,
+    H: Handler<M, SK, G>,
+    G: Genesis,
 >(
     Path(round): Path<u64>,
     Path(scheme): Path<u32>,
@@ -239,13 +236,13 @@ pub async fn get_keypairs_by_round_and_scheme<
 
 /// Get all loe_data
 pub async fn get_all_loe_data<
-    SK: Hash + Eq + IntoEnumIterator + StoreKey + Clone + Send + Sync + 'static,
-    PSK: ParamsSubspaceKey + Clone + Send + Sync + 'static,
+    SK: StoreKey,
+    PSK: ParamsSubspaceKey,
     M: Message,
-    BK: BankKeeper<SK> + Clone + Send + Sync + 'static,
-    AK: AuthKeeper<SK> + Clone + Send + Sync + 'static,
-    H: Handler<M, SK, G> + 'static,
-    G: DeserializeOwned + Clone + Send + Sync + 'static,
+    BK: BankKeeper<SK>,
+    AK: AuthKeeper<SK>,
+    H: Handler<M, SK, G>,
+    G: Genesis,
 >(
     _pagination: Query<Pagination>,
     State(app): State<BaseApp<SK, PSK, M, BK, AK, H, G>>,
@@ -267,13 +264,13 @@ pub async fn get_all_loe_data<
 
 /// Get all loe_data by round
 pub async fn get_loe_data_by_round<
-    SK: Hash + Eq + IntoEnumIterator + StoreKey + Clone + Send + Sync + 'static,
-    PSK: ParamsSubspaceKey + Clone + Send + Sync + 'static,
+    SK: StoreKey,
+    PSK: ParamsSubspaceKey,
     M: Message,
-    BK: BankKeeper<SK> + Clone + Send + Sync + 'static,
-    AK: AuthKeeper<SK> + Clone + Send + Sync + 'static,
-    H: Handler<M, SK, G> + 'static,
-    G: DeserializeOwned + Clone + Send + Sync + 'static,
+    BK: BankKeeper<SK>,
+    AK: AuthKeeper<SK>,
+    H: Handler<M, SK, G>,
+    G: Genesis,
 >(
     Path(round): Path<u64>,
     _pagination: Query<Pagination>,
@@ -296,13 +293,13 @@ pub async fn get_loe_data_by_round<
 }
 
 pub fn get_router<
-    SK: Hash + Eq + IntoEnumIterator + StoreKey + Clone + Send + Sync + 'static,
-    PSK: ParamsSubspaceKey + Clone + Send + Sync + 'static,
+    SK: StoreKey,
+    PSK: ParamsSubspaceKey,
     M: Message,
-    BK: BankKeeper<SK> + Clone + Send + Sync + 'static,
-    AK: AuthKeeper<SK> + Clone + Send + Sync + 'static,
-    H: Handler<M, SK, G> + 'static,
-    G: DeserializeOwned + Clone + Send + Sync + 'static,
+    BK: BankKeeper<SK>,
+    AK: AuthKeeper<SK>,
+    H: Handler<M, SK, G>,
+    G: Genesis,
 >() -> Router<BaseApp<SK, PSK, M, BK, AK, H, G>, Body> {
     Router::new()
         .route(

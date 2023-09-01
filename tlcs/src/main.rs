@@ -46,7 +46,7 @@ fn main() -> Result<()> {
         get_timelock_query_command(),
     ];
 
-    run(
+    gears::app::run(
         APP_NAME,
         VERSION,
         GenesisState::default(),
