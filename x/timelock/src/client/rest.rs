@@ -292,6 +292,34 @@ pub async fn get_loe_data_by_round<
     ))
 }
 
+/// Get all keys for a given round
+pub async fn get_loe_data_needed<
+    SK: StoreKey,
+    PSK: ParamsSubspaceKey,
+    M: Message,
+    BK: BankKeeper<SK>,
+    AK: AuthKeeper<SK>,
+    H: Handler<M, SK, G>,
+    G: Genesis,
+>(
+    _pagination: Query<Pagination>,
+    State(app): State<BaseApp<SK, PSK, M, BK, AK, H, G>>,
+) -> Result<Json<QueryAllKeyPairsResponse>, Error> {
+    let request = RequestQuery {
+        data: Bytes::new(),
+        path: "/azkr.tlcs.v1beta1.Query/AllLoeDataNeeded".into(),
+        height: 0,
+        prove: false,
+    };
+
+    let response = app.query(request);
+
+    Ok(Json(
+        QueryAllKeyPairsResponse::decode(response.value)
+            .expect("should be a valid QueryAllKeyPairsResponse"),
+    ))
+}
+
 pub fn get_router<
     SK: StoreKey,
     PSK: ParamsSubspaceKey,
@@ -331,5 +359,9 @@ pub fn get_router<
         .route(
             "/azkr/tlcs/v1beta1/loe_data/round/:round",
             get(get_loe_data_by_round),
+        )
+        .route(
+            "/azkr/tlcs/v1beta1/loe_data_needed",
+            get(get_loe_data_needed),
         )
 }

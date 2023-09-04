@@ -632,6 +632,29 @@ impl<SK: StoreKey> Keeper<SK> {
         return loe_data;
     }
 
+    pub fn query_loe_data_needed<T: Database>(
+        &self,
+        ctx: &QueryContext<T, SK>,
+    ) -> QueryAllKeyPairsResponse {
+        let tlcs_store = ctx.get_kv_store(&self.store_key);
+        let store_key = KEYPAIR_DATA_KEY.to_vec();
+
+        let prefix_store = tlcs_store.get_immutable_prefix_store(store_key);
+        let all_raw_data = prefix_store.range(..);
+
+        let mut keypairs = vec![];
+
+        for (_, row) in all_raw_data {
+            let keypair: RawMsgKeyPair = RawMsgKeyPair::decode::<Bytes>(row.into())
+                .expect("invalid data in database - possible database corruption");
+            //TODO: Possibly also filter by blocktime. It would be better but for now we'll just get records with empty private keys
+            if keypair.public_key != "" && keypair.private_key == "" {
+                keypairs.push(keypair);
+            }
+        }
+        QueryAllKeyPairsResponse { keypairs }
+    }
+
     #[allow(dead_code)]
     pub fn get_public_keys_store<'a, T: Database>(
         &self,

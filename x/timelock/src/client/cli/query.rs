@@ -80,6 +80,9 @@ pub fn get_timelock_query_command() -> Command {
                         .value_parser(clap::value_parser!(u64)),
                 ),
         )
+        .subcommand(
+            Command::new("loe_data_needed").about("Query list of keypairs that need loe data"),
+        )
         .subcommand_required(true)
 }
 
@@ -158,6 +161,9 @@ pub fn run_timelock_query_command(matches: &ArgMatches, node: &str) -> Result<St
                 .expect("unclear why this would ever fail")
                 .block_on(get_loe_data_by_round(client, round))
         }
+        Some(("loe_data_needed", _sub_matches)) => Runtime::new()
+            .expect("unclear why this would ever fail")
+            .block_on(get_loe_data_needed(client)),
         _ => unreachable!("exhausted list of subcommands and subcommand_required prevents `None`"),
     }
 }
@@ -372,5 +378,27 @@ pub async fn get_loe_data_by_round(client: HttpClient, round: u64) -> Result<Str
 
     let res = QueryAllLoeDataResponse::decode(&*res.value)?;
 
+    Ok(serde_json::to_string_pretty(&res)?)
+}
+
+pub async fn get_loe_data_needed(client: HttpClient) -> Result<String> {
+    let res = client
+        .abci_query(
+            Some(
+                "/azkr.tlcs.v1beta1.Query/AllLoeDataNeeded"
+                    .parse()
+                    .expect("hard coded path will always succeed"),
+            ),
+            vec![],
+            None,
+            false,
+        )
+        .await?;
+
+    if res.code.is_err() {
+        return Err(anyhow!("node returned an error: {}", res.log));
+    }
+
+    let res = QueryAllKeyPairsResponse::decode(&*res.value)?;
     Ok(serde_json::to_string_pretty(&res)?)
 }
