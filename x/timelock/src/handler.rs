@@ -133,6 +133,11 @@ impl<SK: StoreKey> Handler<SK> {
                     .encode_to_vec()
                     .into())
             }
+            "/azkr.tlcs.v1beta1.Query/AllLoeDataNeeded" => Ok(self
+                .keeper
+                .query_loe_data_needed(&ctx)
+                .encode_to_vec()
+                .into()),
             _ => Err(AppError::InvalidRequest("query path not found".into())),
         }
     }
