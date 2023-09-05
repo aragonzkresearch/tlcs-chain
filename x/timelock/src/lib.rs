@@ -1,5 +1,4 @@
 mod client;
-mod crypto;
 mod handler;
 mod keeper;
 mod message;

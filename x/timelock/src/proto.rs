@@ -345,15 +345,15 @@ pub mod tlcs {
             pub address: String,
             #[prost(uint64, tag = "2")]
             pub round: u64,
-            #[prost(bytes, tag = "3")]
-            pub signature: Vec<u8>,
+            #[prost(string, tag = "3")]
+            pub signature: String,
         }
 
         #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
         pub struct MsgLoeData {
             pub address: AccAddress,
             pub round: u64,
-            pub signature: Vec<u8>,
+            pub signature: String,
         }
 
         impl TryFrom<RawMsgLoeData> for MsgLoeData {
