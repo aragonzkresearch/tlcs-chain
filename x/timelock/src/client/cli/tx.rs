@@ -7,9 +7,12 @@ use std::process::exit;
 use std::str;
 use tokio::runtime::Runtime;
 
-use crate::crypto::generate_participant_data;
 use crate::Message as TimelockMessage;
+use tlcs_rust::chain_functions::make_keyshare;
 
+const LOE_PUBLIC_KEY: &str = "a0b862a7527fee3a731bcb59280ab6abd62d5c0b6ea03dc4ddf6612fdfc9d01f01c31542541771903475eb1ec6615f8d0df0b8b6dce385811d6dcf8cbefb8759e5e616a3dfd054c928940766d9a5b9db91e3b697e5d70a975181e007f87fca5e";
+const SECURITY_PARAM: usize = 10;
+const SCHEME: &str = "BJJ";
 const LOE_URL: &str =
     "https://api.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/";
 
@@ -55,7 +58,9 @@ pub fn run_timelock_tx_command(args: Cli, from_address: AccAddress) -> Result<Ti
             scheme,
             public_key_time,
         } => {
-            let round_data_vec = generate_participant_data(round);
+            //let round_data_vec = generate_participant_data(round);
+            let round_data_vec =
+                make_keyshare(LOE_PUBLIC_KEY.into(), round, SCHEME.into(), SECURITY_PARAM);
             Ok(TimelockMessage::NewProcess(MsgNewProcess {
                 address: from_address,
                 round,
@@ -65,7 +70,9 @@ pub fn run_timelock_tx_command(args: Cli, from_address: AccAddress) -> Result<Ti
             }))
         }
         TimelockCommands::Contribute { round, scheme, id } => {
-            let round_data_vec = generate_participant_data(round);
+            //let round_data_vec = generate_participant_data(round);
+            let round_data_vec =
+                make_keyshare(LOE_PUBLIC_KEY.into(), round, SCHEME.into(), SECURITY_PARAM);
 
             Ok(TimelockMessage::Participate(MsgContribution {
                 address: from_address,
@@ -102,12 +109,13 @@ pub fn run_timelock_tx_command(args: Cli, from_address: AccAddress) -> Result<Ti
     }
 }
 
-pub async fn get_loe_data(round: u64) -> Result<Vec<u8>> {
+//pub async fn get_loe_data(round: u64) -> Result<Vec<u8>> {
+pub async fn get_loe_data(round: u64) -> Result<String> {
     // Create a new client and retrieve the latest beacon. By default, it verifies its signature against the chain info.
     let client: DrandHttpClient = LOE_URL.try_into().unwrap();
     match client.get(round).await {
         Ok(dat) => {
-            return Ok(dat.signature());
+            return Ok(hex::encode(dat.signature()));
         }
         //Err(err) => Error(println!("LOE API connection failed: Error: {}", err)),
         //Err(err) => return Ok((vec![], vec![])),
