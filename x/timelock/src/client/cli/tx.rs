@@ -57,18 +57,12 @@ pub fn run_timelock_tx_command(args: Cli, from_address: AccAddress) -> Result<Ti
             round,
             scheme,
             public_key_time,
-        } => {
-            //let round_data_vec = generate_participant_data(round);
-            let round_data_vec =
-                make_keyshare(LOE_PUBLIC_KEY.into(), round, SCHEME.into(), SECURITY_PARAM);
-            Ok(TimelockMessage::NewProcess(MsgNewProcess {
-                address: from_address,
-                round,
-                scheme,
-                pubkey_time: public_key_time,
-                data: round_data_vec,
-            }))
-        }
+        } => Ok(TimelockMessage::NewProcess(MsgNewProcess {
+            address: from_address,
+            round,
+            scheme,
+            pubkey_time: public_key_time,
+        })),
         TimelockCommands::Contribute { round, scheme, id } => {
             //let round_data_vec = generate_participant_data(round);
             let round_data_vec =
