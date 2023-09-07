@@ -7,7 +7,6 @@ use gears::{
     types::context::{Context, QueryContext, TxContext},
 };
 use prost::Message;
-use proto_types::AccAddress;
 use store::{MutablePrefixStore, StoreKey};
 use tracing::info;
 // Include to run benchmark and uncomment benchmark in test
@@ -34,9 +33,7 @@ use crate::{
     Config,
 };
 
-// For LOE data verification
-//use drand_verify::{verify, G2Pubkey, Pubkey};
-//use hex_literal::hex;
+use chrono::Utc;
 
 // Key Prefixes
 const CONTRIBUTION_THRESHOLD_KEY: [u8; 1] = [0];
@@ -55,6 +52,11 @@ const LOE_PERIOD: u32 = 3;
 
 pub fn valid_scheme(scheme: u32) -> bool {
     scheme == 1
+}
+
+pub fn check_time(time: i64) -> bool {
+    let now = Utc::now();
+    time > now.timestamp()
 }
 
 #[derive(Debug, Clone)]
@@ -93,16 +95,7 @@ impl<SK: StoreKey> Keeper<SK> {
         config: Config,
         msg: &MsgNewProcess,
     ) -> Result<(), AppError> {
-        if !valid_scheme(msg.scheme) {
-            return Err(AppError::InvalidRequest("Invalid scheme.".into()));
-        }
-
-        info!(
-            "PROCESS TX: new process request. Round: {:?}, Scheme: {:?}",
-            msg.round, msg.scheme
-        );
-
-        thread::spawn(|| {
+      thread::spawn(|| {
             // This must be run inside a thread since it will block until it receives a response
             // which won't happen until this transaction has been processed.
 
@@ -120,36 +113,19 @@ impl<SK: StoreKey> Keeper<SK> {
 
         let keycount = self.open_process_count(ctx, msg.round, msg.scheme);
 
-        if verify_keyshare(
-            LOE_PUBLIC_KEY.into(),
-            msg.round,
-            SCHEME.into(),
-            msg.data.clone(),
-            SECURITY_PARAM,
-        ) {
-            //if verify_participant_data(msg.round, msg.data.clone()) {
+        if msg.round > 0 && valid_scheme(msg.scheme) && check_time(msg.pubkey_time) {
+            info!(
+                "PROCESS TX: new process request. Round: {:?}, Scheme: {:?}",
+                msg.round, msg.scheme
+            );
+
+            let keycount = self.open_process_count(ctx, msg.round, msg.scheme);
             let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
 
             // Save Participant data
             let mut prefix = PARTICIPANT_DATA_KEY.to_vec();
             prefix.append(&mut msg.round.to_le_bytes().to_vec());
             prefix.append(&mut msg.scheme.to_le_bytes().to_vec());
-
-            let addr: Vec<u8> = msg.address.clone().into();
-            prefix.append(&mut addr.to_vec());
-
-            let address = AccAddress::from_bech32(&msg.address.to_string())
-                .map_err(|e| AppError::InvalidRequest(e.to_string()))?;
-            //.map_err(|e| Error::DecodeAddress(e.to_string()))?;
-
-            let contrib_data: RawMsgContribution = RawMsgContribution {
-                address: address.to_string(),
-                round: msg.round,
-                scheme: msg.scheme,
-                id: keycount,
-                data: msg.data.clone(),
-            };
-            tlcs_store.set(prefix.into(), contrib_data.encode_to_vec());
 
             // Create empty keypair
             let mut prefix = KEYPAIR_DATA_KEY.to_vec();
@@ -167,7 +143,7 @@ impl<SK: StoreKey> Keeper<SK> {
             tlcs_store.set(prefix.into(), key_data.encode_to_vec());
         } else {
             return Err(AppError::InvalidRequest(
-                "The contribution data is invalid for the given round".into(),
+                "The keypair request is invalid".into(),
             ));
         }
 

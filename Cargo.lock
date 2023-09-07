@@ -831,8 +831,11 @@ checksum = "d87d9d13be47a5b7c3907137f1290b0459a7f80efb26be8c52afb11963bccb02"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
+ "js-sys",
  "num-traits",
  "serde",
+ "time 0.1.45",
+ "wasm-bindgen",
  "windows-targets",
 ]
 
@@ -2272,7 +2275,7 @@ dependencies = [
  "tendermint 0.29.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "tendermint-light-client-verifier 0.29.1",
  "tendermint-proto 0.29.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "time",
+ "time 0.3.20",
  "tracing",
  "uint",
 ]
@@ -2412,7 +2415,7 @@ dependencies = [
  "tendermint-light-client-verifier 0.30.0",
  "tendermint-proto 0.30.0",
  "tendermint-testgen",
- "time",
+ "time 0.3.20",
  "uint",
 ]
 
@@ -4164,7 +4167,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with_macros",
- "time",
+ "time 0.3.20",
 ]
 
 [[package]]
@@ -4526,7 +4529,7 @@ dependencies = [
  "subtle",
  "subtle-encoding",
  "tendermint-proto 0.29.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "time",
+ "time 0.3.20",
  "zeroize",
 ]
 
@@ -4554,7 +4557,7 @@ dependencies = [
  "subtle",
  "subtle-encoding",
  "tendermint-proto 0.29.1 (git+https://github.com/joneskm/tendermint-rs)",
- "time",
+ "time 0.3.20",
  "zeroize",
 ]
 
@@ -4585,7 +4588,7 @@ dependencies = [
  "subtle",
  "subtle-encoding",
  "tendermint-proto 0.30.0",
- "time",
+ "time 0.3.20",
  "zeroize",
 ]
 
@@ -4646,7 +4649,7 @@ dependencies = [
  "tendermint 0.30.0",
  "tendermint-light-client-verifier 0.30.0",
  "tendermint-rpc 0.30.0",
- "time",
+ "time 0.3.20",
  "tokio",
 ]
 
@@ -4660,7 +4663,7 @@ dependencies = [
  "flex-error",
  "serde",
  "tendermint 0.29.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "time",
+ "time 0.3.20",
 ]
 
 [[package]]
@@ -4673,7 +4676,7 @@ dependencies = [
  "flex-error",
  "serde",
  "tendermint 0.30.0",
- "time",
+ "time 0.3.20",
 ]
 
 [[package]]
@@ -4691,7 +4694,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "subtle-encoding",
- "time",
+ "time 0.3.20",
 ]
 
 [[package]]
@@ -4708,7 +4711,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "subtle-encoding",
- "time",
+ "time 0.3.20",
 ]
 
 [[package]]
@@ -4726,7 +4729,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "subtle-encoding",
- "time",
+ "time 0.3.20",
 ]
 
 [[package]]
@@ -4753,7 +4756,7 @@ dependencies = [
  "tendermint 0.29.1 (git+https://github.com/joneskm/tendermint-rs)",
  "tendermint-config 0.29.1",
  "thiserror",
- "time",
+ "time 0.3.20",
  "tokio",
  "tracing",
  "url",
@@ -4788,7 +4791,7 @@ dependencies = [
  "tendermint 0.30.0",
  "tendermint-config 0.30.0",
  "thiserror",
- "time",
+ "time 0.3.20",
  "tokio",
  "tracing",
  "url",
@@ -4809,7 +4812,7 @@ dependencies = [
  "simple-error",
  "tempfile",
  "tendermint 0.30.0",
- "time",
+ "time 0.3.20",
 ]
 
 [[package]]
@@ -4850,6 +4853,17 @@ dependencies = [
 
 [[package]]
 name = "time"
+version = "0.1.45"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b797afad3f312d1c66a56d11d0316f916356d11bd158fbc6ca6389ff6bf805a"
+dependencies = [
+ "libc",
+ "wasi 0.10.0+wasi-snapshot-preview1",
+ "winapi",
+]
+
+[[package]]
+name = "time"
 version = "0.3.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cd0cbfecb4d19b5ea75bb31ad904eb5b9fa13f21079c3b92017ebdf4999a5890"
@@ -4883,6 +4897,7 @@ dependencies = [
  "auth",
  "axum",
  "bytes",
+ "chrono",
  "clap",
  "database",
  "drand-verify",
@@ -5560,6 +5575,12 @@ name = "wasi"
 version = "0.9.0+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cccddf32554fecc6acb585f82a32a72e28b48f8c4c1883ddfeeeaa96f7d8e519"
+
+[[package]]
+name = "wasi"
+version = "0.10.0+wasi-snapshot-preview1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a143597ca7c7793eff794def352d41792a93c481eb1042423ff7ff72ba2c31f"
 
 [[package]]
 name = "wasi"

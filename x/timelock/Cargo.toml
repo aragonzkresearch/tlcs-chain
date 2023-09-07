@@ -36,7 +36,7 @@ drand_core = "0.0.7"
 strum = "0.24.1"
 axum = "0.6.18"
 tendermint-informal = { package = "tendermint", git = "https://github.com/joneskm/tendermint-rs" }
-
+chrono = "0.4.29"
 
 [dev-dependencies]
 hex = "0.4.3"

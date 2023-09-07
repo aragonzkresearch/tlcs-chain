@@ -26,8 +26,6 @@ pub mod tlcs {
             pub scheme: u32,
             #[prost(int64, tag = "4")]
             pub pubkey_time: i64,
-            #[prost(bytes, tag = "5")]
-            pub data: Vec<u8>,
         }
 
         #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -36,7 +34,6 @@ pub mod tlcs {
             pub round: u64,
             pub scheme: u32,
             pub pubkey_time: i64,
-            pub data: Vec<u8>,
         }
 
         impl TryFrom<RawMsgNewProcess> for MsgNewProcess {
@@ -51,7 +48,6 @@ pub mod tlcs {
                     round: raw.round,
                     scheme: raw.scheme,
                     pubkey_time: raw.pubkey_time,
-                    data: raw.data,
                 })
             }
         }
@@ -63,7 +59,6 @@ pub mod tlcs {
                     round: msg.round,
                     scheme: msg.scheme,
                     pubkey_time: msg.pubkey_time,
-                    data: msg.data,
                 }
             }
         }
