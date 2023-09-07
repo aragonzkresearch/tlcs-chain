@@ -155,6 +155,8 @@ pub mod tlcs {
             pub contributions: Vec<RawMsgContribution>,
         }
 
+        impl Protobuf<QueryAllContributionsResponse> for QueryAllContributionsResponse {}
+
         /////////////////////////////////////////////////////////////////////////////////////
         // KeyPair Section
         /////////////////////////////////////////////////////////////////////////////////////
@@ -230,6 +232,8 @@ pub mod tlcs {
             #[prost(message, repeated, tag = "1")]
             pub keypairs: Vec<RawMsgKeyPair>,
         }
+
+        impl Protobuf<QueryAllKeyPairsResponse> for QueryAllKeyPairsResponse {}
 
         /////////////////////////////////////////////////////////////////////////////////////
         // Round and Scheme Query message
@@ -393,5 +397,7 @@ pub mod tlcs {
             #[prost(message, repeated, tag = "1")]
             pub randomnesses: Vec<RawMsgLoeData>,
         }
+
+        impl Protobuf<QueryAllLoeDataResponse> for QueryAllLoeDataResponse {}
     }
 }

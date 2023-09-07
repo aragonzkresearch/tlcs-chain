@@ -1,14 +1,14 @@
 use anyhow::Result;
-use auth::cli::query::run_auth_query_command;
+use auth::cli::query::{run_auth_query_command, QueryCli as AuthQueryCli};
 use bank::cli::{
-    query::run_bank_query_command,
+    query::{run_bank_query_command, QueryCli as BankQueryCli},
     tx::{run_bank_tx_command, Cli as BankCli},
 };
-use clap::{ArgMatches, Subcommand};
+use clap::Subcommand;
 use proto_types::AccAddress;
 use tendermint_informal::block::Height;
 use timelock::cli::{
-    query::run_timelock_query_command,
+    query::{run_timelock_query_command, QueryCli as TimelockQueryCli},
     tx::{run_timelock_tx_command, Cli as TimelockCli},
 };
 
@@ -33,21 +33,25 @@ pub fn tx_command_handler(command: Commands, from_address: AccAddress) -> Result
     }
 }
 
-pub fn query_command_handler(matches: &ArgMatches) -> Result<()> {
-    let node = matches
-        .get_one::<String>("node")
-        .expect("Node arg has a default value so this cannot be `None`.");
+#[derive(Subcommand, Debug)]
+pub enum QueryCommands {
+    /// Querying commands for the bank module
+    Bank(BankQueryCli),
+    /// Querying commands for the auth module
+    Auth(AuthQueryCli),
+    /// Querying commands for the timelock module
+    Timelock(TimelockQueryCli),
+}
 
-    let height = *matches
-        .get_one::<Height>("height")
-        .expect("Height arg has a default value so this cannot be `None`.");
-
-    let res = match matches.subcommand() {
-        Some(("bank", sub_matches)) => run_bank_query_command(sub_matches, node, Some(height)),
-        Some(("auth", sub_matches)) => run_auth_query_command(sub_matches, node),
-        Some(("timelock", sub_matches)) => run_timelock_query_command(sub_matches, node),
-
-        _ => unreachable!("Exhausted list of subcommands and subcommand_required prevents `None`"),
+pub fn query_command_handler(
+    command: QueryCommands,
+    node: &str,
+    height: Option<Height>,
+) -> Result<()> {
+    let res = match command {
+        QueryCommands::Bank(args) => run_bank_query_command(args, node, height),
+        QueryCommands::Auth(args) => run_auth_query_command(args, node, height),
+        QueryCommands::Timelock(args) => run_timelock_query_command(args, node, height),
     }?;
 
     println!("{}", res);

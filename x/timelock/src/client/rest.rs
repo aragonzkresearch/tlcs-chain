@@ -1,6 +1,5 @@
 use bytes::Bytes;
 use ibc_proto::protobuf::Protobuf;
-use prost::Message as ProstMessage;
 use tendermint_abci::Application;
 
 use axum::{
