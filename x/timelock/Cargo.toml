@@ -13,7 +13,7 @@ store = { workspace = true }
 
 prost = { version = "0.11" }
 tracing = { version = "0.1", default-features = false }
-ibc-proto = { git = "https://github.com/joneskm/ibc-proto-rs" }
+ibc-proto = { workspace = true }
 tendermint-abci = { git = "https://github.com/joneskm/tendermint-rs" }
 tendermint-proto = { git = "https://github.com/joneskm/tendermint-rs" }
 tendermint-rpc = { git = "https://github.com/joneskm/tendermint-rs", features = [
@@ -35,6 +35,7 @@ drand_core = "0.0.7"
 
 strum = "0.24.1"
 axum = "0.6.18"
+tendermint-informal = { package = "tendermint", git = "https://github.com/joneskm/tendermint-rs" }
 
 
 [dev-dependencies]

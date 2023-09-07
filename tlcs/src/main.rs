@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use anyhow::Result;
 use auth::cli::query::get_auth_query_command;
 use auth::Keeper as AuthKeeper;
@@ -7,7 +9,9 @@ use client::query_command_handler;
 use client::tx_command_handler;
 use gears::x::params::Keeper as ParamsKeeper;
 use rest::get_router;
+use tendermint_rpc::Url;
 use timelock::cli::query::get_timelock_query_command;
+use timelock::Config;
 
 use crate::genesis::GenesisState;
 use crate::handler::Handler;
@@ -45,6 +49,13 @@ fn main() -> Result<()> {
         get_timelock_query_command(),
     ];
 
+    let config = Config {
+        node: Url::from_str("http:localhost:22557").unwrap(),
+        home: "home".into(),
+        from: "bob".into(),
+        chain_id: tendermint_informal::chain::Id::try_from("chain-id").unwrap(),
+    };
+
     gears::app::run(
         APP_NAME,
         VERSION,
@@ -53,7 +64,7 @@ fn main() -> Result<()> {
         auth_keeper,
         params_keeper,
         TlcsParamsStoreKey::BaseApp,
-        Handler::new(),
+        Handler::new(config),
         query_commands,
         query_command_handler,
         tx_command_handler,
