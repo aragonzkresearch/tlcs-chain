@@ -95,7 +95,7 @@ impl<SK: StoreKey> Keeper<SK> {
         config: Config,
         msg: &MsgNewProcess,
     ) -> Result<(), AppError> {
-      thread::spawn(|| {
+        thread::spawn(|| {
             // This must be run inside a thread since it will block until it receives a response
             // which won't happen until this transaction has been processed.
 
@@ -110,8 +110,6 @@ impl<SK: StoreKey> Keeper<SK> {
                 Err(_) => info!("Failed to submit LOE data"),
             }
         });
-
-        let keycount = self.open_process_count(ctx, msg.round, msg.scheme);
 
         if msg.round > 0 && valid_scheme(msg.scheme) && check_time(msg.pubkey_time) {
             info!(
