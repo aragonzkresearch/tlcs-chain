@@ -8,6 +8,7 @@ use tendermint_proto::abci::{RequestBeginBlock, RequestQuery};
 
 use database::Database;
 use gears::{error::AppError, types::context::QueryContext};
+use timelock::Config;
 
 use crate::{
     genesis::GenesisState,
@@ -23,7 +24,7 @@ pub struct Handler {
 }
 
 impl Handler {
-    pub fn new() -> Handler {
+    pub fn new(config: Config) -> Handler {
         let params_keeper = ParamsKeeper::new(TlcsStoreKey::Params);
 
         let auth_keeper = auth::Keeper::new(
@@ -44,7 +45,7 @@ impl Handler {
         Handler {
             bank_handler: bank::Handler::new(bank_keeper),
             auth_handler: auth::Handler::new(auth_keeper),
-            timelock_handler: timelock::Handler::new(timelock_keeper),
+            timelock_handler: timelock::Handler::new(timelock_keeper, config),
         }
     }
 }

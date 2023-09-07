@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, thread};
 
 use bytes::Bytes;
 use database::{Database, PrefixDB};
@@ -15,18 +15,22 @@ use tlcs_rust::chain_functions::{
     loe_signature_is_valid, make_public_key, make_secret_key, verify_keyshare,
 };
 
-use crate::proto::tlcs::v1beta1::{
-    MsgContribution,
-    MsgKeyPair,
-    MsgLoeData,
-    MsgNewProcess,
-    QueryAllContributionsResponse,
-    QueryAllKeyPairsResponse,
-    QueryAllLoeDataResponse,
-    RawMsgContribution,
-    RawMsgKeyPair,
-    RawMsgLoeData,
-    //RawMsgNewProcess,
+use crate::{
+    proto::tlcs::v1beta1::{
+        MsgContribution,
+        MsgKeyPair,
+        MsgLoeData,
+        MsgNewProcess,
+        QueryAllContributionsResponse,
+        QueryAllKeyPairsResponse,
+        QueryAllLoeDataResponse,
+        RawMsgContribution,
+        RawMsgKeyPair,
+        RawMsgLoeData,
+        //RawMsgNewProcess,
+    },
+    utils::run_tx_command,
+    Config,
 };
 
 use chrono::Utc;
@@ -88,8 +92,27 @@ impl<SK: StoreKey> Keeper<SK> {
     pub fn open_new_process<T: Database>(
         &self,
         ctx: &mut TxContext<T, SK>,
+        config: Config,
         msg: &MsgNewProcess,
     ) -> Result<(), AppError> {
+      thread::spawn(|| {
+            // This must be run inside a thread since it will block until it receives a response
+            // which won't happen until this transaction has been processed.
+
+            match run_tx_command(config, |addr| {
+                crate::Message::SubmitLoeData(MsgLoeData {
+                    address: addr,
+                    round: 12,
+                    signature: "a_signature".into(),
+                })
+            }) {
+                Ok(_) => info!("Successfully submitted LOE data"),
+                Err(_) => info!("Failed to submit LOE data"),
+            }
+        });
+
+        let keycount = self.open_process_count(ctx, msg.round, msg.scheme);
+
         if msg.round > 0 && valid_scheme(msg.scheme) && check_time(msg.pubkey_time) {
             info!(
                 "PROCESS TX: new process request. Round: {:?}, Scheme: {:?}",

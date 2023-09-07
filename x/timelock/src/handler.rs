@@ -7,17 +7,18 @@ use tendermint_proto::abci::RequestBeginBlock;
 
 use crate::{
     proto::tlcs::v1beta1::{QueryRoundRequest, QueryRoundSchemeRequest, QueryTimeRequest},
-    Keeper, Message,
+    Config, Keeper, Message,
 };
 
 #[derive(Debug, Clone)]
 pub struct Handler<SK: StoreKey> {
     keeper: Keeper<SK>,
+    config: Config,
 }
 
 impl<SK: StoreKey> Handler<SK> {
-    pub fn new(keeper: Keeper<SK>) -> Self {
-        Handler { keeper }
+    pub fn new(keeper: Keeper<SK>, config: Config) -> Self {
+        Handler { keeper, config }
     }
 
     pub fn handle<DB: Database>(
@@ -26,7 +27,7 @@ impl<SK: StoreKey> Handler<SK> {
         msg: &Message,
     ) -> Result<(), AppError> {
         match msg {
-            Message::NewProcess(msg) => self.keeper.open_new_process(ctx, msg),
+            Message::NewProcess(msg) => self.keeper.open_new_process(ctx, self.config.clone(), msg),
             Message::Participate(msg) => self.keeper.append_contribution(ctx, msg),
             Message::SubmitLoeData(msg) => self.keeper.append_loe_data(&mut ctx.as_any(), msg),
         }

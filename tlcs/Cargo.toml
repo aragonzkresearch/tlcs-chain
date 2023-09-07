@@ -15,6 +15,9 @@ auth = { workspace = true }
 cosmwasm-std = "1.1.5"
 ibc-proto = { git = "https://github.com/joneskm/ibc-proto-rs" }
 tendermint-proto = { git = "https://github.com/joneskm/tendermint-rs" }
+tendermint-rpc = { git = "https://github.com/joneskm/tendermint-rs", features = [
+    "http-client",
+] }
 clap = { version = "4.2.2", features = ["derive"] }
 bytes = "1.2.1"
 serde = { version = "1.0", default-features = false }
