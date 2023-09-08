@@ -376,7 +376,7 @@ dependencies = [
 [[package]]
 name = "auth"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears?rev=ae051d7d5470a0f542343ae52f3751ab237c3a6c#ae051d7d5470a0f542343ae52f3751ab237c3a6c"
+source = "git+https://github.com/rumos-io/gears?rev=8cfe303aaafc9848c196489dd033441ba0e8dcab#8cfe303aaafc9848c196489dd033441ba0e8dcab"
 dependencies = [
  "anyhow",
  "bytes",
@@ -470,7 +470,7 @@ dependencies = [
 [[package]]
 name = "bank"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears?rev=ae051d7d5470a0f542343ae52f3751ab237c3a6c#ae051d7d5470a0f542343ae52f3751ab237c3a6c"
+source = "git+https://github.com/rumos-io/gears?rev=8cfe303aaafc9848c196489dd033441ba0e8dcab#8cfe303aaafc9848c196489dd033441ba0e8dcab"
 dependencies = [
  "anyhow",
  "auth",
@@ -729,9 +729,9 @@ checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
 
 [[package]]
 name = "bytes"
-version = "1.4.0"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89b2fd2a0dcf38d7971e2194b6b6eebab45ae01067456a7fd93d5547a61b70be"
+checksum = "a2bd12c1caf447e69cd4528f47f94d203fd2582878ecb9e9465484c4148a8223"
 dependencies = [
  "serde",
 ]
@@ -826,16 +826,15 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chrono"
-version = "0.4.29"
+version = "0.4.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d87d9d13be47a5b7c3907137f1290b0459a7f80efb26be8c52afb11963bccb02"
+checksum = "defd4e7873dbddba6c7c91e199c7fcb946abc4a6a4ac3195400bcfb01b5de877"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
  "js-sys",
  "num-traits",
  "serde",
- "time 0.1.45",
  "wasm-bindgen",
  "windows-targets",
 ]
@@ -902,9 +901,9 @@ dependencies = [
 
 [[package]]
 name = "clap_complete"
-version = "4.4.0"
+version = "4.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "586a385f7ef2f8b4d86bddaa0c094794e7ccbfe5ffef1f434fe928143fc783a5"
+checksum = "4110a1e6af615a9e6d0a36f805d5c99099f8bab9b8042f5bc1fa220a4a89e36f"
 dependencies = [
  "clap",
 ]
@@ -1243,7 +1242,7 @@ dependencies = [
 [[package]]
 name = "database"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears?rev=ae051d7d5470a0f542343ae52f3751ab237c3a6c#ae051d7d5470a0f542343ae52f3751ab237c3a6c"
+source = "git+https://github.com/rumos-io/gears?rev=8cfe303aaafc9848c196489dd033441ba0e8dcab#8cfe303aaafc9848c196489dd033441ba0e8dcab"
 dependencies = [
  "rocksdb",
  "thiserror",
@@ -1792,7 +1791,7 @@ dependencies = [
 [[package]]
 name = "gears"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears?rev=ae051d7d5470a0f542343ae52f3751ab237c3a6c#ae051d7d5470a0f542343ae52f3751ab237c3a6c"
+source = "git+https://github.com/rumos-io/gears?rev=8cfe303aaafc9848c196489dd033441ba0e8dcab#8cfe303aaafc9848c196489dd033441ba0e8dcab"
 dependencies = [
  "anyhow",
  "axum",
@@ -1829,6 +1828,7 @@ dependencies = [
  "text_io",
  "tiny-bip39",
  "tokio",
+ "toml 0.7.7",
  "tower-http",
  "tracing",
  "tracing-subscriber",
@@ -2108,7 +2108,7 @@ dependencies = [
  "os_info",
  "serde",
  "serde_derive",
- "toml 0.7.6",
+ "toml 0.7.7",
  "uuid 1.4.1",
 ]
 
@@ -2276,7 +2276,7 @@ dependencies = [
  "tendermint 0.29.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "tendermint-light-client-verifier 0.29.1",
  "tendermint-proto 0.29.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "time 0.3.20",
+ "time",
  "tracing",
  "uint",
 ]
@@ -2416,7 +2416,7 @@ dependencies = [
  "tendermint-light-client-verifier 0.30.0",
  "tendermint-proto 0.30.0",
  "tendermint-testgen",
- "time 0.3.20",
+ "time",
  "uint",
 ]
 
@@ -2996,9 +2996,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec"
-version = "3.6.6"
+version = "3.6.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b4a26fb934017f2e774ad9a16b40cca8faec288e0233496c6a47f266d49f024"
+checksum = "8d640b40e81625f53b59f9c5812d3fb9e7ce11971d3fb34268eb7a83adf98051"
 dependencies = [
  "arrayvec",
  "bitvec",
@@ -3010,9 +3010,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec-derive"
-version = "3.6.6"
+version = "3.6.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a65cebc1b089c96df6203a76279a82b4bbf04fa23659c4093cac6fd245c25d1f"
+checksum = "7ac464815d51fff2f64d690bf6ea4442d365e53495d50737685cfecfa3dd3f62"
 dependencies = [
  "proc-macro-crate 1.3.1",
  "proc-macro2",
@@ -3299,7 +3299,7 @@ dependencies = [
 [[package]]
 name = "proto-messages"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears?rev=ae051d7d5470a0f542343ae52f3751ab237c3a6c#ae051d7d5470a0f542343ae52f3751ab237c3a6c"
+source = "git+https://github.com/rumos-io/gears?rev=8cfe303aaafc9848c196489dd033441ba0e8dcab#8cfe303aaafc9848c196489dd033441ba0e8dcab"
 dependencies = [
  "base64 0.21.3",
  "base64-serde",
@@ -3320,7 +3320,7 @@ dependencies = [
 [[package]]
 name = "proto-types"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears?rev=ae051d7d5470a0f542343ae52f3751ab237c3a6c#ae051d7d5470a0f542343ae52f3751ab237c3a6c"
+source = "git+https://github.com/rumos-io/gears?rev=8cfe303aaafc9848c196489dd033441ba0e8dcab#8cfe303aaafc9848c196489dd033441ba0e8dcab"
 dependencies = [
  "bech32",
  "cosmwasm-std",
@@ -4168,7 +4168,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with_macros",
- "time 0.3.20",
+ "time",
 ]
 
 [[package]]
@@ -4378,7 +4378,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 [[package]]
 name = "store"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears?rev=ae051d7d5470a0f542343ae52f3751ab237c3a6c#ae051d7d5470a0f542343ae52f3751ab237c3a6c"
+source = "git+https://github.com/rumos-io/gears?rev=8cfe303aaafc9848c196489dd033441ba0e8dcab#8cfe303aaafc9848c196489dd033441ba0e8dcab"
 dependencies = [
  "database",
  "integer-encoding",
@@ -4493,7 +4493,7 @@ dependencies = [
 [[package]]
 name = "tendermint"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears?rev=ae051d7d5470a0f542343ae52f3751ab237c3a6c#ae051d7d5470a0f542343ae52f3751ab237c3a6c"
+source = "git+https://github.com/rumos-io/gears?rev=8cfe303aaafc9848c196489dd033441ba0e8dcab#8cfe303aaafc9848c196489dd033441ba0e8dcab"
 dependencies = [
  "ed25519-consensus",
  "handlebars",
@@ -4530,7 +4530,7 @@ dependencies = [
  "subtle",
  "subtle-encoding",
  "tendermint-proto 0.29.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "time 0.3.20",
+ "time",
  "zeroize",
 ]
 
@@ -4558,7 +4558,7 @@ dependencies = [
  "subtle",
  "subtle-encoding",
  "tendermint-proto 0.29.1 (git+https://github.com/joneskm/tendermint-rs)",
- "time 0.3.20",
+ "time",
  "zeroize",
 ]
 
@@ -4589,7 +4589,7 @@ dependencies = [
  "subtle",
  "subtle-encoding",
  "tendermint-proto 0.30.0",
- "time 0.3.20",
+ "time",
  "zeroize",
 ]
 
@@ -4650,7 +4650,7 @@ dependencies = [
  "tendermint 0.30.0",
  "tendermint-light-client-verifier 0.30.0",
  "tendermint-rpc 0.30.0",
- "time 0.3.20",
+ "time",
  "tokio",
 ]
 
@@ -4664,7 +4664,7 @@ dependencies = [
  "flex-error",
  "serde",
  "tendermint 0.29.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "time 0.3.20",
+ "time",
 ]
 
 [[package]]
@@ -4677,7 +4677,7 @@ dependencies = [
  "flex-error",
  "serde",
  "tendermint 0.30.0",
- "time 0.3.20",
+ "time",
 ]
 
 [[package]]
@@ -4695,7 +4695,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "subtle-encoding",
- "time 0.3.20",
+ "time",
 ]
 
 [[package]]
@@ -4712,7 +4712,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "subtle-encoding",
- "time 0.3.20",
+ "time",
 ]
 
 [[package]]
@@ -4730,7 +4730,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "subtle-encoding",
- "time 0.3.20",
+ "time",
 ]
 
 [[package]]
@@ -4757,7 +4757,7 @@ dependencies = [
  "tendermint 0.29.1 (git+https://github.com/joneskm/tendermint-rs)",
  "tendermint-config 0.29.1",
  "thiserror",
- "time 0.3.20",
+ "time",
  "tokio",
  "tracing",
  "url",
@@ -4792,7 +4792,7 @@ dependencies = [
  "tendermint 0.30.0",
  "tendermint-config 0.30.0",
  "thiserror",
- "time 0.3.20",
+ "time",
  "tokio",
  "tracing",
  "url",
@@ -4813,7 +4813,7 @@ dependencies = [
  "simple-error",
  "tempfile",
  "tendermint 0.30.0",
- "time 0.3.20",
+ "time",
 ]
 
 [[package]]
@@ -4850,17 +4850,6 @@ checksum = "3fdd6f064ccff2d6567adcb3873ca630700f00b5ad3f060c25b5dcfd9a4ce152"
 dependencies = [
  "cfg-if 1.0.0",
  "once_cell",
-]
-
-[[package]]
-name = "time"
-version = "0.1.45"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b797afad3f312d1c66a56d11d0316f916356d11bd158fbc6ca6389ff6bf805a"
-dependencies = [
- "libc",
- "wasi 0.10.0+wasi-snapshot-preview1",
- "winapi",
 ]
 
 [[package]]
@@ -5152,9 +5141,9 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "0.7.6"
+version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c17e963a819c331dcacd7ab957d80bc2b9a9c1e71c804826d2f283dd65306542"
+checksum = "de0a3ab2091e52d7299a39d098e200114a972df0a7724add02a273aa9aada592"
 dependencies = [
  "serde",
  "serde_spanned",
@@ -5173,9 +5162,9 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
-version = "0.19.14"
+version = "0.19.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8123f27e969974a3dfba720fdb560be359f57b44302d280ba72e76a74480e8a"
+checksum = "1b5bb770da30e5cbfde35a2d7b9b8a2c4b8ef89548a7a6aeab5c9a576e3e7421"
 dependencies = [
  "indexmap 2.0.0",
  "serde",
@@ -5387,7 +5376,7 @@ dependencies = [
 [[package]]
 name = "trees"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears?rev=ae051d7d5470a0f542343ae52f3751ab237c3a6c#ae051d7d5470a0f542343ae52f3751ab237c3a6c"
+source = "git+https://github.com/rumos-io/gears?rev=8cfe303aaafc9848c196489dd033441ba0e8dcab#8cfe303aaafc9848c196489dd033441ba0e8dcab"
 dependencies = [
  "caches",
  "database",
@@ -5576,12 +5565,6 @@ name = "wasi"
 version = "0.9.0+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cccddf32554fecc6acb585f82a32a72e28b48f8c4c1883ddfeeeaa96f7d8e519"
-
-[[package]]
-name = "wasi"
-version = "0.10.0+wasi-snapshot-preview1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a143597ca7c7793eff794def352d41792a93c481eb1042423ff7ff72ba2c31f"
 
 [[package]]
 name = "wasi"

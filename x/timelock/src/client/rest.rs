@@ -13,7 +13,7 @@ use gears::{
         ante::{AuthKeeper, BankKeeper},
         BaseApp, Genesis, Handler,
     },
-    client::rest::{error::Error, Pagination},
+    client::rest::{error::Error, Pagination, RestState},
     x::params::ParamsSubspaceKey,
 };
 use proto_messages::cosmos::tx::v1beta1::Message;
@@ -327,7 +327,7 @@ pub fn get_router<
     AK: AuthKeeper<SK>,
     H: Handler<M, SK, G>,
     G: Genesis,
->() -> Router<BaseApp<SK, PSK, M, BK, AK, H, G>, Body> {
+>() -> Router<RestState<SK, PSK, M, BK, AK, H, G>, Body> {
     Router::new()
         .route(
             "/azkr/tlcs/v1beta1/contributions",
