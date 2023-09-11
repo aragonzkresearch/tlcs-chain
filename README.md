@@ -32,18 +32,12 @@ git clone https://github.com/aragonzkresearch/tlcs-chain
 cd tlcs-chain
 ```
 
-1.5 Install TLCS-C binaries
-
-```console
-git clone https://github.com/aragonzkresearch/tlcs-c
-follow instruction in README
----more instructions to come
-```
-
-2. Initialize a new chain:
+2. Initialize a new chain and add accounts:
 
 ```console
 make init
+tlcs add-genesis-account cosmos1syavy2npfyt9tcncdtsdzf7kny9lh777pahuux 53uatom
+tlcs add-genesis-account cosmos1skgmlw2j4qupafzcg5qvacd76mfzfe69la0hxz 53uatom
 ```
 
 3. Build and start the application:
@@ -90,14 +84,14 @@ Which returns:
   "balances": [
     {
       "denom": "uatom",
-      "amount": "34"
+      "amount": "53"
     }
   ],
   "pagination": null
 }
 ```
 
-The balance of this address was set to 34 in the genesis file.
+The balance of this address was set to 53 in the genesis file.
 
 3. Import the key corresponding to the above address into the tlcs key store:
 
@@ -133,17 +127,23 @@ Which returns:
 
 ```
 
-6. Submit participant data:
+6. Submit keypair request and contribute data
 
 ```console
-tlcs tx tlcs request_keypair kevin 100 1 1692800327 
+tlcs tx kevin timelock keypair 100 1 1692800327 
+```
+
+Get keypair ID
+```console
+tlcs query timelock keypairs-by-round 100
 ```
 
 ```console
 tlcs tx tlcs contribute kevin 100 1 0
+tlcs tx tlcs contribute alice 100 1 0
 ```
 
 ```console
-tlcs query tlcs contributions_by_round 100
+tlcs query timelock contributions_by_round 100
 ```
 

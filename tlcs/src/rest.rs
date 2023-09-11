@@ -20,5 +20,5 @@ pub fn get_router<
     G: Genesis,
 >() -> Router<RestState<SK, PSK, M, BK, AK, H, G>, Body> {
     let router = Router::new().nest("/bank", bank::rest::get_router());
-    router.nest("/tlcs", timelock::rest::get_router())
+    router.nest("/tlcs/timelock/v1beta1", timelock::rest::get_router())
 }

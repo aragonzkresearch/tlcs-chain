@@ -7,6 +7,9 @@ run:
 build:
 	cargo build --release --target-dir ./build
 
+build-linux-server:
+	(export OPENSSL_INCLUDE_DIR='/usr/include/openssl'; export OPENSSL_LIB_DIR='/usr/lib/x86_64-linux-gnu'; cargo build --release --target-dir ./build)
+
 test:
 	cargo test -- --nocapture
 
