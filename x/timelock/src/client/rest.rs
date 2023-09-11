@@ -319,6 +319,21 @@ pub async fn get_loe_data_needed<
     ))
 }
 
+async fn endpoint_info() -> &'static str {
+    "TLCS rest endpoints:\n\n\
+     \t /tlcs/timelock/v1beta1/contributions\n\
+     \t /tlcs/timelock/v1beta1/contributions_by_round/:round\n\
+     \t /tlcs/timelock/v1beta1/contributions_by_round_and_scheme/:round/:scheme\n\
+     \t /tlcs/timelock/v1beta1/keypairs\n\
+     \t /tlcs/timelock/v1beta1/keypairs/round/:round\n\
+     \t /tlcs/timelock/v1beta1/keypairs/time/:time\n\
+     \t /tlcs/timelock/v1beta1/keypairs/round_and_scheme/:round/:scheme\n\
+     \t /tlcs/timelock/v1beta1/loe_data\n\
+     \t /tlcs/timelock/v1beta1/loe_data/round/:round\n\
+     \t /tlcs/timelock/v1beta1/loe_data_needed\n\
+    "
+}
+
 pub fn get_router<
     SK: StoreKey,
     PSK: ParamsSubspaceKey,
@@ -329,38 +344,24 @@ pub fn get_router<
     G: Genesis,
 >() -> Router<RestState<SK, PSK, M, BK, AK, H, G>, Body> {
     Router::new()
+        .route("/", get(endpoint_info))
+        .route("/contributions", get(get_all_contributions))
         .route(
-            "/azkr/tlcs/v1beta1/contributions",
-            get(get_all_contributions),
-        )
-        .route(
-            "/azkr/tlcs/v1beta1/contributions_by_round/:round",
+            "/contributions_by_round/:round",
             get(get_contributions_by_round),
         )
         .route(
-            "/azkr/tlcs/v1beta1/contributions_by_round_and_scheme/:round/:scheme",
+            "/contributions_by_round_and_scheme/:round/:scheme",
             get(get_contributions_by_round_and_scheme),
         )
-        .route("/azkr/tlcs/v1beta1/keypairs", get(get_all_keypairs))
+        .route("/keypairs", get(get_all_keypairs))
+        .route("/keypairs/round/:round", get(get_keypairs_by_round))
+        .route("/keypairs/time/:time", get(get_keypairs_by_time))
         .route(
-            "/azkr/tlcs/v1beta1/keypairs/round/:round",
-            get(get_keypairs_by_round),
-        )
-        .route(
-            "/azkr/tlcs/v1beta1/keypairs/time/:time",
-            get(get_keypairs_by_time),
-        )
-        .route(
-            "/azkr/tlcs/v1beta1/keypairs/round_and_scheme/:round/:scheme",
+            "/keypairs/round_and_scheme/:round/:scheme",
             get(get_keypairs_by_round_and_scheme),
         )
-        .route("/azkr/tlcs/v1beta1/loe_data", get(get_all_loe_data))
-        .route(
-            "/azkr/tlcs/v1beta1/loe_data/round/:round",
-            get(get_loe_data_by_round),
-        )
-        .route(
-            "/azkr/tlcs/v1beta1/loe_data_needed",
-            get(get_loe_data_needed),
-        )
+        .route("/loe_data", get(get_all_loe_data))
+        .route("/loe_data/round/:round", get(get_loe_data_by_round))
+        .route("/loe_data_needed", get(get_loe_data_needed))
 }
