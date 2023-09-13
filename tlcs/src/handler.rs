@@ -80,7 +80,7 @@ impl gears::baseapp::Handler<Message, TlcsStoreKey, GenesisState> for Handler {
             self.auth_handler.handle_query(ctx, query)
         } else if query.path.starts_with("/cosmos.bank") {
             self.bank_handler.handle_query(ctx, query)
-        } else if query.path.starts_with("/cosmos.tlcs") {
+        } else if query.path.starts_with("/tlcs.timelock") {
             self.timelock_handler.handle_query(ctx, query)
         } else {
             Err(AppError::InvalidRequest("query path not found".into()))

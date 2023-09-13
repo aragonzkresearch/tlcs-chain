@@ -5,6 +5,7 @@ use auth::Keeper as AuthKeeper;
 use bank::Keeper as BankKeeper;
 use client::query_command_handler;
 use client::tx_command_handler;
+use gears::utils::get_default_home_dir;
 use gears::x::params::Keeper as ParamsKeeper;
 use rest::get_router;
 use tendermint_rpc::Url;
@@ -41,9 +42,10 @@ fn main() -> Result<()> {
     );
 
     let config = Config {
-        node: Url::from_str("http:localhost:22557").unwrap(),
-        home: "home".into(),
-        from: "bob".into(),
+        node: Url::from_str("http://localhost:26657").unwrap(),
+        //home: "/Users/craig/.tlcs".into(),
+        home: get_default_home_dir(APP_NAME).unwrap(),
+        from: "kevin".into(),
         chain_id: tendermint_informal::chain::Id::try_from("chain-id").unwrap(),
     };
 

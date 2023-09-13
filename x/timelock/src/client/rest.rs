@@ -40,7 +40,7 @@ pub async fn get_all_contributions<
 ) -> Result<Json<QueryAllContributionsResponse>, Error> {
     let request = RequestQuery {
         data: Default::default(),
-        path: "/azkr.tlcs.v1beta1.Query/AllContributions".into(),
+        path: "/tlcs.timelock.v1beta1.Query/AllContributions".into(),
         height: 0,
         prove: false,
     };
@@ -70,7 +70,7 @@ pub async fn get_contributions_by_round<
     let req = QueryRoundRequest { round };
     let request = RequestQuery {
         data: req.encode_vec().into(),
-        path: "/azkr.tlcs.v1beta1.Query/AllContributionsByRound".into(),
+        path: "/tlcs.timelock.v1beta1.Query/AllContributionsByRound".into(),
         height: 0,
         prove: false,
     };
@@ -101,7 +101,7 @@ pub async fn get_contributions_by_round_and_scheme<
     let req = QueryRoundSchemeRequest { round, scheme };
     let request = RequestQuery {
         data: req.encode_vec().into(),
-        path: "/azkr.tlcs.v1beta1.Query/AllContributionsByRoundAndScheme".into(),
+        path: "/tlcs.timelock.v1beta1.Query/AllContributionsByRoundAndScheme".into(),
         height: 0,
         prove: false,
     };
@@ -129,7 +129,7 @@ pub async fn get_all_keypairs<
 ) -> Result<Json<QueryAllKeyPairsResponse>, Error> {
     let request = RequestQuery {
         data: Bytes::new(),
-        path: "/azkr.tlcs.v1beta1.Query/AllKeyPairs".into(),
+        path: "/tlcs.timelock.v1beta1.Query/AllKeyPairs".into(),
         height: 0,
         prove: false,
     };
@@ -159,7 +159,7 @@ pub async fn get_keypairs_by_round<
     let req = QueryRoundRequest { round };
     let request = RequestQuery {
         data: req.encode_vec().into(),
-        path: "/azkr.tlcs.v1beta1.Query/AllKeyPairsByRound".into(),
+        path: "/tlcs.timelock.v1beta1.Query/AllKeyPairsByRound".into(),
         height: 0,
         prove: false,
     };
@@ -189,7 +189,7 @@ pub async fn get_keypairs_by_time<
     let req = QueryTimeRequest { time };
     let request = RequestQuery {
         data: req.encode_vec().into(),
-        path: "/azkr.tlcs.v1beta1.Query/AllKeyPairsByTime".into(),
+        path: "/tlcs.timelock.v1beta1.Query/AllKeyPairsByTime".into(),
         height: 0,
         prove: false,
     };
@@ -220,7 +220,7 @@ pub async fn get_keypairs_by_round_and_scheme<
     let req = QueryRoundSchemeRequest { round, scheme };
     let request = RequestQuery {
         data: req.encode_vec().into(),
-        path: "/azkr.tlcs.v1beta1.Query/AllKeyPairsByRoundAndScheme".into(),
+        path: "/tlcs.timelock.v1beta1.Query/AllKeyPairsByRoundAndScheme".into(),
         height: 0,
         prove: false,
     };
@@ -248,7 +248,7 @@ pub async fn get_all_loe_data<
 ) -> Result<Json<QueryAllLoeDataResponse>, Error> {
     let request = RequestQuery {
         data: Bytes::new(),
-        path: "/azkr.tlcs.v1beta1.Query/AllLoeData".into(),
+        path: "/tlcs.timelock.v1beta1.Query/AllLoeData".into(),
         height: 0,
         prove: false,
     };
@@ -278,7 +278,7 @@ pub async fn get_loe_data_by_round<
     let req = QueryRoundRequest { round };
     let request = RequestQuery {
         data: req.encode_vec().into(),
-        path: "/azkr.tlcs.v1beta1.Query/AllLoeDataByRound".into(),
+        path: "/tlcs.timelock.v1beta1.Query/AllLoeDataByRound".into(),
         height: 0,
         prove: false,
     };
@@ -306,7 +306,7 @@ pub async fn get_loe_data_needed<
 ) -> Result<Json<QueryAllKeyPairsResponse>, Error> {
     let request = RequestQuery {
         data: Bytes::new(),
-        path: "/azkr.tlcs.v1beta1.Query/AllLoeDataNeeded".into(),
+        path: "/tlcs.timelock.v1beta1.Query/AllLoeDataNeeded".into(),
         height: 0,
         prove: false,
     };
