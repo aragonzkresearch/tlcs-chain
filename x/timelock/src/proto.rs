@@ -1,7 +1,7 @@
 pub mod tlcs {
     pub mod v1beta1 {
         use ibc_proto::{
-            //azkr::tlcs::v1beta1::{
+            //azkr::timelock::v1beta1::{
             //    QueryAllRoundSchemeRequest as RawQueryAllRoundSchemeRequest,
             //},
             google::protobuf::Any,
@@ -69,7 +69,7 @@ pub mod tlcs {
         impl From<MsgNewProcess> for Any {
             fn from(msg: MsgNewProcess) -> Self {
                 Any {
-                    type_url: "/azkr.tlcs.v1beta1.MsgNewProcess".to_string(),
+                    type_url: "/tlcs.timelock.v1beta1.MsgNewProcess".to_string(),
                     value: msg.encode_vec(),
                 }
             }
@@ -143,7 +143,7 @@ pub mod tlcs {
         impl From<MsgContribution> for Any {
             fn from(msg: MsgContribution) -> Self {
                 Any {
-                    type_url: "/azkr.tlcs.v1beta1.MsgContribution".to_string(),
+                    type_url: "/tlcs.timelock.v1beta1.MsgContribution".to_string(),
                     value: msg.encode_vec(),
                 }
             }
@@ -221,7 +221,7 @@ pub mod tlcs {
         impl From<MsgKeyPair> for Any {
             fn from(msg: MsgKeyPair) -> Self {
                 Any {
-                    type_url: "/azkr.tlcs.v1beta1.MsgKeyPair".to_string(),
+                    type_url: "/tlcs.timelock.v1beta1.MsgKeyPair".to_string(),
                     value: msg.encode_vec(),
                 }
             }
@@ -386,7 +386,7 @@ pub mod tlcs {
         impl From<MsgLoeData> for Any {
             fn from(msg: MsgLoeData) -> Self {
                 Any {
-                    type_url: "/azkr.tlcs.v1beta1.MsgLoeData".to_string(),
+                    type_url: "/tlcs.timelock.v1beta1.MsgLoeData".to_string(),
                     value: msg.encode_vec(),
                 }
             }

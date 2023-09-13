@@ -1,3 +1,5 @@
+use std::{thread, time};
+
 use anyhow::{anyhow, Result};
 use gears::{
     client::keys::key_store::DiskStore,
@@ -20,6 +22,7 @@ use tendermint_rpc::{endpoint::abci_query::AbciQuery, Client, HttpClient, Url};
 use tokio::runtime::Runtime;
 
 use crate::Config;
+use tracing::info;
 
 /// This method is used when sending transactions from within
 /// Tx handlers (which is not supported by the SDK)
@@ -30,12 +33,16 @@ pub fn run_tx_command<Msg: Message, MessageGetter>(
 where
     MessageGetter: FnOnce(AccAddress) -> Msg,
 {
+    let ten_secs = time::Duration::from_secs(10);
+    thread::sleep(ten_secs);
+
     let Config {
         node,
         home,
         from,
         chain_id,
     } = config;
+    //info!("Chain ID: {:?}", chain_id);
 
     let key_store: DiskStore<Secp256k1KeyPair> = DiskStore::new(home)?;
     let key = key_store.get_key(&from)?;
@@ -49,7 +56,8 @@ where
     };
 
     let address = AccAddress::from_str(&key.account())?;
-    let account = get_account_latest(address.clone(), node.clone())?;
+    //let account = get_account_latest(address.clone(), node.clone())?;
+    let account = get_account_latest(AccAddress::from_str(&key.account())?, node.clone())?;
 
     let signing_info = SigningInfo {
         key,
@@ -78,11 +86,13 @@ where
 }
 
 pub async fn broadcast_tx_commit(client: HttpClient, raw_tx: TxRaw) -> Result<()> {
+    info!("Broadcasting TX");
     let res = client
         .broadcast_tx_commit(prost::Message::encode_to_vec(&raw_tx))
         .await?;
 
-    println!("{}", serde_json::to_string_pretty(&res)?);
+    info!("RES: {}", serde_json::to_string_pretty(&res)?);
+    //println!("{}", serde_json::to_string_pretty(&res)?);
     Ok(())
 }
 

@@ -63,12 +63,12 @@ impl<SK: StoreKey> Handler<SK> {
         query: tendermint_proto::abci::RequestQuery,
     ) -> std::result::Result<bytes::Bytes, AppError> {
         match query.path.as_str() {
-            "/azkr.tlcs.v1beta1.Query/AllContributions" => Ok(self
+            "/tlcs.timelock.v1beta1.Query/AllContributions" => Ok(self
                 .keeper
                 .query_all_contributions(&ctx)
                 .encode_to_vec()
                 .into()),
-            "/azkr.tlcs.v1beta1.Query/AllContributionsByRound" => {
+            "/tlcs.timelock.v1beta1.Query/AllContributionsByRound" => {
                 let data = query.data.clone();
                 let req = QueryRoundRequest::decode(data)?;
 
@@ -78,7 +78,7 @@ impl<SK: StoreKey> Handler<SK> {
                     .encode_to_vec()
                     .into())
             }
-            "/azkr.tlcs.v1beta1.Query/AllContributionsByRoundAndScheme" => {
+            "/tlcs.timelock.v1beta1.Query/AllContributionsByRoundAndScheme" => {
                 let data = query.data.clone();
                 let req = QueryRoundSchemeRequest::decode(data)?;
 
@@ -88,10 +88,10 @@ impl<SK: StoreKey> Handler<SK> {
                     .encode_to_vec()
                     .into())
             }
-            "/azkr.tlcs.v1beta1.Query/AllKeyPairs" => {
+            "/tlcs.timelock.v1beta1.Query/AllKeyPairs" => {
                 Ok(self.keeper.query_all_keypairs(&ctx).encode_to_vec().into())
             }
-            "/azkr.tlcs.v1beta1.Query/AllKeyPairsByRound" => {
+            "/tlcs.timelock.v1beta1.Query/AllKeyPairsByRound" => {
                 let data = query.data.clone();
                 let req = QueryRoundRequest::decode(data)?;
 
@@ -101,7 +101,7 @@ impl<SK: StoreKey> Handler<SK> {
                     .encode_to_vec()
                     .into())
             }
-            "/azkr.tlcs.v1beta1.Query/AllKeyPairsByRoundAndScheme" => {
+            "/tlcs.timelock.v1beta1.Query/AllKeyPairsByRoundAndScheme" => {
                 let data = query.data.clone();
                 let req = QueryRoundSchemeRequest::decode(data)?;
 
@@ -111,7 +111,7 @@ impl<SK: StoreKey> Handler<SK> {
                     .encode_to_vec()
                     .into())
             }
-            "/azkr.tlcs.v1beta1.Query/AllKeyPairsByTime" => {
+            "/tlcs.timelock.v1beta1.Query/AllKeyPairsByTime" => {
                 let data = query.data.clone();
                 let req = QueryTimeRequest::decode(data)?;
 
@@ -121,10 +121,10 @@ impl<SK: StoreKey> Handler<SK> {
                     .encode_to_vec()
                     .into())
             }
-            "/azkr.tlcs.v1beta1.Query/AllLoeData" => {
+            "/tlcs.timelock.v1beta1.Query/AllLoeData" => {
                 Ok(self.keeper.query_all_loe_data(&ctx).encode_to_vec().into())
             }
-            "/azkr.tlcs.v1beta1.Query/AllLoeDataByRound" => {
+            "/tlcs.timelock.v1beta1.Query/AllLoeDataByRound" => {
                 let data = query.data.clone();
                 let req = QueryRoundRequest::decode(data)?;
 
@@ -134,7 +134,7 @@ impl<SK: StoreKey> Handler<SK> {
                     .encode_to_vec()
                     .into())
             }
-            "/azkr.tlcs.v1beta1.Query/AllLoeDataNeeded" => Ok(self
+            "/tlcs.timelock.v1beta1.Query/AllLoeDataNeeded" => Ok(self
                 .keeper
                 .query_loe_data_needed(&ctx)
                 .encode_to_vec()

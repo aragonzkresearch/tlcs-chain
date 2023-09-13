@@ -12,7 +12,7 @@ use tracing::info;
 // Include to run benchmark and uncomment benchmark in test
 //use std::time::Instant;
 use tlcs_rust::chain_functions::{
-    loe_signature_is_valid, make_public_key, make_secret_key, verify_keyshare,
+    loe_signature_is_valid, make_keyshare, make_public_key, make_secret_key, verify_keyshare,
 };
 
 use crate::{
@@ -40,8 +40,6 @@ const CONTRIBUTION_THRESHOLD_KEY: [u8; 1] = [0];
 const PARTICIPANT_DATA_KEY: [u8; 1] = [1];
 const KEYPAIR_DATA_KEY: [u8; 1] = [2];
 const LOE_DATA_KEY: [u8; 1] = [3];
-
-const TMP_SCHEME_ID: [u8; 1] = [1];
 
 const LOE_PUBLIC_KEY: &str = "a0b862a7527fee3a731bcb59280ab6abd62d5c0b6ea03dc4ddf6612fdfc9d01f01c31542541771903475eb1ec6615f8d0df0b8b6dce385811d6dcf8cbefb8759e5e616a3dfd054c928940766d9a5b9db91e3b697e5d70a975181e007f87fca5e";
 const SECURITY_PARAM: usize = 10;
@@ -95,40 +93,19 @@ impl<SK: StoreKey> Keeper<SK> {
         config: Config,
         msg: &MsgNewProcess,
     ) -> Result<(), AppError> {
-        thread::spawn(|| {
-            // This must be run inside a thread since it will block until it receives a response
-            // which won't happen until this transaction has been processed.
-
-            match run_tx_command(config, |addr| {
-                crate::Message::SubmitLoeData(MsgLoeData {
-                    address: addr,
-                    round: 12,
-                    signature: "a_signature".into(),
-                })
-            }) {
-                Ok(_) => info!("Successfully submitted LOE data"),
-                Err(_) => info!("Failed to submit LOE data"),
-            }
-        });
-
         if msg.round > 0 && valid_scheme(msg.scheme) && check_time(msg.pubkey_time) {
             info!(
-                "PROCESS TX: new process request. Round: {:?}, Scheme: {:?}",
+                "NEW PROCESS TX: new process request. Round: {:?}, Scheme: {:?}",
                 msg.round, msg.scheme
             );
 
             let keycount = self.open_process_count(ctx, msg.round, msg.scheme);
+
+            let mut store_key = KEYPAIR_DATA_KEY.to_vec();
+            store_key.append(&mut msg.round.to_le_bytes().to_vec());
+            store_key.append(&mut msg.scheme.to_le_bytes().to_vec());
+
             let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
-
-            // Save Participant data
-            let mut prefix = PARTICIPANT_DATA_KEY.to_vec();
-            prefix.append(&mut msg.round.to_le_bytes().to_vec());
-            prefix.append(&mut msg.scheme.to_le_bytes().to_vec());
-
-            // Create empty keypair
-            let mut prefix = KEYPAIR_DATA_KEY.to_vec();
-            prefix.append(&mut msg.round.to_le_bytes().to_vec());
-            prefix.append(&mut TMP_SCHEME_ID.to_vec());
 
             let key_data: RawMsgKeyPair = RawMsgKeyPair {
                 round: msg.round,
@@ -138,7 +115,38 @@ impl<SK: StoreKey> Keeper<SK> {
                 public_key: "".to_string(),
                 private_key: "".to_string(),
             };
-            tlcs_store.set(prefix.into(), key_data.encode_to_vec());
+
+            tlcs_store.set(store_key.into(), key_data.encode_to_vec());
+
+            let round_data_vec = make_keyshare(
+                LOE_PUBLIC_KEY.into(),
+                msg.round,
+                SCHEME.into(),
+                SECURITY_PARAM,
+            );
+            let this_round = msg.round;
+            let this_scheme = msg.scheme;
+
+            thread::spawn(move || {
+                // This must be run inside a thread since it will block until it receives a response
+                // which won't happen until this transaction has been processed.
+
+                match run_tx_command(config, |addr| {
+                    crate::Message::Participate(MsgContribution {
+                        address: addr,
+                        round: this_round,
+                        scheme: this_scheme,
+                        id: keycount,
+                        data: round_data_vec,
+                    })
+                }) {
+                    Ok(_) => info!(
+                        "Successfully submitted Contribution data for {:?}",
+                        this_round
+                    ),
+                    Err(e) => info!("Failed to submit Contribution: {:?}", e),
+                }
+            });
         } else {
             return Err(AppError::InvalidRequest(
                 "The keypair request is invalid".into(),
@@ -172,30 +180,28 @@ impl<SK: StoreKey> Keeper<SK> {
 
         let keycount = self.open_process_count(ctx, msg.round, msg.scheme);
 
-        if keycount < 1 {
-            if keycount < msg.id {
-                return Err(AppError::InvalidRequest(
-                    "The round is no longer open for contributions".into(),
-                ));
-            }
-
-            if verify_keyshare(
-                LOE_PUBLIC_KEY.into(),
-                msg.round,
-                SCHEME.into(),
-                msg.data.clone(),
-                SECURITY_PARAM,
-            ) {
-                //    if verify_participant_data(msg.round, msg.data.clone()) {
-                let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
-                let chain_data: RawMsgContribution = msg.to_owned().into();
-                tlcs_store.set(store_key.into(), chain_data.encode_to_vec());
-            } else {
-                return Err(AppError::InvalidRequest(
-                    "The contribution data is invalid for the given round".into(),
-                ));
-            }
+        //if msg.id <= (keycount - 1) {
+        if verify_keyshare(
+            LOE_PUBLIC_KEY.into(),
+            msg.round,
+            SCHEME.into(),
+            msg.data.clone(),
+            SECURITY_PARAM,
+        ) {
+            //    if verify_participant_data(msg.round, msg.data.clone()) {
+            let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
+            let chain_data: RawMsgContribution = msg.to_owned().into();
+            tlcs_store.set(store_key.into(), chain_data.encode_to_vec());
+        } else {
+            return Err(AppError::InvalidRequest(
+                "The contribution data is invalid for the given round".into(),
+            ));
         }
+        //} else {
+        //    return Err(AppError::InvalidRequest(
+        //        "Can't contribute data without existing keypair request.".into(),
+        //    ));
+        //}
 
         Ok(())
     }
@@ -217,7 +223,6 @@ impl<SK: StoreKey> Keeper<SK> {
                 .expect("invalid data in database - possible database corruption");
             contributions.push(contribution);
         }
-
         QueryAllContributionsResponse { contributions }
     }
 
