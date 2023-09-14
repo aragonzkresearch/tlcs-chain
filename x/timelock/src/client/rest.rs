@@ -322,14 +322,14 @@ pub async fn get_loe_data_needed<
 async fn endpoint_info() -> &'static str {
     "TLCS rest endpoints:\n\n\
      \t /tlcs/timelock/v1beta1/contributions\n\
-     \t /tlcs/timelock/v1beta1/contributions_by_round/:round\n\
-     \t /tlcs/timelock/v1beta1/contributions_by_round_and_scheme/:round/:scheme\n\
+     \t /tlcs/timelock/v1beta1/contributions_by_round/<round>\n\
+     \t /tlcs/timelock/v1beta1/contributions_by_round_and_scheme/<round>/<scheme>\n\
      \t /tlcs/timelock/v1beta1/keypairs\n\
-     \t /tlcs/timelock/v1beta1/keypairs/round/:round\n\
-     \t /tlcs/timelock/v1beta1/keypairs/time/:time\n\
-     \t /tlcs/timelock/v1beta1/keypairs/round_and_scheme/:round/:scheme\n\
+     \t /tlcs/timelock/v1beta1/keypairs/round/<round>\n\
+     \t /tlcs/timelock/v1beta1/keypairs/time/<time>\n\
+     \t /tlcs/timelock/v1beta1/keypairs/round_and_scheme/<round>/:scheme>\n\
      \t /tlcs/timelock/v1beta1/loe_data\n\
-     \t /tlcs/timelock/v1beta1/loe_data/round/:round\n\
+     \t /tlcs/timelock/v1beta1/loe_data/round/<round>\n\
      \t /tlcs/timelock/v1beta1/loe_data_needed\n\
     "
 }

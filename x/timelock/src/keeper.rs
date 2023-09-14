@@ -95,7 +95,7 @@ impl<SK: StoreKey> Keeper<SK> {
     ) -> Result<(), AppError> {
         if msg.round > 0 && valid_scheme(msg.scheme) && check_time(msg.pubkey_time) {
             info!(
-                "NEW PROCESS TX: new process request. Round: {:?}, Scheme: {:?}",
+                "NEW PROCESS TX: Round: {:?}, Scheme: {:?}",
                 msg.round, msg.scheme
             );
 
@@ -180,28 +180,28 @@ impl<SK: StoreKey> Keeper<SK> {
 
         let keycount = self.open_process_count(ctx, msg.round, msg.scheme);
 
-        //if msg.id <= (keycount - 1) {
-        if verify_keyshare(
-            LOE_PUBLIC_KEY.into(),
-            msg.round,
-            SCHEME.into(),
-            msg.data.clone(),
-            SECURITY_PARAM,
-        ) {
-            //    if verify_participant_data(msg.round, msg.data.clone()) {
-            let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
-            let chain_data: RawMsgContribution = msg.to_owned().into();
-            tlcs_store.set(store_key.into(), chain_data.encode_to_vec());
+        if msg.id <= (keycount - 1) {
+            if verify_keyshare(
+                LOE_PUBLIC_KEY.into(),
+                msg.round,
+                SCHEME.into(),
+                msg.data.clone(),
+                SECURITY_PARAM,
+            ) {
+                //    if verify_participant_data(msg.round, msg.data.clone()) {
+                let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
+                let chain_data: RawMsgContribution = msg.to_owned().into();
+                tlcs_store.set(store_key.into(), chain_data.encode_to_vec());
+            } else {
+                return Err(AppError::InvalidRequest(
+                    "The contribution data is invalid for the given round".into(),
+                ));
+            }
         } else {
             return Err(AppError::InvalidRequest(
-                "The contribution data is invalid for the given round".into(),
+                "Can't contribute data without existing keypair request.".into(),
             ));
         }
-        //} else {
-        //    return Err(AppError::InvalidRequest(
-        //        "Can't contribute data without existing keypair request.".into(),
-        //    ));
-        //}
 
         Ok(())
     }

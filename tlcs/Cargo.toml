@@ -27,5 +27,6 @@ strum = "0.24.1"
 strum_macros = "0.24"
 tendermint-informal = { package = "tendermint", git = "https://github.com/joneskm/tendermint-rs" }
 timelock = { path = "../x/timelock" }
+toml = "0.8.0"
 
 [dev-dependencies]

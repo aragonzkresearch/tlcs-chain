@@ -1,4 +1,7 @@
-use std::str::FromStr;
+use serde::Deserialize; // TODO: remove this and get rid of the config reading in this file
+use std::fs;
+use std::str::FromStr; // TODO: remove this and get rid of the config reading in this file
+use toml; // TODO: remove this and get rid of the config reading in this file
 
 use anyhow::Result;
 use auth::Keeper as AuthKeeper;
@@ -25,6 +28,13 @@ mod store_keys;
 pub const APP_NAME: &str = env!("CARGO_PKG_NAME");
 pub const VERSION: &str = env!("GIT_HASH");
 
+#[derive(Deserialize)]
+struct Fileconf {
+    tendermint_url: String,
+    from_user: String,
+    chain_id: String,
+}
+
 fn main() -> Result<()> {
     let params_keeper = ParamsKeeper::new(TlcsStoreKey::Params);
 
@@ -41,12 +51,34 @@ fn main() -> Result<()> {
         auth_keeper.clone(),
     );
 
+    // This is only here until Kevin makes the config more universal
+    let mut home_dir = get_default_home_dir(APP_NAME).unwrap();
+    home_dir.push("config/resend.toml");
+
+    //let contents = match fs::read_to_string("~/.tlcs/config/resend.toml") {
+    let contents = match fs::read_to_string(home_dir) {
+        Ok(s) => s,
+        Err(_) => {
+            panic!("Could not read file resend.toml");
+        }
+    };
+
+    let file_conf: Fileconf = match toml::from_str(&contents) {
+        Ok(d) => d,
+        Err(_) => {
+            panic!("File resend.toml is corrupt");
+        }
+    };
+    // End of temp section
+
     let config = Config {
-        node: Url::from_str("http://localhost:26657").unwrap(),
-        //home: "/Users/craig/.tlcs".into(),
+        //node: Url::from_str("http://localhost:26657").unwrap(),
+        node: Url::from_str(&file_conf.tendermint_url).unwrap(),
         home: get_default_home_dir(APP_NAME).unwrap(),
-        from: "kevin".into(),
-        chain_id: tendermint_informal::chain::Id::try_from("chain-id").unwrap(),
+        //from: "kevin".into(),
+        //chain_id: tendermint_informal::chain::Id::try_from("test-chain").unwrap(),
+        from: file_conf.from_user.into(),
+        chain_id: tendermint_informal::chain::Id::try_from(file_conf.chain_id).unwrap(),
     };
 
     gears::app::run(

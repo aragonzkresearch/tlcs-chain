@@ -42,7 +42,6 @@ where
         from,
         chain_id,
     } = config;
-    //info!("Chain ID: {:?}", chain_id);
 
     let key_store: DiskStore<Secp256k1KeyPair> = DiskStore::new(home)?;
     let key = key_store.get_key(&from)?;
@@ -56,8 +55,7 @@ where
     };
 
     let address = AccAddress::from_str(&key.account())?;
-    //let account = get_account_latest(address.clone(), node.clone())?;
-    let account = get_account_latest(AccAddress::from_str(&key.account())?, node.clone())?;
+    let account = get_account_latest(address.clone(), node.clone())?;
 
     let signing_info = SigningInfo {
         key,
@@ -86,14 +84,19 @@ where
 }
 
 pub async fn broadcast_tx_commit(client: HttpClient, raw_tx: TxRaw) -> Result<()> {
-    info!("Broadcasting TX");
+    info!("Broadcasting Contrib TX");
     let res = client
         .broadcast_tx_commit(prost::Message::encode_to_vec(&raw_tx))
         .await?;
 
-    info!("RES: {}", serde_json::to_string_pretty(&res)?);
-    //println!("{}", serde_json::to_string_pretty(&res)?);
-    Ok(())
+    let delivery_code = res.deliver_tx.code.to_owned();
+    match delivery_code.is_ok() {
+        true => Ok(()),
+        false => Err(anyhow!("TX returned an error: ")),
+    }
+
+    //info!("RES: {}", serde_json::to_string_pretty(&res)?);
+    //Ok(())
 }
 
 // NOTE: we're assuming here that the app has an auth module which handles this query
