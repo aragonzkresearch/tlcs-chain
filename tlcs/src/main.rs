@@ -59,7 +59,10 @@ fn main() -> Result<()> {
     let contents = match fs::read_to_string(home_dir) {
         Ok(s) => s,
         Err(_) => {
-            panic!("Could not read file resend.toml");
+            //panic!("Could not read file resend.toml");
+            format!(
+                "tendermint_url='http://localhost:26657'\nfrom_user='kevin'\nchain_id='tlcs-chain'"
+            )
         }
     };
 
