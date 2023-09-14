@@ -38,6 +38,7 @@ cd tlcs-chain
 make init
 tlcs add-genesis-account cosmos1syavy2npfyt9tcncdtsdzf7kny9lh777pahuux 53uatom
 tlcs add-genesis-account cosmos1skgmlw2j4qupafzcg5qvacd76mfzfe69la0hxz 53uatom
+tlcs add-genesis-account cosmos1gc308w6mg7skucsdxdjehhewr4aetwq24zf92m 50uatom
 ```
 
 3. Build and start the application:
@@ -98,6 +99,7 @@ The balance of this address was set to 53 in the genesis file.
 ```console
 echo "race draft rival universe maid cheese steel logic crowd fork comic easy truth drift tomorrow eye buddy head time cash swing swift midnight borrow" | tlcs keys add kevin --recover
 echo "all victory hero talent forget twice quote you office vacant sleep kangaroo disorder scorpion humble gorilla coast pudding edge garlic bid dutch excuse magic" | tlcs keys add alice --recover
+echo "quick rack fancy cruel knee early summer clock group apology excuse file voice album fold cave garbage student awake twenty stereo argue draw human" | tlcs keys add ahmad --recover
 ```
 
 4. Send tokens:
@@ -119,7 +121,7 @@ Which returns:
   "balances": [
     {
       "denom": "uatom",
-      "amount": "23"
+      "amount": "53"
     }
   ],
   "pagination": null
@@ -136,14 +138,14 @@ tlcs tx kevin timelock keypair 100 1 1692800327
 Get keypair ID
 ```console
 tlcs query timelock keypairs-by-round 100
+tlcs query timelock contributions-by-round 100
 ```
 
 ```console
-tlcs tx tlcs contribute kevin 100 1 0
 tlcs tx tlcs contribute alice 100 1 0
+tlcs tx tlcs contribute ahmad 100 1 0
 ```
 
 ```console
 tlcs query timelock contributions_by_round 100
 ```
-
