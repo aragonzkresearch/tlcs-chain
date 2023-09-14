@@ -2,12 +2,12 @@
 members = ["tlcs", "x/timelock"]
 
 [workspace.dependencies]
-auth = {git = "https://github.com/rumos-io/gears", rev = "1e225fc7bc02ecac5cc6cadc6d7caca958452816"}
-bank = {git = "https://github.com/rumos-io/gears", rev = "1e225fc7bc02ecac5cc6cadc6d7caca958452816"}
-database = {git = "https://github.com/rumos-io/gears", rev = "1e225fc7bc02ecac5cc6cadc6d7caca958452816"}
-gears = {git = "https://github.com/rumos-io/gears", rev = "1e225fc7bc02ecac5cc6cadc6d7caca958452816"}
-proto-messages = {git = "https://github.com/rumos-io/gears", rev = "1e225fc7bc02ecac5cc6cadc6d7caca958452816"}
-proto-types = {git = "https://github.com/rumos-io/gears", rev = "1e225fc7bc02ecac5cc6cadc6d7caca958452816"}
-store = {git = "https://github.com/rumos-io/gears", rev = "1e225fc7bc02ecac5cc6cadc6d7caca958452816"}
+auth = {git = "https://github.com/rumos-io/gears", rev = "9019b276e71c34a7be49859eff84fac1555ed9a9"}
+bank = {git = "https://github.com/rumos-io/gears", rev = "9019b276e71c34a7be49859eff84fac1555ed9a9"}
+database = {git = "https://github.com/rumos-io/gears", rev = "9019b276e71c34a7be49859eff84fac1555ed9a9"}
+gears = {git = "https://github.com/rumos-io/gears", rev = "9019b276e71c34a7be49859eff84fac1555ed9a9"}
+proto-messages = {git = "https://github.com/rumos-io/gears", rev = "9019b276e71c34a7be49859eff84fac1555ed9a9"}
+proto-types = {git = "https://github.com/rumos-io/gears", rev = "9019b276e71c34a7be49859eff84fac1555ed9a9"}
+store = {git = "https://github.com/rumos-io/gears", rev = "9019b276e71c34a7be49859eff84fac1555ed9a9"}
 
 ibc-proto = {git = "https://github.com/joneskm/ibc-proto-rs"}

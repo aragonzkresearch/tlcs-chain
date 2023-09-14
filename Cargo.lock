@@ -376,7 +376,7 @@ dependencies = [
 [[package]]
 name = "auth"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears?rev=1e225fc7bc02ecac5cc6cadc6d7caca958452816#1e225fc7bc02ecac5cc6cadc6d7caca958452816"
+source = "git+https://github.com/rumos-io/gears?rev=9019b276e71c34a7be49859eff84fac1555ed9a9#9019b276e71c34a7be49859eff84fac1555ed9a9"
 dependencies = [
  "anyhow",
  "bytes",
@@ -470,7 +470,7 @@ dependencies = [
 [[package]]
 name = "bank"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears?rev=1e225fc7bc02ecac5cc6cadc6d7caca958452816#1e225fc7bc02ecac5cc6cadc6d7caca958452816"
+source = "git+https://github.com/rumos-io/gears?rev=9019b276e71c34a7be49859eff84fac1555ed9a9#9019b276e71c34a7be49859eff84fac1555ed9a9"
 dependencies = [
  "anyhow",
  "auth",
@@ -1242,7 +1242,7 @@ dependencies = [
 [[package]]
 name = "database"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears?rev=1e225fc7bc02ecac5cc6cadc6d7caca958452816#1e225fc7bc02ecac5cc6cadc6d7caca958452816"
+source = "git+https://github.com/rumos-io/gears?rev=9019b276e71c34a7be49859eff84fac1555ed9a9#9019b276e71c34a7be49859eff84fac1555ed9a9"
 dependencies = [
  "rocksdb",
  "thiserror",
@@ -1791,7 +1791,7 @@ dependencies = [
 [[package]]
 name = "gears"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears?rev=1e225fc7bc02ecac5cc6cadc6d7caca958452816#1e225fc7bc02ecac5cc6cadc6d7caca958452816"
+source = "git+https://github.com/rumos-io/gears?rev=9019b276e71c34a7be49859eff84fac1555ed9a9#9019b276e71c34a7be49859eff84fac1555ed9a9"
 dependencies = [
  "anyhow",
  "axum",
@@ -1802,6 +1802,7 @@ dependencies = [
  "cosmwasm-std",
  "database",
  "dirs",
+ "handlebars",
  "hdpath",
  "hex",
  "human-panic",
@@ -3299,7 +3300,7 @@ dependencies = [
 [[package]]
 name = "proto-messages"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears?rev=1e225fc7bc02ecac5cc6cadc6d7caca958452816#1e225fc7bc02ecac5cc6cadc6d7caca958452816"
+source = "git+https://github.com/rumos-io/gears?rev=9019b276e71c34a7be49859eff84fac1555ed9a9#9019b276e71c34a7be49859eff84fac1555ed9a9"
 dependencies = [
  "base64 0.21.3",
  "base64-serde",
@@ -3320,7 +3321,7 @@ dependencies = [
 [[package]]
 name = "proto-types"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears?rev=1e225fc7bc02ecac5cc6cadc6d7caca958452816#1e225fc7bc02ecac5cc6cadc6d7caca958452816"
+source = "git+https://github.com/rumos-io/gears?rev=9019b276e71c34a7be49859eff84fac1555ed9a9#9019b276e71c34a7be49859eff84fac1555ed9a9"
 dependencies = [
  "bech32",
  "cosmwasm-std",
@@ -4378,7 +4379,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 [[package]]
 name = "store"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears?rev=1e225fc7bc02ecac5cc6cadc6d7caca958452816#1e225fc7bc02ecac5cc6cadc6d7caca958452816"
+source = "git+https://github.com/rumos-io/gears?rev=9019b276e71c34a7be49859eff84fac1555ed9a9#9019b276e71c34a7be49859eff84fac1555ed9a9"
 dependencies = [
  "database",
  "integer-encoding",
@@ -4493,7 +4494,7 @@ dependencies = [
 [[package]]
 name = "tendermint"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears?rev=1e225fc7bc02ecac5cc6cadc6d7caca958452816#1e225fc7bc02ecac5cc6cadc6d7caca958452816"
+source = "git+https://github.com/rumos-io/gears?rev=9019b276e71c34a7be49859eff84fac1555ed9a9#9019b276e71c34a7be49859eff84fac1555ed9a9"
 dependencies = [
  "ed25519-consensus",
  "handlebars",
@@ -5376,7 +5377,7 @@ dependencies = [
 [[package]]
 name = "trees"
 version = "0.1.0"
-source = "git+https://github.com/rumos-io/gears?rev=1e225fc7bc02ecac5cc6cadc6d7caca958452816#1e225fc7bc02ecac5cc6cadc6d7caca958452816"
+source = "git+https://github.com/rumos-io/gears?rev=9019b276e71c34a7be49859eff84fac1555ed9a9#9019b276e71c34a7be49859eff84fac1555ed9a9"
 dependencies = [
  "caches",
  "database",
