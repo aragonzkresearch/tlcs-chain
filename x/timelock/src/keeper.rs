@@ -492,6 +492,7 @@ impl<SK: StoreKey> Keeper<SK> {
         return (need_pub_key, need_priv_key);
     }
 
+    // self.keeper.make_public_keys(ctx, need_pub_keys, block_time, contribution_threshold);
     pub fn make_public_keys<'a, T: Database>(
         &self,
         ctx: &'a mut TxContext<T, SK>,
@@ -505,6 +506,10 @@ impl<SK: StoreKey> Keeper<SK> {
             let mut all_participant_data: Vec<Vec<u8>> = vec![];
             let mut contrib_count: u32 = 0;
 
+            info!(
+                "Make PK: key time: {:?}, cur time: {:?}",
+                keypair.pubkey_time, cur_time
+            );
             if keypair.pubkey_time > cur_time {
                 continue;
             }

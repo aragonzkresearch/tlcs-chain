@@ -4,6 +4,7 @@ use ibc_proto::protobuf::Protobuf;
 use prost::Message as ProstMessage;
 use store::StoreKey;
 use tendermint_proto::abci::RequestBeginBlock;
+use tracing::info;
 
 use crate::{
     proto::tlcs::v1beta1::{QueryRoundRequest, QueryRoundSchemeRequest, QueryTimeRequest},
@@ -48,9 +49,9 @@ impl<SK: StoreKey> Handler<SK> {
         let contribution_threshold: u32 = 2;
         let block_time = ctx.get_header().time.unix_timestamp();
 
-        //info!("BEGINBLOCKER:   process_to: {:?}", process_up_to);
         let (need_pub_keys, need_secret_keys) = self.keeper.get_empty_keypairs(ctx);
 
+        info!("BEGINBLOCKER: need pubkeys: {:?}", need_pub_keys.len());
         self.keeper
             .make_public_keys(ctx, need_pub_keys, block_time, contribution_threshold);
 
