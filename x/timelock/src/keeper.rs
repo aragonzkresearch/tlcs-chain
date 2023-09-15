@@ -532,6 +532,7 @@ impl<SK: StoreKey> Keeper<SK> {
                 continue;
             }
 
+            info!("MAKE PK: making key for round: {:?}", keypair.round);
             let public_key = make_public_key(LOE_PUBLIC_KEY.into(), &all_participant_data);
             keypair.public_key = hex::encode(&public_key);
 
