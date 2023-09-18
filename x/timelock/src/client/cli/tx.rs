@@ -103,7 +103,6 @@ pub fn run_timelock_tx_command(args: Cli, from_address: AccAddress) -> Result<Ti
     }
 }
 
-//pub async fn get_loe_data(round: u64) -> Result<Vec<u8>> {
 pub async fn get_loe_data(round: u64) -> Result<String> {
     // Create a new client and retrieve the latest beacon. By default, it verifies its signature against the chain info.
     let client: DrandHttpClient = LOE_URL.try_into().unwrap();
@@ -111,8 +110,6 @@ pub async fn get_loe_data(round: u64) -> Result<String> {
         Ok(dat) => {
             return Ok(hex::encode(dat.signature()));
         }
-        //Err(err) => Error(println!("LOE API connection failed: Error: {}", err)),
-        //Err(err) => return Ok((vec![], vec![])),
         Err(e) => return Err(e),
     };
 

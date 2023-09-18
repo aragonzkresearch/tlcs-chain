@@ -4998,7 +4998,7 @@ dependencies = [
 [[package]]
 name = "tlcs-rust"
 version = "0.1.0"
-source = "git+https://github.com/aragonzkresearch/tlcs-rust#824dbd529f241eaccf69942fe82063ca62080aa7"
+source = "git+https://github.com/aragonzkresearch/tlcs-rust#7833b63b41a7902a63c91488ef1cfba0b113f987"
 dependencies = [
  "anyhow",
  "ark-bls12-381",

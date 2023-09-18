@@ -124,6 +124,7 @@ impl<SK: StoreKey> Keeper<SK> {
                 SCHEME.into(),
                 SECURITY_PARAM,
             );
+
             let this_round = msg.round;
             let this_scheme = msg.scheme;
 
@@ -466,16 +467,13 @@ impl<SK: StoreKey> Keeper<SK> {
         HashMap<Vec<u8>, RawMsgKeyPair>,
         HashMap<Vec<u8>, RawMsgKeyPair>,
     ) {
+        let mut need_pub_key: HashMap<Vec<u8>, RawMsgKeyPair> = HashMap::new();
+        let mut need_priv_key: HashMap<Vec<u8>, RawMsgKeyPair> = HashMap::new();
+
         let tlcs_store = ctx.get_kv_store(&self.store_key);
         let store_key = KEYPAIR_DATA_KEY.to_vec();
         let prefix_store = tlcs_store.get_immutable_prefix_store(store_key);
         let keypairs = prefix_store.range(..);
-
-        let mut need_pub_key: HashMap<Vec<u8>, RawMsgKeyPair> = HashMap::new();
-        let mut need_priv_key: HashMap<Vec<u8>, RawMsgKeyPair> = HashMap::new();
-
-        //let mut need_pub_key: Vec<RawMsgKeyPair> = Vec::new();
-        //let mut need_priv_key: Vec<RawMsgKeyPair> = Vec::new();
 
         for (index, keypair) in keypairs {
             let the_keys: RawMsgKeyPair = RawMsgKeyPair::decode::<Bytes>(keypair.into())
@@ -492,7 +490,6 @@ impl<SK: StoreKey> Keeper<SK> {
         return (need_pub_key, need_priv_key);
     }
 
-    // self.keeper.make_public_keys(ctx, need_pub_keys, block_time, contribution_threshold);
     pub fn make_public_keys<'a, T: Database>(
         &self,
         ctx: &'a mut TxContext<T, SK>,
@@ -506,42 +503,34 @@ impl<SK: StoreKey> Keeper<SK> {
             let mut all_participant_data: Vec<Vec<u8>> = vec![];
             let mut contrib_count: u32 = 0;
 
-            info!(
-                "Make PK: key time: {:?}, cur time: {:?}",
-                keypair.pubkey_time, cur_time
-            );
-            if keypair.pubkey_time > cur_time {
-                continue;
+            if keypair.pubkey_time < cur_time {
+                let round_all_participant_data =
+                    self.get_this_round_all_participant_data(ctx, keypair.round, keypair.scheme);
+
+                for (_, row) in round_all_participant_data {
+                    let contribution: RawMsgContribution =
+                        RawMsgContribution::decode::<Bytes>(row.into())
+                            .expect("invalid data in database - possible database corruption");
+
+                    all_participant_data.push(contribution.data);
+                    contrib_count += 1;
+                }
+
+                if contrib_count > contribution_threshold {
+                    info!("MAKE PK: making key for round: {:?}", keypair.round);
+                    let public_key = make_public_key(LOE_PUBLIC_KEY.into(), &all_participant_data);
+                    keypair.public_key = hex::encode(&public_key);
+
+                    tmp_store.insert(key, keypair.encode_to_vec());
+                }
             }
-
-            // TODO Add the scheme in here
-            let round_all_participant_data =
-                self.get_this_round_all_participant_data(ctx, keypair.round, keypair.scheme);
-
-            for (_, row) in round_all_participant_data {
-                let contribution: RawMsgContribution =
-                    RawMsgContribution::decode::<Bytes>(row.into())
-                        .expect("invalid data in database - possible database corruption");
-
-                //cur_data.extend(contribution.data);
-                all_participant_data.push(contribution.data);
-                contrib_count += 1;
-            }
-
-            if contrib_count < contribution_threshold {
-                continue;
-            }
-
-            info!("MAKE PK: making key for round: {:?}", keypair.round);
-            let public_key = make_public_key(LOE_PUBLIC_KEY.into(), &all_participant_data);
-            keypair.public_key = hex::encode(&public_key);
-
-            tmp_store.insert(key, keypair.encode_to_vec());
         }
 
         let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
-        for (k, v) in tmp_store {
-            tlcs_store.set(k, v)
+        for (mut k, v) in tmp_store {
+            let mut prefix = KEYPAIR_DATA_KEY.to_vec();
+            prefix.append(&mut k);
+            tlcs_store.set(prefix, v)
         }
     }
 
@@ -555,9 +544,10 @@ impl<SK: StoreKey> Keeper<SK> {
 
         for (key, mut keypair) in new_key_list {
             let mut all_participant_data: Vec<Vec<u8>> = vec![];
-            match self.get_this_round_all_loe_data(ctx, keypair.round) {
+
+            match self.get_this_round_loe_signature(ctx, keypair.round) {
                 Some(data) => {
-                    loe_signature = hex::encode(data.signature);
+                    loe_signature = data;
                 }
                 None => continue,
             }
@@ -570,24 +560,26 @@ impl<SK: StoreKey> Keeper<SK> {
                     RawMsgContribution::decode::<Bytes>(row.into())
                         .expect("invalid data in database - possible database corruption");
 
-                all_participant_data.push(contribution.data);
+                all_participant_data.push(contribution.data.clone());
             }
 
             let secret_key = make_secret_key(
                 keypair.round,
+                //keypair.scheme,
                 SCHEME.to_string(),
                 loe_signature,
                 all_participant_data,
             );
 
             keypair.private_key = hex::encode(secret_key);
-
             tmp_store.insert(key, keypair.encode_to_vec());
         }
 
         let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
-        for (k, v) in tmp_store {
-            tlcs_store.set(k, v)
+        for (mut k, v) in tmp_store {
+            let mut prefix = KEYPAIR_DATA_KEY.to_vec();
+            prefix.append(&mut k);
+            tlcs_store.set(prefix, v)
         }
     }
 
@@ -633,11 +625,12 @@ impl<SK: StoreKey> Keeper<SK> {
             .collect()
     }
 
-    pub fn get_this_round_all_loe_data<'a, T: Database>(
+    pub fn get_this_round_loe_signature<'a, T: Database>(
         &self,
         ctx: &'a mut TxContext<T, SK>,
         round: u64,
-    ) -> Option<RawMsgLoeData> {
+        //) -> Option<RawMsgLoeData> {
+    ) -> Option<String> {
         let tlcs_store = ctx.get_kv_store(&self.store_key);
 
         let mut prefix = LOE_DATA_KEY.to_vec();
@@ -646,13 +639,12 @@ impl<SK: StoreKey> Keeper<SK> {
 
         match store_data {
             Some(store_data) => {
-                return Some(
-                    RawMsgLoeData::decode::<Bytes>(store_data.into())
-                        .expect("invalid data in database - possible database corruption"),
-                )
+                let loe_data = RawMsgLoeData::decode::<Bytes>(store_data.into())
+                    .expect("invalid data in database - possible database corruption");
+                Some(loe_data.signature)
             }
-            None => return None,
-        };
+            None => None,
+        }
     }
 
     pub fn query_loe_data_needed<T: Database>(
