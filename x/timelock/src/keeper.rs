@@ -517,7 +517,7 @@ impl<SK: StoreKey> Keeper<SK> {
                 }
 
                 if contrib_count > contribution_threshold {
-                    info!("MAKE PK: making key for round: {:?}", keypair.round);
+                    info!("MAKE_PK: making key for round: {:?}", keypair.round);
                     let public_key = make_public_key(LOE_PUBLIC_KEY.into(), &all_participant_data);
                     keypair.public_key = hex::encode(&public_key);
 
@@ -528,6 +528,7 @@ impl<SK: StoreKey> Keeper<SK> {
 
         let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
         for (mut k, v) in tmp_store {
+            info!("MAKE_PK: storing new key");
             let mut prefix = KEYPAIR_DATA_KEY.to_vec();
             prefix.append(&mut k);
             tlcs_store.set(prefix, v)
