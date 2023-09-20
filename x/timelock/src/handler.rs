@@ -55,6 +55,10 @@ impl<SK: StoreKey> Handler<SK> {
         self.keeper
             .make_public_keys(ctx, need_pub_keys, block_time, contribution_threshold);
 
+        info!(
+            "BEGINBLOCKER: need secret keys: {:?}",
+            need_secret_keys.len()
+        );
         self.keeper.make_secret_keys(ctx, need_secret_keys);
     }
 
