@@ -61,7 +61,7 @@ fn main() -> Result<()> {
         Err(_) => {
             //panic!("Could not read file resend.toml");
             format!(
-                "tendermint_url='http://localhost:26657'\nfrom_user='kevin'\nchain_id='tlcs-chain'"
+                "tendermint_url='http://localhost:26657'\nfrom_user='kevin'\nchain_id='test-chain'"
             )
         }
     };
