@@ -1,5 +1,5 @@
 [workspace]
-members = ["tlcs", "x/timelock"]
+members = ["tlcs", "x/timelock", "watcher"]
 
 [workspace.dependencies]
 auth = {git = "https://github.com/rumos-io/gears", rev = "9019b276e71c34a7be49859eff84fac1555ed9a9"}

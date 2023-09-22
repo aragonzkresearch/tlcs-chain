@@ -3,8 +3,8 @@ mod config;
 mod handler;
 mod keeper;
 mod message;
-mod proto;
-mod utils;
+pub mod proto;
+pub mod utils;
 
 pub use client::*;
 pub use config::*;

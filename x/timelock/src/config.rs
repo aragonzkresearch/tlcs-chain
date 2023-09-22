@@ -9,4 +9,5 @@ pub struct Config {
     pub home: PathBuf,
     pub from: String,
     pub chain_id: Id,
+    pub delay: u8,
 }

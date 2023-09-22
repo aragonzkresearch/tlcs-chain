@@ -1,0 +1,43 @@
+[package]
+name = "tlcs-loe-watcher"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+gears = { workspace = true }
+proto-types = { workspace = true }
+proto-messages = { workspace = true } # This is needed for the error Type
+database = { workspace = true }
+auth = { workspace = true }
+store = { workspace = true }
+
+prost = { version = "0.11" }
+tracing = { version = "0.1", default-features = false }
+ibc-proto = { workspace = true }
+tendermint-abci = { git = "https://github.com/joneskm/tendermint-rs" }
+tendermint-proto = { git = "https://github.com/joneskm/tendermint-rs" }
+tendermint-rpc = { git = "https://github.com/joneskm/tendermint-rs", features = [
+    "http-client",
+] }
+tlcs-rust = { git = "https://github.com/aragonzkresearch/tlcs-rust" }
+clap = { version = "4.2.2", features = ["derive"] }
+bytes = "1.2.1"
+serde = { version = "1.0", default-features = false }
+serde_json = "1.0.93"
+hex = "0.4.3"
+
+tokio = "1.27.0"
+anyhow = "1.0.70"
+ibc-relayer = "0.23.0"
+drand_core = "0.0.7"
+
+strum = "0.24.1"
+axum = "0.6.18"
+tendermint-informal = { package = "tendermint", git = "https://github.com/joneskm/tendermint-rs" }
+timelock = { path = "../x/timelock" }
+chrono = "0.4.29"
+toml = "0.8.0"
+error-chain = "0.12.4"
+reqwest = { version = "0.11", features = ["json"] }
+
+[dev-dependencies]
