@@ -33,15 +33,18 @@ pub fn run_tx_command<Msg: Message, MessageGetter>(
 where
     MessageGetter: FnOnce(AccAddress) -> Msg,
 {
-    let ten_secs = time::Duration::from_secs(10);
-    thread::sleep(ten_secs);
-
     let Config {
         node,
         home,
         from,
         chain_id,
+        delay,
     } = config;
+
+    if delay > 0 {
+        let ten_secs = time::Duration::from_secs(10);
+        thread::sleep(ten_secs);
+    }
 
     let key_store: DiskStore<Secp256k1KeyPair> = DiskStore::new(home)?;
     let key = key_store.get_key(&from)?;

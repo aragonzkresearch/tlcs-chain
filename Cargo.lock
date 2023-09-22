@@ -1595,6 +1595,7 @@ version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2d2f06b9cac1506ece98fe3231e3cc9c4410ec3d5b1f24ae1c8946f0742cdefc"
 dependencies = [
+ "backtrace",
  "version_check",
 ]
 
@@ -4993,6 +4994,42 @@ dependencies = [
  "tendermint-rpc 0.29.1",
  "timelock",
  "toml 0.8.0",
+]
+
+[[package]]
+name = "tlcs-loe-watcher"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "auth",
+ "axum",
+ "bytes",
+ "chrono",
+ "clap",
+ "database",
+ "drand_core",
+ "error-chain",
+ "gears",
+ "hex",
+ "ibc-proto 0.31.0-alpha.2",
+ "ibc-relayer",
+ "prost",
+ "proto-messages",
+ "proto-types",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "store",
+ "strum",
+ "tendermint 0.29.1 (git+https://github.com/joneskm/tendermint-rs)",
+ "tendermint-abci",
+ "tendermint-proto 0.29.1 (git+https://github.com/joneskm/tendermint-rs)",
+ "tendermint-rpc 0.29.1",
+ "timelock",
+ "tlcs-rust",
+ "tokio",
+ "toml 0.8.0",
+ "tracing",
 ]
 
 [[package]]

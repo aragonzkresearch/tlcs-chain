@@ -141,11 +141,8 @@ impl<SK: StoreKey> Keeper<SK> {
                         data: round_data_vec,
                     })
                 }) {
-                    Ok(_) => info!(
-                        "Successfully submitted Contribution data for {:?}",
-                        this_round
-                    ),
-                    Err(e) => info!("Failed to submit Contribution: {:?}", e),
+                    Ok(_) => info!("Successfully submitted keyshare data for {:?}", this_round),
+                    Err(e) => info!("Failed to submit keyshare: {:?}", e),
                 }
             });
         } else {
@@ -277,7 +274,6 @@ impl<SK: StoreKey> Keeper<SK> {
 
     // Keypair section
 
-    // TODO maybe use this from the endblocker so all of the save/query functions are in the keeper
     #[allow(dead_code)]
     pub fn append_keypair<T: Database>(
         &self,
@@ -402,17 +398,17 @@ impl<SK: StoreKey> Keeper<SK> {
         let mut store_key = LOE_DATA_KEY.to_vec();
         store_key.append(&mut msg.round.to_le_bytes().to_vec());
 
-        //if loe_signature_is_valid(msg.round, msg.signature.clone()) {
+        info!("TX LOE Data: Round: {:?}", msg.round);
         if loe_signature_is_valid(msg.round, msg.signature.clone(), LOE_PUBLIC_KEY.into()) {
-            //if loe_signature_is_valid(msg.round, msg.signature.clone()) {
             tlcs_store.set(
                 store_key.into(),
                 <MsgLoeData as Into<RawMsgLoeData>>::into(msg.to_owned()).encode_to_vec(),
             );
         } else {
-            return Err(AppError::InvalidRequest(
-                "the loe data is invalid for the given round".into(),
-            ));
+            return Err(AppError::InvalidRequest(format!(
+                "Invalid loe data received. Round:{}",
+                msg.round
+            )));
         }
 
         Ok(())
@@ -480,10 +476,8 @@ impl<SK: StoreKey> Keeper<SK> {
                 .expect("invalid data in database - possible database corruption");
             if the_keys.public_key.len() == 0 {
                 need_pub_key.insert(index.into(), the_keys);
-                //need_pub_key.push(the_keys);
             } else if the_keys.private_key.len() == 0 {
                 need_priv_key.insert(index.into(), the_keys);
-                //need_priv_key.push(the_keys);
             }
         }
 
@@ -664,6 +658,7 @@ impl<SK: StoreKey> Keeper<SK> {
             let keypair: RawMsgKeyPair = RawMsgKeyPair::decode::<Bytes>(row.into())
                 .expect("invalid data in database - possible database corruption");
             //TODO: Possibly also filter by blocktime. It would be better but for now we'll just get records with empty private keys
+            // Currently, can't get blocktime in here so the time filtering is done in the loe watcher
             if keypair.public_key != "" && keypair.private_key == "" {
                 keypairs.push(keypair);
             }
@@ -684,31 +679,6 @@ impl<SK: StoreKey> Keeper<SK> {
         prefix.append(&mut round.to_le_bytes().to_vec());
         prefix.append(&mut scheme.to_le_bytes().to_vec());
 
-        //tlcs_store.get_mutable_prefix_store(KEYPAIR_DATA_KEY.into())
         tlcs_store.get_mutable_prefix_store(prefix.into())
     }
-}
-
-#[test]
-fn test_round_signature() {
-    //let signature: String = "9544ddce2fdbe8688d6f5b4f98eed5d63eee3902e7e162050ac0f45905a55657714880adabe3c3096b92767d886567d0".to_string();
-    //let round: u32 = 1;
-    //let randomness: Vec<u8> = hex::decode("f282310f131ed63e0342cd7e47f9e4317b20fb6f652b03ce81378cf825227212").unwrap();
-    let signature: &str = "86f91b1eec7b22ecce1385ec1cc4861f43507fa897cad686e44a87986a7ce18a94fa7128d6f76d6b950bb4e559472539";
-    let round: u64 = 3276594;
-    /* Benchmark
-    let before = Instant::now();
-    for _i in 0..1000 {
-        //_ = loe_signature_is_valid(round, randomness.clone(), signature.clone());
-        _ = loe_signature_is_valid(round, signature.clone());
-        // some code
-    }
-    println!("Elapsed time(10000): {:.2?}", before.elapsed());
-    */
-    //assert!(loe_signature_is_valid(round, randomness, signature));
-    assert!(loe_signature_is_valid(
-        round,
-        signature.into(),
-        LOE_PUBLIC_KEY.into()
-    ));
 }
