@@ -68,7 +68,7 @@ async fn main() -> Result<()> {
         Ok(s) => s,
         Err(_) => {
             format!(
-                "tendermint_url='http://localhost:26657'\nfrom_user='kevin'\nchain_id='test-chain'"
+                "tendermint_url='http://localhost:26657'\nfrom_user='loesender'\nchain_id='test-chain'"
             )
         }
     };
@@ -103,14 +103,15 @@ async fn main() -> Result<()> {
 
         for keypair in keypairs.keypairs {
             //println!("Getting loe data for {}", keypair.round);
-            let loe_data: LoeData = reqwest::get(format!("{}{}", drand_url, keypair.round))
-                .await?
-                .json()
-                .await?;
-
             if keypair.round < current_loe_round() {
+                let loe_data: LoeData = reqwest::get(format!("{}{}", drand_url, keypair.round))
+                    .await?
+                    .json()
+                    .await?;
+
                 send_transaction(config.clone(), loe_data);
             }
+            sleep(Duration::from_millis(6100)).await;
         }
 
         // TODO: make sleep time configurable via config file
