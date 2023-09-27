@@ -93,8 +93,7 @@ pub async fn get_contributions_by_round_and_scheme<
     H: Handler<M, SK, G>,
     G: Genesis,
 >(
-    Path(round): Path<u64>,
-    Path(scheme): Path<u32>,
+    Path((round, scheme)): Path<(u64, u32)>,
     _pagination: Query<Pagination>,
     State(app): State<BaseApp<SK, PSK, M, BK, AK, H, G>>,
 ) -> Result<Json<QueryAllContributionsResponse>, Error> {
@@ -212,8 +211,7 @@ pub async fn get_keypairs_by_round_and_scheme<
     H: Handler<M, SK, G>,
     G: Genesis,
 >(
-    Path(round): Path<u64>,
-    Path(scheme): Path<u32>,
+    Path((round, scheme)): Path<(u64, u32)>,
     _pagination: Query<Pagination>,
     State(app): State<BaseApp<SK, PSK, M, BK, AK, H, G>>,
 ) -> Result<Json<QueryAllKeyPairsResponse>, Error> {
@@ -327,7 +325,7 @@ async fn endpoint_info() -> &'static str {
      \t /tlcs/timelock/v1beta1/keypairs\n\
      \t /tlcs/timelock/v1beta1/keypairs/round/<round>\n\
      \t /tlcs/timelock/v1beta1/keypairs/time/<time>\n\
-     \t /tlcs/timelock/v1beta1/keypairs/round_and_scheme/<round>/:scheme>\n\
+     \t /tlcs/timelock/v1beta1/keypairs/round_and_scheme/<round>/<scheme>\n\
      \t /tlcs/timelock/v1beta1/loe_data\n\
      \t /tlcs/timelock/v1beta1/loe_data/round/<round>\n\
      \t /tlcs/timelock/v1beta1/loe_data_needed\n\

@@ -4,7 +4,7 @@ use ibc_proto::protobuf::Protobuf;
 use prost::Message as ProstMessage;
 use store::StoreKey;
 use tendermint_proto::abci::RequestBeginBlock;
-use tracing::info;
+//use tracing::info;
 
 use crate::{
     proto::tlcs::v1beta1::{QueryRoundRequest, QueryRoundSchemeRequest, QueryTimeRequest},
@@ -39,9 +39,6 @@ impl<SK: StoreKey> Handler<SK> {
         ctx: &mut TxContext<DB, SK>,
         _request: RequestBeginBlock,
     ) {
-        //let _ = set_last_processed_round(ctx, 4183720);
-        ////return;
-
         // TODO: Get this from the number of validators. For now we'll just set it here
         //let _ = set_contribution_threshold(ctx, 2);
         //let contribution_threshold = get_contribution_threshold(ctx);
@@ -51,14 +48,11 @@ impl<SK: StoreKey> Handler<SK> {
 
         let (need_pub_keys, need_secret_keys) = self.keeper.get_empty_keypairs(ctx);
 
-        info!("BEGINBLOCKER: need pubkeys: {:?}", need_pub_keys.len());
+        //info!("BEGINBLOCKER: need pubkeys: {:?}", need_pub_keys.len());
         self.keeper
             .make_public_keys(ctx, need_pub_keys, block_time, contribution_threshold);
 
-        info!(
-            "BEGINBLOCKER: need secret keys: {:?}",
-            need_secret_keys.len()
-        );
+        //info!( "BEGINBLOCKER: need secret keys: {:?}", need_secret_keys.len());
         self.keeper.make_secret_keys(ctx, need_secret_keys);
     }
 
