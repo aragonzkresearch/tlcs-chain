@@ -39,6 +39,7 @@ make init
 tlcs add-genesis-account cosmos1syavy2npfyt9tcncdtsdzf7kny9lh777pahuux 53uatom
 tlcs add-genesis-account cosmos1skgmlw2j4qupafzcg5qvacd76mfzfe69la0hxz 53uatom
 tlcs add-genesis-account cosmos1gc308w6mg7skucsdxdjehhewr4aetwq24zf92m 50uatom
+tlcs add-genesis-account cosmos1jf9e50e6w5wdlgdxnf6s6rh4n0ed4z86hzh6em 50uatom
 ```
 
 3. Build and start the application:
@@ -100,6 +101,7 @@ The balance of this address was set to 53 in the genesis file.
 echo "race draft rival universe maid cheese steel logic crowd fork comic easy truth drift tomorrow eye buddy head time cash swing swift midnight borrow" | tlcs keys add kevin --recover
 echo "all victory hero talent forget twice quote you office vacant sleep kangaroo disorder scorpion humble gorilla coast pudding edge garlic bid dutch excuse magic" | tlcs keys add alice --recover
 echo "quick rack fancy cruel knee early summer clock group apology excuse file voice album fold cave garbage student awake twenty stereo argue draw human" | tlcs keys add ahmad --recover
+echo "cool snack excite whale maximum rally fly swap link detect shy rich subway early again analyst pet have powder notice exhaust drill donor cream" | tlcs keys add loesender --recover
 ```
 
 4. Send tokens:
