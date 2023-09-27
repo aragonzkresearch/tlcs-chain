@@ -110,8 +110,8 @@ async fn main() -> Result<()> {
                     .await?;
 
                 send_transaction(config.clone(), loe_data);
+                sleep(Duration::from_millis(6100)).await;
             }
-            sleep(Duration::from_millis(6100)).await;
         }
 
         // TODO: make sleep time configurable via config file
