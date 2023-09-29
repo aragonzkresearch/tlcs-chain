@@ -1,3 +1,4 @@
+use crate::keeper::scheme_to_string;
 use crate::proto::tlcs::v1beta1::{MsgContribution, MsgLoeData, MsgNewProcess};
 use anyhow::Result;
 use clap::{Args, Subcommand};
@@ -12,7 +13,7 @@ use tlcs_rust::chain_functions::make_keyshare;
 
 const LOE_PUBLIC_KEY: &str = "a0b862a7527fee3a731bcb59280ab6abd62d5c0b6ea03dc4ddf6612fdfc9d01f01c31542541771903475eb1ec6615f8d0df0b8b6dce385811d6dcf8cbefb8759e5e616a3dfd054c928940766d9a5b9db91e3b697e5d70a975181e007f87fca5e";
 const SECURITY_PARAM: usize = 10;
-const SCHEME: &str = "BJJ";
+//const SCHEME: &str = "BJJ";
 const LOE_URL: &str =
     "https://api.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/";
 
@@ -28,7 +29,9 @@ pub enum TimelockCommands {
     Keypair {
         /// LOE round number.
         round: u64,
-        /// Key generation scheme. Currently must be 1.
+        /// Key generation scheme. Currently supported schemes:
+        ///      1  for BabyJubJub
+        ///      2  forSecp256k1
         scheme: u32,
         /// Time that public key should be generated. Time is in unix timestamp format.
         public_key_time: i64,
@@ -65,8 +68,12 @@ pub fn run_timelock_tx_command(args: Cli, from_address: AccAddress) -> Result<Ti
         })),
         TimelockCommands::Contribute { round, scheme, id } => {
             //let round_data_vec = generate_participant_data(round);
-            let round_data_vec =
-                make_keyshare(LOE_PUBLIC_KEY.into(), round, SCHEME.into(), SECURITY_PARAM);
+            let round_data_vec = make_keyshare(
+                LOE_PUBLIC_KEY.into(),
+                round,
+                scheme_to_string(scheme),
+                SECURITY_PARAM,
+            );
 
             Ok(TimelockMessage::Participate(MsgContribution {
                 address: from_address,

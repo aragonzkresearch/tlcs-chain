@@ -43,13 +43,21 @@ const LOE_DATA_KEY: [u8; 1] = [3];
 
 const LOE_PUBLIC_KEY: &str = "a0b862a7527fee3a731bcb59280ab6abd62d5c0b6ea03dc4ddf6612fdfc9d01f01c31542541771903475eb1ec6615f8d0df0b8b6dce385811d6dcf8cbefb8759e5e616a3dfd054c928940766d9a5b9db91e3b697e5d70a975181e007f87fca5e";
 const SECURITY_PARAM: usize = 10;
-const SCHEME: &str = "BJJ";
 
 const LOE_GENESIS_TIME: u32 = 1677685200;
 const LOE_PERIOD: u32 = 3;
 
+// Temporary function to convert the scheme type number into string for the tlcs-rust code
+pub fn scheme_to_string(scheme: u32) -> String {
+    if scheme == 2 {
+        "SECP256K1".to_string()
+    } else {
+        "BJJ".to_string()
+    }
+}
+
 pub fn valid_scheme(scheme: u32) -> bool {
-    scheme == 1
+    scheme == 1 || scheme == 2
 }
 
 pub fn check_time(time: i64) -> bool {
@@ -121,7 +129,7 @@ impl<SK: StoreKey> Keeper<SK> {
             let round_data_vec = make_keyshare(
                 LOE_PUBLIC_KEY.into(),
                 msg.round,
-                SCHEME.into(),
+                scheme_to_string(msg.scheme),
                 SECURITY_PARAM,
             );
 
@@ -182,7 +190,7 @@ impl<SK: StoreKey> Keeper<SK> {
             if verify_keyshare(
                 LOE_PUBLIC_KEY.into(),
                 msg.round,
-                SCHEME.into(),
+                scheme_to_string(msg.scheme),
                 msg.data.clone(),
                 SECURITY_PARAM,
             ) {
@@ -512,7 +520,8 @@ impl<SK: StoreKey> Keeper<SK> {
 
                 if contrib_count > contribution_threshold {
                     info!("MAKE_PK: making key for round: {:?}", keypair.round);
-                    let public_key = make_public_key(LOE_PUBLIC_KEY.into(), &all_participant_data);
+                    let public_key =
+                        make_public_key(scheme_to_string(keypair.scheme), &all_participant_data);
                     keypair.public_key = hex::encode(&public_key);
 
                     tmp_store.insert(key, keypair.encode_to_vec());
@@ -559,9 +568,7 @@ impl<SK: StoreKey> Keeper<SK> {
             }
 
             let secret_key = make_secret_key(
-                keypair.round,
-                //keypair.scheme,
-                SCHEME.to_string(),
+                scheme_to_string(keypair.scheme),
                 loe_signature,
                 all_participant_data,
             );
