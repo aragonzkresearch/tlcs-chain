@@ -2,10 +2,12 @@
 
 This repo contains node software for running a Blockchain which provides a Time Lock Cryptography Service.
 
-NOTE: This is a WIP, e.g. it does not contain the necessary CLI commands and REST endpoints to interact with
-the TLCS parts of the chain!
+NOTE: This is a WIP, e.g. it is still undergoing heavy development and should not be used in production!
+## How to run
+  - [Local Testing](#running-a-local-chain)
+  - [Production](#production-server-node)
 
-# Getting Started
+## Getting Started
 
 TLCS uses the [tendermint-abci](https://crates.io/crates/tendermint-abci) crate to communicate with a Tendermint instance which runs as a separate process. This means that to run a full node, Tendermint must be installed and run separately (see instructions below).
 
@@ -150,4 +152,22 @@ tlcs tx tlcs contribute ahmad 100 1 0
 
 ```console
 tlcs query timelock contributions_by_round 100
+```
+## Production server node
+
+1. Clone this repo:
+```console
+git clone https://github.com/aragonzkresearch/tlcs-chain/
+make build
+```
+3. Initialize a new chain and add accounts:
+
+```console
+tlcs init
+```
+
+3. Build and start the application:
+
+```console
+tlcs run
 ```
