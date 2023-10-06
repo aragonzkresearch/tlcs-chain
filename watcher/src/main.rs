@@ -15,6 +15,10 @@ use std::env;
 use tendermint_rpc::Url;
 use tokio::time::{sleep, Duration};
 
+use timelock::LOE_GENESIS_TIME;
+use timelock::LOE_PERIOD;
+use timelock::LOE_URL;
+
 error_chain! {
     foreign_links {
         EnvVar(env::VarError);
@@ -48,8 +52,7 @@ pub struct Pairs {
 }
 
 const APP_NAME: &str = env!("CARGO_PKG_NAME");
-const LOE_GENESIS_TIME: i64 = 1677685200;
-const LOE_PERIOD: i64 = 3;
+const TIMELOCK_URL: &str = "https://api.timelock.zone/tlcs/timelock/v1beta1/loe_data_needed";
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -89,22 +92,16 @@ async fn main() -> Result<()> {
         delay: 0,
     };
 
-    // TODO: Get urls from config file
-    let request_url = "https://api.timelock.zone/tlcs/timelock/v1beta1/loe_data_needed";
-    //let request_url = "https://api.timelock.zone/tlcs/timelock/v1beta1/keypairs";
-    let drand_url = "https://api.drand.sh/dbd506d6ef76e5f386f41c651dcb808c5bcbd75471cc4eafa3f4df7ad4e4c493/public/";
-    //let request_url = "http://localhost:1317/tlcs/timelock/v1beta1/keypairs";
-
     loop {
         // Get list of need LOE data rounds
-        let response = reqwest::get(request_url).await?;
+        let response = reqwest::get(TIMELOCK_URL.to_string()).await?;
         let keypairs: Pairs = response.json().await?;
         //println!("Got keypair data. Len: {}", keypairs.keypairs.len());
 
         for keypair in keypairs.keypairs {
             //println!("Getting loe data for {}", keypair.round);
             if keypair.round < current_loe_round() {
-                let loe_data: LoeData = reqwest::get(format!("{}{}", drand_url, keypair.round))
+                let loe_data: LoeData = reqwest::get(format!("{}{}", LOE_URL, keypair.round))
                     .await?
                     .json()
                     .await?;
@@ -145,5 +142,5 @@ fn current_loe_round() -> u64 {
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_secs() as i64;
-    ((now - LOE_GENESIS_TIME) / LOE_PERIOD) as u64
+    ((now - LOE_GENESIS_TIME as i64) / LOE_PERIOD as i64) as u64
 }
