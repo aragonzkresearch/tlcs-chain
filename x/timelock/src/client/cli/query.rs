@@ -48,7 +48,7 @@ pub fn run_timelock_query_command(
         TimelockCommands::Contributions => {
             let res = run_query::<QueryAllContributionsResponse, QueryAllContributionsResponse>(
                 vec![],
-                "/azkr.tlcs.v1beta1.Query/AllContributions".into(),
+                "/tlcs.timelock.v1beta1.Query/AllContributions".into(),
                 node,
                 height,
             )?;
@@ -60,7 +60,7 @@ pub fn run_timelock_query_command(
 
             let res = run_query::<QueryAllContributionsResponse, QueryAllContributionsResponse>(
                 query.encode_vec(),
-                "/azkr.tlcs.v1beta1.Query/AllContributionsByRound".into(),
+                "/tlcs.timelock.v1beta1.Query/AllContributionsByRound".into(),
                 node,
                 height,
             )?;
@@ -72,7 +72,7 @@ pub fn run_timelock_query_command(
 
             let res = run_query::<QueryAllContributionsResponse, QueryAllContributionsResponse>(
                 query.encode_vec(),
-                "/azkr.tlcs.v1beta1.Query/AllContributionsByRoundAndScheme".into(),
+                "/tlcs.timelock.v1beta1.Query/AllContributionsByRoundAndScheme".into(),
                 node,
                 height,
             )?;
@@ -82,7 +82,7 @@ pub fn run_timelock_query_command(
         TimelockCommands::Keypairs => {
             let res = run_query::<QueryAllKeyPairsResponse, QueryAllKeyPairsResponse>(
                 vec![],
-                "/azkr.tlcs.v1beta1.Query/AllKeyPairs".into(),
+                "/tlcs.timelock.v1beta1.Query/AllKeyPairs".into(),
                 node,
                 height,
             )?;
@@ -94,7 +94,7 @@ pub fn run_timelock_query_command(
 
             let res = run_query::<QueryAllKeyPairsResponse, QueryAllKeyPairsResponse>(
                 query.encode_vec(),
-                "/azkr.tlcs.v1beta1.Query/AllKeyPairsByRound".into(),
+                "/tlcs.timelock.v1beta1.Query/AllKeyPairsByRound".into(),
                 node,
                 height,
             )?;
@@ -106,7 +106,7 @@ pub fn run_timelock_query_command(
 
             let res = run_query::<QueryAllKeyPairsResponse, QueryAllKeyPairsResponse>(
                 query.encode_vec(),
-                "/azkr.tlcs.v1beta1.Query/AllKeyPairsByTime".into(),
+                "/tlcs.timelock.v1beta1.Query/AllKeyPairsByTime".into(),
                 node,
                 height,
             )?;
@@ -118,7 +118,7 @@ pub fn run_timelock_query_command(
 
             let res = run_query::<QueryAllKeyPairsResponse, QueryAllKeyPairsResponse>(
                 query.encode_vec(),
-                "/azkr.tlcs.v1beta1.Query/AllKeyPairsByRoundAndScheme".into(),
+                "/tlcs.timelock.v1beta1.Query/AllKeyPairsByRoundAndScheme".into(),
                 node,
                 height,
             )?;
@@ -128,7 +128,7 @@ pub fn run_timelock_query_command(
         TimelockCommands::LoeData => {
             let res = run_query::<QueryAllLoeDataResponse, QueryAllLoeDataResponse>(
                 vec![],
-                "/azkr.tlcs.v1beta1.Query/AllLoeData".into(),
+                "/tlcs.timelock.v1beta1.Query/AllLoeData".into(),
                 node,
                 height,
             )?;
@@ -140,7 +140,7 @@ pub fn run_timelock_query_command(
 
             let res = run_query::<QueryAllLoeDataResponse, QueryAllLoeDataResponse>(
                 query.encode_vec(),
-                "/azkr.tlcs.v1beta1.Query/AllLoeDataByRound".into(),
+                "/tlcs.timelock.v1beta1.Query/AllLoeDataByRound".into(),
                 node,
                 height,
             )?;
@@ -150,7 +150,7 @@ pub fn run_timelock_query_command(
         TimelockCommands::LoeDataNeeded => {
             let res = run_query::<QueryAllKeyPairsResponse, QueryAllKeyPairsResponse>(
                 vec![],
-                "/azkr.tlcs.v1beta1.Query/AllLoeDataNeeded".into(),
+                "/tlcs.timelock.v1beta1.Query/AllLoeDataNeeded".into(),
                 node,
                 height,
             )?;
