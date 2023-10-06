@@ -35,17 +35,16 @@ use crate::{
 
 use chrono::Utc;
 
+use crate::LOE_GENESIS_TIME;
+use crate::LOE_PERIOD;
+use crate::LOE_PUBLIC_KEY;
+use crate::SECURITY_PARAM;
+
 // Key Prefixes
 const CONTRIBUTION_THRESHOLD_KEY: [u8; 1] = [0];
 const PARTICIPANT_DATA_KEY: [u8; 1] = [1];
 const KEYPAIR_DATA_KEY: [u8; 1] = [2];
 const LOE_DATA_KEY: [u8; 1] = [3];
-
-const LOE_PUBLIC_KEY: &str = "a0b862a7527fee3a731bcb59280ab6abd62d5c0b6ea03dc4ddf6612fdfc9d01f01c31542541771903475eb1ec6615f8d0df0b8b6dce385811d6dcf8cbefb8759e5e616a3dfd054c928940766d9a5b9db91e3b697e5d70a975181e007f87fca5e";
-const SECURITY_PARAM: usize = 10;
-
-const LOE_GENESIS_TIME: u32 = 1677685200;
-const LOE_PERIOD: u32 = 3;
 
 // Temporary function to convert the scheme type number into string for the tlcs-rust code
 pub fn scheme_to_string(scheme: u32) -> String {

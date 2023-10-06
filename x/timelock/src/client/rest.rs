@@ -329,6 +329,7 @@ async fn endpoint_info() -> &'static str {
      \t /tlcs/timelock/v1beta1/loe_data\n\
      \t /tlcs/timelock/v1beta1/loe_data/round/<round>\n\
      \t /tlcs/timelock/v1beta1/loe_data_needed\n\
+     \n\t pagination is done by appending offset=<page number>&limit=<rows per page>\n\
     "
 }
 
