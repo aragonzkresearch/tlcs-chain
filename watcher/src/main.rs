@@ -101,7 +101,7 @@ async fn main() -> Result<()> {
         for keypair in keypairs.keypairs {
             //println!("Getting loe data for {}", keypair.round);
             if keypair.round < current_loe_round() {
-                let loe_data: LoeData = reqwest::get(format!("{}{}", LOE_URL, keypair.round))
+                let loe_data: LoeData = reqwest::get(format!("{}round/{}", LOE_URL, keypair.round))
                     .await?
                     .json()
                     .await?;
