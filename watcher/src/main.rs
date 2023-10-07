@@ -101,10 +101,11 @@ async fn main() -> Result<()> {
         for keypair in keypairs.keypairs {
             //println!("Getting loe data for {}", keypair.round);
             if keypair.round < current_loe_round() {
-                let loe_data: LoeData = reqwest::get(format!("{}round/{}", LOE_URL, keypair.round))
-                    .await?
-                    .json()
-                    .await?;
+                let loe_data: LoeData =
+                    reqwest::get(format!("{}public/{}", LOE_URL, keypair.round))
+                        .await?
+                        .json()
+                        .await?;
 
                 send_transaction(config.clone(), loe_data);
                 sleep(Duration::from_millis(6100)).await;
