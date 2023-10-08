@@ -405,13 +405,14 @@ impl<SK: StoreKey> Keeper<SK> {
         let mut store_key = LOE_DATA_KEY.to_vec();
         store_key.append(&mut msg.round.to_le_bytes().to_vec());
 
-        info!("TX LOE Data: Round: {:?}", msg.round);
         if loe_signature_is_valid(msg.round, msg.signature.clone(), LOE_PUBLIC_KEY.into()) {
+            info!("TX LOE Data stored: Round: {:?}", msg.round);
             tlcs_store.set(
                 store_key.into(),
                 <MsgLoeData as Into<RawMsgLoeData>>::into(msg.to_owned()).encode_to_vec(),
             );
         } else {
+            info!("TX LOE Data rejected: Round: {:?}", msg.round);
             return Err(AppError::InvalidRequest(format!(
                 "Invalid loe data received. Round:{}",
                 msg.round

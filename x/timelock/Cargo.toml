@@ -31,7 +31,7 @@ anyhow = "1.0.70"
 ibc-relayer = "0.23.0"
 drand-verify = "0.5.0"
 hex-literal = "0.4.1"
-drand_core = "0.0.7"
+drand_core = "0.0.8"
 
 strum = "0.24.1"
 axum = "0.6.18"

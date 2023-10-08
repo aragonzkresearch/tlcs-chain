@@ -1414,6 +1414,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "drand_core"
+version = "0.0.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53006ef9a13c1cbe0f6cc8f69c8ecfd248385474020fb704e6014574b0a0148b"
+dependencies = [
+ "anyhow",
+ "ark-bls12-381",
+ "ark-ec",
+ "ark-ff",
+ "ark-serialize",
+ "async-trait",
+ "getrandom 0.2.10",
+ "hex",
+ "rand 0.8.5",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sha2 0.10.7",
+ "url",
+]
+
+[[package]]
 name = "dyn-clone"
 version = "1.0.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4905,7 +4927,7 @@ dependencies = [
  "clap",
  "database",
  "drand-verify",
- "drand_core",
+ "drand_core 0.0.8",
  "gears",
  "hex",
  "hex-literal",
@@ -5019,7 +5041,7 @@ dependencies = [
  "chrono",
  "clap",
  "database",
- "drand_core",
+ "drand_core 0.0.7",
  "error-chain",
  "gears",
  "hex",
