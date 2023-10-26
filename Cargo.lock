@@ -5068,7 +5068,7 @@ dependencies = [
 [[package]]
 name = "tlcs-rust"
 version = "0.1.0"
-source = "git+https://github.com/aragonzkresearch/tlcs-rust?branch=modify-for-generic-curve#b3e3485405e245f850d7477f9a8a8ca1373e8ec1"
+source = "git+https://github.com/aragonzkresearch/tlcs-rust?branch=modify-for-generic-curve#6fe85abf0f33feb0941bec68119573a4dae1a65c"
 dependencies = [
  "anyhow",
  "ark-bls12-381",
@@ -5089,6 +5089,8 @@ dependencies = [
  "digest 0.10.7",
  "hex",
  "num-bigint",
+ "num-integer",
+ "num-traits",
  "rand 0.8.5",
  "reqwest",
  "serde",
