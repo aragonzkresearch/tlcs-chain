@@ -520,9 +520,8 @@ impl<SK: StoreKey> Keeper<SK> {
 
                 if contrib_count > contribution_threshold {
                     info!("MAKE_PK: making key for round: {:?}", keypair.round);
-                    let public_key =
+                    keypair.public_key =
                         make_public_key(scheme_to_string(keypair.scheme), &all_participant_data);
-                    keypair.public_key = hex::encode(&public_key);
 
                     tmp_store.insert(key, keypair.encode_to_vec());
                 }
@@ -567,13 +566,12 @@ impl<SK: StoreKey> Keeper<SK> {
                 all_participant_data.push(contribution.data.clone());
             }
 
-            let secret_key = make_secret_key(
+            keypair.private_key = make_secret_key(
                 scheme_to_string(keypair.scheme),
                 loe_signature,
                 all_participant_data,
             );
 
-            keypair.private_key = hex::encode(secret_key);
             tmp_store.insert(key, keypair.encode_to_vec());
         }
 
