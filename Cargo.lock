@@ -5068,7 +5068,7 @@ dependencies = [
 [[package]]
 name = "tlcs-rust"
 version = "0.1.0"
-source = "git+https://github.com/aragonzkresearch/tlcs-rust?branch=modify-for-generic-curve#6fe85abf0f33feb0941bec68119573a4dae1a65c"
+source = "git+https://github.com/aragonzkresearch/tlcs-rust#86bf2e500b375b941540062cd7032cc046438094"
 dependencies = [
  "anyhow",
  "ark-bls12-381",
