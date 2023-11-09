@@ -1,7 +1,7 @@
 use gears::utils::get_default_home_dir;
 use std::fs;
 use std::str::FromStr; // TODO: remove this and get rid of the config reading in this file
-use toml; // TODO: remove this and get rid of the config reading in this file
+                       //use toml; // TODO: remove this and get rid of the config reading in this file
 
 use error_chain::error_chain;
 use std::thread;
@@ -70,9 +70,8 @@ async fn main() -> Result<()> {
     let contents = match fs::read_to_string(home_dir) {
         Ok(s) => s,
         Err(_) => {
-            format!(
-                "tendermint_url='http://localhost:26657'\nfrom_user='loesender'\nchain_id='test-chain'"
-            )
+            "tendermint_url='http://localhost:26657'\nfrom_user='loesender'\nchain_id='test-chain'"
+                .to_string()
         }
     };
 
@@ -87,7 +86,7 @@ async fn main() -> Result<()> {
     let config = Config {
         node: Url::from_str(&file_conf.tendermint_url).unwrap(),
         home: get_default_home_dir(APP_NAME).unwrap(),
-        from: file_conf.from_user.into(),
+        from: file_conf.from_user,
         chain_id: tendermint_informal::chain::Id::try_from(file_conf.chain_id).unwrap(),
         delay: 0,
     };

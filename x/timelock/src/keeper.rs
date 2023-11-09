@@ -89,9 +89,8 @@ impl<SK: StoreKey> Keeper<SK> {
 
         let prefix_store = tlcs_store.get_immutable_prefix_store(store_key);
         let the_keys = prefix_store.range(..);
-        let keycount = the_keys.count() as u32; // usize
 
-        return keycount;
+        the_keys.count() as u32 // from usize
     }
 
     pub fn open_new_process<T: Database>(
@@ -123,7 +122,7 @@ impl<SK: StoreKey> Keeper<SK> {
                 private_key: "".to_string(),
             };
 
-            tlcs_store.set(store_key.into(), key_data.encode_to_vec());
+            tlcs_store.set(store_key, key_data.encode_to_vec());
 
             let round_data_vec = make_keyshare(
                 LOE_PUBLIC_KEY.into(),
@@ -196,7 +195,7 @@ impl<SK: StoreKey> Keeper<SK> {
                 //    if verify_participant_data(msg.round, msg.data.clone()) {
                 let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
                 let chain_data: RawMsgContribution = msg.to_owned().into();
-                tlcs_store.set(store_key.into(), chain_data.encode_to_vec());
+                tlcs_store.set(store_key, chain_data.encode_to_vec());
             } else {
                 return Err(AppError::InvalidRequest(
                     "The contribution data is invalid for the given round".into(),
@@ -298,7 +297,7 @@ impl<SK: StoreKey> Keeper<SK> {
         let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
 
         let key_data: RawMsgKeyPair = msg.to_owned().into();
-        tlcs_store.set(prefix.into(), key_data.encode_to_vec());
+        tlcs_store.set(prefix, key_data.encode_to_vec());
 
         Ok(())
     }
@@ -408,7 +407,7 @@ impl<SK: StoreKey> Keeper<SK> {
         if loe_signature_is_valid(msg.round, msg.signature.clone(), LOE_PUBLIC_KEY.into()) {
             info!("TX LOE Data stored: Round: {:?}", msg.round);
             tlcs_store.set(
-                store_key.into(),
+                store_key,
                 <MsgLoeData as Into<RawMsgLoeData>>::into(msg.to_owned()).encode_to_vec(),
             );
         } else {
@@ -464,9 +463,9 @@ impl<SK: StoreKey> Keeper<SK> {
         QueryAllLoeDataResponse { randomnesses }
     }
 
-    pub fn get_empty_keypairs<'a, T: Database>(
+    pub fn get_empty_keypairs<T: Database>(
         &self,
-        ctx: &'a mut TxContext<T, SK>,
+        ctx: &mut TxContext<T, SK>,
     ) -> (
         HashMap<Vec<u8>, RawMsgKeyPair>,
         HashMap<Vec<u8>, RawMsgKeyPair>,
@@ -482,19 +481,19 @@ impl<SK: StoreKey> Keeper<SK> {
         for (index, keypair) in keypairs {
             let the_keys: RawMsgKeyPair = RawMsgKeyPair::decode::<Bytes>(keypair.into())
                 .expect("invalid data in database - possible database corruption");
-            if the_keys.public_key.len() == 0 {
-                need_pub_key.insert(index.into(), the_keys);
-            } else if the_keys.private_key.len() == 0 {
-                need_priv_key.insert(index.into(), the_keys);
+            if the_keys.public_key.is_empty() {
+                need_pub_key.insert(index, the_keys);
+            } else if the_keys.private_key.is_empty() {
+                need_priv_key.insert(index, the_keys);
             }
         }
 
-        return (need_pub_key, need_priv_key);
+        (need_pub_key, need_priv_key)
     }
 
-    pub fn make_public_keys<'a, T: Database>(
+    pub fn make_public_keys<T: Database>(
         &self,
-        ctx: &'a mut TxContext<T, SK>,
+        ctx: &mut TxContext<T, SK>,
         new_key_list: HashMap<Vec<u8>, RawMsgKeyPair>,
         cur_time: i64,
         contribution_threshold: u32,
@@ -537,9 +536,9 @@ impl<SK: StoreKey> Keeper<SK> {
         }
     }
 
-    pub fn make_secret_keys<'a, T: Database>(
+    pub fn make_secret_keys<T: Database>(
         &self,
-        ctx: &'a mut TxContext<T, SK>,
+        ctx: &mut TxContext<T, SK>,
         new_key_list: HashMap<Vec<u8>, RawMsgKeyPair>,
     ) {
         let mut tmp_store: HashMap<Vec<u8>, Vec<u8>> = HashMap::new();
@@ -603,14 +602,14 @@ impl<SK: StoreKey> Keeper<SK> {
     ) -> Result<(), AppError> {
         let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
         let prefix = CONTRIBUTION_THRESHOLD_KEY.to_vec();
-        tlcs_store.set(prefix.into(), new_threshold.encode_to_vec());
+        tlcs_store.set(prefix, new_threshold.encode_to_vec());
 
         Ok(())
     }
 
-    pub fn get_this_round_all_participant_data<'a, T: Database>(
+    pub fn get_this_round_all_participant_data<T: Database>(
         &self,
-        ctx: &'a mut TxContext<T, SK>,
+        ctx: &mut TxContext<T, SK>,
         round: u64,
         scheme: u32,
     ) -> Vec<(Vec<u8>, Vec<u8>)> {
@@ -625,9 +624,9 @@ impl<SK: StoreKey> Keeper<SK> {
             .collect()
     }
 
-    pub fn get_this_round_loe_signature<'a, T: Database>(
+    pub fn get_this_round_loe_signature<T: Database>(
         &self,
-        ctx: &'a mut TxContext<T, SK>,
+        ctx: &mut TxContext<T, SK>,
         round: u64,
         //) -> Option<RawMsgLoeData> {
     ) -> Option<String> {
@@ -664,7 +663,7 @@ impl<SK: StoreKey> Keeper<SK> {
                 .expect("invalid data in database - possible database corruption");
             //TODO: Possibly also filter by blocktime. It would be better but for now we'll just get records with empty private keys
             // Currently, can't get blocktime in here so the time filtering is done in the loe watcher
-            if keypair.public_key != "" && keypair.private_key == "" {
+            if !keypair.public_key.is_empty() && keypair.private_key.is_empty() {
                 keypairs.push(keypair);
             }
         }
@@ -684,6 +683,6 @@ impl<SK: StoreKey> Keeper<SK> {
         prefix.append(&mut round.to_le_bytes().to_vec());
         prefix.append(&mut scheme.to_le_bytes().to_vec());
 
-        tlcs_store.get_mutable_prefix_store(prefix.into())
+        tlcs_store.get_mutable_prefix_store(prefix)
     }
 }

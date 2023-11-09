@@ -1,7 +1,7 @@
 use serde::Deserialize; // TODO: remove this and get rid of the config reading in this file
 use std::fs;
 use std::str::FromStr; // TODO: remove this and get rid of the config reading in this file
-use toml; // TODO: remove this and get rid of the config reading in this file
+                       //use toml; // TODO: remove this and get rid of the config reading in this file
 
 use anyhow::Result;
 use auth::Keeper as AuthKeeper;
@@ -59,11 +59,9 @@ fn main() -> Result<()> {
     let contents = match fs::read_to_string(home_dir) {
         Ok(s) => s,
         Err(_) => {
-            //panic!("Could not read file resend.toml");
-            format!(
-                "tendermint_url='http://localhost:26657'\nfrom_user='kevin'\nchain_id='test-chain'"
-            )
-        }
+            "tendermint_url='http://localhost:26657'\nfrom_user='kevin'\nchain_id='test-chain'"
+                .to_string()
+        } //panic!("Could not read file resend.toml");
     };
 
     let file_conf: Fileconf = match toml::from_str(&contents) {
@@ -80,7 +78,7 @@ fn main() -> Result<()> {
         home: get_default_home_dir(APP_NAME).unwrap(),
         //from: "kevin".into(),
         //chain_id: tendermint_informal::chain::Id::try_from("test-chain").unwrap(),
-        from: file_conf.from_user.into(),
+        from: file_conf.from_user,
         chain_id: tendermint_informal::chain::Id::try_from(file_conf.chain_id).unwrap(),
         delay: 10,
     };
