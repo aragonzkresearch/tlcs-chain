@@ -19,9 +19,9 @@ pub enum Message {
 impl proto_messages::cosmos::tx::v1beta1::Message for Message {
     fn get_signers(&self) -> Vec<&AccAddress> {
         match &self {
-            Message::NewProcess(msg) => return vec![&msg.address],
-            Message::Participate(msg) => return vec![&msg.address],
-            Message::SubmitLoeData(msg) => return vec![&msg.address],
+            Message::NewProcess(msg) => vec![&msg.address],
+            Message::Participate(msg) => vec![&msg.address],
+            Message::SubmitLoeData(msg) => vec![&msg.address],
         }
     }
 

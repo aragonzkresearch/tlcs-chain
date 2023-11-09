@@ -64,7 +64,7 @@ impl<SK: StoreKey> Handler<SK> {
         match query.path.as_str() {
             "/tlcs.timelock.v1beta1.Query/AllContributions" => Ok(self
                 .keeper
-                .query_all_contributions(&ctx)
+                .query_all_contributions(ctx)
                 .encode_to_vec()
                 .into()),
             "/tlcs.timelock.v1beta1.Query/AllContributionsByRound" => {
@@ -73,7 +73,7 @@ impl<SK: StoreKey> Handler<SK> {
 
                 Ok(self
                     .keeper
-                    .query_contributions_by_round(&ctx, req.round)
+                    .query_contributions_by_round(ctx, req.round)
                     .encode_to_vec()
                     .into())
             }
@@ -83,12 +83,12 @@ impl<SK: StoreKey> Handler<SK> {
 
                 Ok(self
                     .keeper
-                    .query_contributions_by_round_and_scheme(&ctx, req.round, req.scheme)
+                    .query_contributions_by_round_and_scheme(ctx, req.round, req.scheme)
                     .encode_to_vec()
                     .into())
             }
             "/tlcs.timelock.v1beta1.Query/AllKeyPairs" => {
-                Ok(self.keeper.query_all_keypairs(&ctx).encode_to_vec().into())
+                Ok(self.keeper.query_all_keypairs(ctx).encode_to_vec().into())
             }
             "/tlcs.timelock.v1beta1.Query/AllKeyPairsByRound" => {
                 let data = query.data.clone();
@@ -96,7 +96,7 @@ impl<SK: StoreKey> Handler<SK> {
 
                 Ok(self
                     .keeper
-                    .query_keypairs_by_round(&ctx, req.round)
+                    .query_keypairs_by_round(ctx, req.round)
                     .encode_to_vec()
                     .into())
             }
@@ -106,7 +106,7 @@ impl<SK: StoreKey> Handler<SK> {
 
                 Ok(self
                     .keeper
-                    .query_keypairs_by_round_and_scheme(&ctx, req.round, req.scheme)
+                    .query_keypairs_by_round_and_scheme(ctx, req.round, req.scheme)
                     .encode_to_vec()
                     .into())
             }
@@ -116,12 +116,12 @@ impl<SK: StoreKey> Handler<SK> {
 
                 Ok(self
                     .keeper
-                    .query_keypairs_by_time(&ctx, req.time)
+                    .query_keypairs_by_time(ctx, req.time)
                     .encode_to_vec()
                     .into())
             }
             "/tlcs.timelock.v1beta1.Query/AllLoeData" => {
-                Ok(self.keeper.query_all_loe_data(&ctx).encode_to_vec().into())
+                Ok(self.keeper.query_all_loe_data(ctx).encode_to_vec().into())
             }
             "/tlcs.timelock.v1beta1.Query/AllLoeDataByRound" => {
                 let data = query.data.clone();
@@ -129,13 +129,13 @@ impl<SK: StoreKey> Handler<SK> {
 
                 Ok(self
                     .keeper
-                    .query_loe_data_by_round(&ctx, req.round)
+                    .query_loe_data_by_round(ctx, req.round)
                     .encode_to_vec()
                     .into())
             }
             "/tlcs.timelock.v1beta1.Query/AllLoeDataNeeded" => Ok(self
                 .keeper
-                .query_loe_data_needed(&ctx)
+                .query_loe_data_needed(ctx)
                 .encode_to_vec()
                 .into()),
             _ => Err(AppError::InvalidRequest("query path not found".into())),

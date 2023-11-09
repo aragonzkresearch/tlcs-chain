@@ -24,13 +24,15 @@ pub enum Commands {
 
 pub fn tx_command_handler(command: Commands, from_address: AccAddress) -> Result<Message> {
     match command {
-        Commands::Bank(args) => {
-            run_bank_tx_command(args, from_address).map(|msg| Message::Bank(msg))
-        }
+        Commands::Bank(args) => run_bank_tx_command(args, from_address).map(Message::Bank),
         Commands::Timelock(args) => {
-            run_timelock_tx_command(args, from_address).map(|msg| Message::Timelock(msg))
+            run_timelock_tx_command(args, from_address).map(Message::Timelock)
         }
     }
+    //run_bank_tx_command(args, from_address).map(|msg| Message::Bank(msg))
+    // Clippy suggested this change
+    //run_timelock_tx_command(args, from_address).map(|msg| Message::Timelock(msg))
+    // Clippy suggested this change
 }
 
 #[derive(Subcommand, Debug)]

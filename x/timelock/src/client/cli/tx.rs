@@ -112,11 +112,9 @@ pub async fn get_loe_data(round: u64) -> Result<String> {
     // Create a new client and retrieve the latest beacon. By default, it verifies its signature against the chain info.
     let client: DrandHttpClient = LOE_URL.try_into().unwrap();
     match client.get(round).await {
-        Ok(dat) => {
-            return Ok(hex::encode(dat.signature()));
-        }
-        Err(e) => return Err(e),
-    };
+        Ok(dat) => Ok(hex::encode(dat.signature())),
+        Err(e) => Err(e),
+    }
 
     // If you just want the latest use this instead
     //let latest = client.latest().await.unwrap();
