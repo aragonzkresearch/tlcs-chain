@@ -29,6 +29,7 @@ impl<SK: StoreKey> Handler<SK> {
     ) -> Result<(), AppError> {
         match msg {
             Message::NewProcess(msg) => self.keeper.open_new_process(ctx, self.config.clone(), msg),
+            Message::MultiNewProcess(msg) => self.keeper.open_multi_new_process(ctx, msg),
             Message::Participate(msg) => self.keeper.append_contribution(ctx, msg),
             Message::SubmitLoeData(msg) => self.keeper.append_loe_data(&mut ctx.as_any(), msg),
         }

@@ -20,6 +20,7 @@ use crate::{
         MsgContribution,
         MsgKeyPair,
         MsgLoeData,
+        MsgMultiNewProcess,
         MsgNewProcess,
         QueryAllContributionsResponse,
         QueryAllKeyPairsResponse,
@@ -59,6 +60,15 @@ pub fn valid_scheme(scheme: u32) -> bool {
     scheme == 1 || scheme == 2
 }
 
+pub fn all_schemes_valid(schemes: Vec<u32>) -> bool {
+    for scheme in schemes {
+        if !valid_scheme(scheme) {
+            return false;
+        }
+    }
+    true
+}
+
 pub fn check_time(time: i64) -> bool {
     let now = Utc::now();
     time > now.timestamp()
@@ -90,7 +100,7 @@ impl<SK: StoreKey> Keeper<SK> {
         let prefix_store = tlcs_store.get_immutable_prefix_store(store_key);
         let the_keys = prefix_store.range(..);
 
-        the_keys.count() as u32 // from usize
+        (the_keys.count() + 1) as u32 // from usize
     }
 
     pub fn open_new_process<T: Database>(
@@ -151,6 +161,62 @@ impl<SK: StoreKey> Keeper<SK> {
                     Err(e) => info!("Failed to submit keyshare: {:?}", e),
                 }
             });
+        } else {
+            return Err(AppError::InvalidRequest(
+                "The keypair request is invalid".into(),
+            ));
+        }
+
+        Ok(())
+    }
+
+    pub fn open_multi_new_process<T: Database>(
+        &self,
+        ctx: &mut TxContext<T, SK>,
+        msg: &MsgMultiNewProcess,
+    ) -> Result<(), AppError> {
+        if msg.startround > 0
+            && all_schemes_valid(msg.schemes.clone())
+            && check_time(msg.pubkey_time)
+        {
+            info!(
+                "NEW MULTI PROCESS TX: Starting Round: {:?}, Schemes: {:?}",
+                msg.startround,
+                msg.schemes
+                    .iter()
+                    .map(|&id| id.to_string() + ",")
+                    .collect::<Vec<String>>()
+            );
+
+            let mut counter: u32 = 0;
+            let mut this_round = msg.startround;
+
+            while counter < msg.reqnum {
+                this_round += msg.roundstep as u64;
+                counter += 1;
+
+                for this_scheme in msg.schemes.clone().into_iter() {
+                    let keycount = self.open_process_count(ctx, this_round, this_scheme);
+
+                    let mut store_key = KEYPAIR_DATA_KEY.to_vec();
+                    store_key.append(&mut this_round.to_le_bytes().to_vec());
+                    store_key.append(&mut this_scheme.to_le_bytes().to_vec());
+
+                    let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
+                    let this_pubkey_time = msg.pubkey_time + (counter * 6) as i64;
+
+                    let key_data: RawMsgKeyPair = RawMsgKeyPair {
+                        round: this_round,
+                        scheme: this_scheme,
+                        id: keycount,
+                        pubkey_time: this_pubkey_time,
+                        public_key: "".to_string(),
+                        private_key: "".to_string(),
+                    };
+
+                    tlcs_store.set(store_key, key_data.encode_to_vec());
+                }
+            }
         } else {
             return Err(AppError::InvalidRequest(
                 "The keypair request is invalid".into(),

@@ -1,5 +1,5 @@
 use crate::keeper::scheme_to_string;
-use crate::proto::tlcs::v1beta1::{MsgContribution, MsgLoeData, MsgNewProcess};
+use crate::proto::tlcs::v1beta1::{MsgContribution, MsgLoeData, MsgMultiNewProcess, MsgNewProcess};
 use anyhow::Result;
 use clap::{Args, Subcommand};
 use drand_core::HttpClient as DrandHttpClient;
@@ -34,6 +34,21 @@ pub enum TimelockCommands {
         /// Time that public key should be generated. Time is in unix timestamp format.
         public_key_time: i64,
     },
+    /// Request new keypair for multiple round and schemes
+    MultiKeypair {
+        /// First LOE round number requesting.
+        startround: u64,
+        /// Number or keypairs to request.
+        reqnum: u32,
+        /// Number of rounds between requests.
+        roundstep: u32,
+        /// Comma seperated list of key generation schemes. Currently supported schemes:
+        ///      1  for BabyJubJub
+        ///      2  forSecp256k1
+        schemes: Vec<u32>,
+        /// Time that public key should be generated. Time is in unix timestamp format.
+        public_key_time: i64,
+    },
     /// Send contribution data for given round and scheme
     Contribute {
         /// LOE round number.
@@ -62,6 +77,20 @@ pub fn run_timelock_tx_command(args: Cli, from_address: AccAddress) -> Result<Ti
             address: from_address,
             round,
             scheme,
+            pubkey_time: public_key_time,
+        })),
+        TimelockCommands::MultiKeypair {
+            startround,
+            reqnum,
+            roundstep,
+            schemes,
+            public_key_time,
+        } => Ok(TimelockMessage::MultiNewProcess(MsgMultiNewProcess {
+            address: from_address,
+            startround,
+            reqnum,
+            roundstep,
+            schemes,
             pubkey_time: public_key_time,
         })),
         TimelockCommands::Contribute { round, scheme, id } => {
