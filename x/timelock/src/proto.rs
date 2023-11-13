@@ -78,7 +78,84 @@ pub mod tlcs {
         #[derive(Serialize, Deserialize, Clone, Message)]
         pub struct QueryAllNewProcesssResponse {
             #[prost(message, repeated, tag = "1")]
-            pub contributions: Vec<RawMsgNewProcess>,
+            pub newkeypairrequests: Vec<RawMsgNewProcess>,
+        }
+
+        // Multi process messages
+
+        #[derive(Serialize, Deserialize, Clone, Message)]
+        pub struct RawMsgMultiNewProcess {
+            #[prost(string, tag = "1")]
+            pub address: String,
+            #[prost(uint64, tag = "2")]
+            pub startround: u64,
+            #[prost(uint32, tag = "3")]
+            pub reqnum: u32,
+            #[prost(uint32, tag = "4")]
+            pub roundstep: u32,
+            #[prost(uint32, repeated, tag = "5")]
+            pub schemes: ::prost::alloc::vec::Vec<u32>,
+            #[prost(int64, tag = "6")]
+            pub pubkey_time: i64,
+        }
+
+        #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+        pub struct MsgMultiNewProcess {
+            pub address: AccAddress,
+            pub startround: u64,
+            pub reqnum: u32,
+            pub roundstep: u32,
+            pub schemes: Vec<u32>,
+            pub pubkey_time: i64,
+        }
+
+        impl TryFrom<RawMsgMultiNewProcess> for MsgMultiNewProcess {
+            type Error = Error;
+
+            fn try_from(raw: RawMsgMultiNewProcess) -> Result<Self, Self::Error> {
+                let address = AccAddress::from_bech32(&raw.address)
+                    .map_err(|e| Error::DecodeAddress(e.to_string()))?;
+
+                Ok(MsgMultiNewProcess {
+                    address,
+                    startround: raw.startround,
+                    reqnum: raw.reqnum,
+                    roundstep: raw.roundstep,
+                    schemes: raw.schemes,
+                    pubkey_time: raw.pubkey_time,
+                })
+            }
+        }
+
+        impl From<MsgMultiNewProcess> for RawMsgMultiNewProcess {
+            fn from(msg: MsgMultiNewProcess) -> RawMsgMultiNewProcess {
+                RawMsgMultiNewProcess {
+                    address: msg.address.into(),
+                    startround: msg.startround,
+                    reqnum: msg.reqnum,
+                    roundstep: msg.roundstep,
+                    schemes: msg.schemes,
+                    pubkey_time: msg.pubkey_time,
+                }
+            }
+        }
+
+        impl Protobuf<RawMsgMultiNewProcess> for MsgMultiNewProcess {}
+
+        //TODO: should to Any be implemented at the individual message type?
+        impl From<MsgMultiNewProcess> for Any {
+            fn from(msg: MsgMultiNewProcess) -> Self {
+                Any {
+                    type_url: "/tlcs.timelock.v1beta1.MsgMultiNewProcess".to_string(),
+                    value: msg.encode_vec(),
+                }
+            }
+        }
+
+        #[derive(Serialize, Deserialize, Clone, Message)]
+        pub struct QueryAllMultiNewProcesssResponse {
+            #[prost(message, repeated, tag = "1")]
+            pub multirequests: Vec<RawMsgMultiNewProcess>,
         }
 
         /////////////////////////////////////////////////////////////////////////////////////
