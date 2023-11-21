@@ -106,7 +106,7 @@ impl<SK: StoreKey> Keeper<SK> {
         let prefix_store = tlcs_store.get_immutable_prefix_store(store_key);
         let the_keys = prefix_store.range(..);
 
-        the_keys.count() as u32 // from usize
+        (the_keys.count() + 1) as u32 // from usize
     }
 
     pub fn open_new_process<T: Database>(
