@@ -1,4 +1,6 @@
-use std::{collections::HashMap, thread};
+use gears::client::keys::key_store::DiskStore;
+use ibc_relayer::keyring::SigningKeyPair;
+use std::{collections::BTreeMap, collections::HashMap, thread};
 
 use bytes::Bytes;
 use database::{Database, PrefixDB};
@@ -11,6 +13,9 @@ use store::{MutablePrefixStore, StoreKey};
 use tracing::info;
 // Include to run benchmark and uncomment benchmark in test
 //use std::time::Instant;
+use ibc_relayer::keyring::Secp256k1KeyPair;
+use proto_types::AccAddress;
+use std::str::FromStr;
 use tlcs_rust::chain_functions::{
     loe_signature_is_valid, make_keyshare, make_public_key, make_secret_key, verify_keyshare,
 };
@@ -33,6 +38,7 @@ use crate::{
     utils::run_tx_command,
     Config,
 };
+use anyhow::Result;
 
 use chrono::Utc;
 
@@ -42,10 +48,10 @@ use crate::LOE_PUBLIC_KEY;
 use crate::SECURITY_PARAM;
 
 // Key Prefixes
-const CONTRIBUTION_THRESHOLD_KEY: [u8; 1] = [0];
-const PARTICIPANT_DATA_KEY: [u8; 1] = [1];
-const KEYPAIR_DATA_KEY: [u8; 1] = [2];
-const LOE_DATA_KEY: [u8; 1] = [3];
+use crate::CONTRIBUTION_THRESHOLD_KEY;
+use crate::KEYPAIR_DATA_KEY;
+use crate::LOE_DATA_KEY;
+use crate::PARTICIPANT_DATA_KEY;
 
 // Temporary function to convert the scheme type number into string for the tlcs-rust code
 pub fn scheme_to_string(scheme: u32) -> String {
@@ -106,7 +112,7 @@ impl<SK: StoreKey> Keeper<SK> {
     pub fn open_new_process<T: Database>(
         &self,
         ctx: &mut TxContext<T, SK>,
-        config: Config,
+        //config: Config,
         msg: &MsgNewProcess,
     ) -> Result<(), AppError> {
         if msg.round > 0 && valid_scheme(msg.scheme) && check_time(msg.pubkey_time) {
@@ -134,6 +140,8 @@ impl<SK: StoreKey> Keeper<SK> {
 
             tlcs_store.set(store_key, key_data.encode_to_vec());
 
+            // Stop sending the keyshares here. It will be handled in the begin blocker
+            /*
             let round_data_vec = make_keyshare(
                 LOE_PUBLIC_KEY.into(),
                 msg.round,
@@ -161,6 +169,7 @@ impl<SK: StoreKey> Keeper<SK> {
                     Err(e) => info!("Failed to submit keyshare: {:?}", e),
                 }
             });
+            */
         } else {
             return Err(AppError::InvalidRequest(
                 "The keypair request is invalid".into(),
@@ -527,6 +536,120 @@ impl<SK: StoreKey> Keeper<SK> {
         }
 
         QueryAllLoeDataResponse { randomnesses }
+    }
+
+    pub fn make_keyshares<T: Database>(
+        &self,
+        ctx: &mut TxContext<T, SK>,
+        config: Config,
+    ) -> Result<()> {
+        let mut list_of_key_requests: BTreeMap<u64, RawMsgKeyPair> = BTreeMap::new();
+        let mut list_of_contrib_data: BTreeMap<u64, RawMsgContribution> = BTreeMap::new();
+
+        let tlcs_store = ctx.get_kv_store(&self.store_key);
+
+        let keypair_store_key = KEYPAIR_DATA_KEY.to_vec();
+        let prefix_store = tlcs_store.get_immutable_prefix_store(keypair_store_key);
+        let keypairs = prefix_store.range(..);
+
+        // Get all keypairs that have a blank public key
+        for (_index, keypair) in keypairs {
+            let the_keys: RawMsgKeyPair = RawMsgKeyPair::decode::<Bytes>(keypair.into())
+                .expect("invalid data in database - possible database corruption");
+            if the_keys.public_key.is_empty() {
+                list_of_key_requests.insert(the_keys.round, the_keys);
+                // Needed fields
+                // round, scheme, id
+            }
+        }
+
+        // Get list of contrib data from this node user
+        let contrib_store_key = PARTICIPANT_DATA_KEY.to_vec();
+        let cdata_store = tlcs_store.get_immutable_prefix_store(contrib_store_key);
+        let cdata_range = cdata_store.range(..);
+
+        /*
+        let Config {
+            node,
+            home,
+            from,
+            chain_id,
+            delay,
+        } = &config;
+        */
+
+        let key_store: DiskStore<Secp256k1KeyPair> = DiskStore::new(config.home.clone())?;
+        let key = key_store.get_key(&config.from)?;
+        let myaddress = AccAddress::from_str(&key.account())?;
+        //let address = AccAddress::from_bech32(&raw.address)
+        //    .map_err(|e| Error::DecodeAddress(e.to_string()))?;
+        //let account = get_account_latest(address.clone(), node.clone())?;
+
+        let mut contrib_to_send = MsgContribution {
+            address: myaddress.clone(),
+            round: 0,
+            scheme: 0,
+            id: 0,
+            data: vec![],
+        };
+
+        for (_, cdata) in cdata_range {
+            let the_data: RawMsgContribution = RawMsgContribution::decode::<Bytes>(cdata.into())
+                .expect("invalid data in database - possible database corruption");
+            if the_data.address == myaddress.to_string() {
+                list_of_contrib_data.insert(the_data.round, the_data);
+            }
+        }
+
+        // For the first keypair that we haven't contributed data to, send a contribution
+        for (round, value) in list_of_key_requests.iter() {
+            if !list_of_contrib_data.contains_key(round) {
+                contrib_to_send = MsgContribution {
+                    address: myaddress,
+                    round: value.round,
+                    scheme: value.scheme,
+                    id: value.id,
+                    data: vec![],
+                };
+                break;
+            }
+        }
+
+        if contrib_to_send.round > 0 {
+            info!(
+                "MAKE_KEYSHARES: sending contribution for round: {:?}",
+                contrib_to_send.round
+            );
+
+            let round_data_vec = make_keyshare(
+                LOE_PUBLIC_KEY.into(),
+                contrib_to_send.round,
+                scheme_to_string(contrib_to_send.scheme),
+                SECURITY_PARAM,
+            );
+
+            thread::spawn(move || {
+                // This must be run inside a thread since it will block until it receives a response
+                // which won't happen until this transaction has been processed.
+
+                match run_tx_command(config, |addr| {
+                    crate::Message::Participate(MsgContribution {
+                        address: addr,
+                        round: contrib_to_send.round,
+                        scheme: contrib_to_send.scheme,
+                        id: contrib_to_send.id,
+                        data: round_data_vec,
+                    })
+                }) {
+                    Ok(_) => info!(
+                        "Successfully submitted keyshare data for {:?}",
+                        contrib_to_send.round
+                    ),
+                    Err(e) => info!("Failed to submit keyshare: {:?}", e),
+                }
+            });
+        }
+        Ok(())
     }
 
     pub fn get_empty_keypairs<T: Database>(

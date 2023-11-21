@@ -20,3 +20,9 @@ const LOE_PUBLIC_KEY: &str = "83cf0f2896adee7eb8b5f01fcad3912212c437e0073e911fb9
 pub const LOE_GENESIS_TIME: u32 = 1692803367;
 pub const LOE_PERIOD: u32 = 3;
 const SECURITY_PARAM: usize = 10;
+
+// Key Prefixes
+const CONTRIBUTION_THRESHOLD_KEY: [u8; 1] = [0];
+const PARTICIPANT_DATA_KEY: [u8; 1] = [1];
+const KEYPAIR_DATA_KEY: [u8; 1] = [2];
+const LOE_DATA_KEY: [u8; 1] = [3];

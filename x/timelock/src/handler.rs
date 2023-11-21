@@ -28,7 +28,7 @@ impl<SK: StoreKey> Handler<SK> {
         msg: &Message,
     ) -> Result<(), AppError> {
         match msg {
-            Message::NewProcess(msg) => self.keeper.open_new_process(ctx, self.config.clone(), msg),
+            Message::NewProcess(msg) => self.keeper.open_new_process(ctx, msg),
             Message::MultiNewProcess(msg) => self.keeper.open_multi_new_process(ctx, msg),
             Message::Participate(msg) => self.keeper.append_contribution(ctx, msg),
             Message::SubmitLoeData(msg) => self.keeper.append_loe_data(&mut ctx.as_any(), msg),
@@ -55,6 +55,8 @@ impl<SK: StoreKey> Handler<SK> {
 
         //info!( "BEGINBLOCKER: need secret keys: {:?}", need_secret_keys.len());
         self.keeper.make_secret_keys(ctx, need_secret_keys);
+
+        let _ = self.keeper.make_keyshares(ctx, self.config.clone());
     }
 
     pub fn handle_query<DB: Database>(
