@@ -103,7 +103,7 @@ pub async fn broadcast_tx_commit(client: HttpClient, raw_tx: TxRaw) -> Result<()
 }
 
 // NOTE: we're assuming here that the app has an auth module which handles this query
-fn get_account_latest(address: AccAddress, node: Url) -> Result<QueryAccountResponse> {
+pub fn get_account_latest(address: AccAddress, node: Url) -> Result<QueryAccountResponse> {
     let query = QueryAccountRequest { address };
 
     run_query::<QueryAccountResponse, RawQueryAccountResponse>(
