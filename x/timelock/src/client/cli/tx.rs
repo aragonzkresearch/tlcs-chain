@@ -45,6 +45,7 @@ pub enum TimelockCommands {
         /// Comma seperated list of key generation schemes. Currently supported schemes:
         ///      1  for BabyJubJub
         ///      2  forSecp256k1
+        #[arg(value_delimiter = ',', num_args = 1..)]
         schemes: Vec<u32>,
         /// Time that public key should be generated. Time is in unix timestamp format.
         public_key_time: i64,
