@@ -245,6 +245,7 @@ impl<SK: StoreKey> Keeper<SK> {
         let mut store_key = PARTICIPANT_DATA_KEY.to_vec();
         store_key.append(&mut msg.round.to_le_bytes().to_vec());
         store_key.append(&mut msg.scheme.to_le_bytes().to_vec());
+        store_key.append(&mut msg.id.to_le_bytes().to_vec());
 
         let addr: Vec<u8> = msg.address.clone().into();
         store_key.append(&mut addr.to_vec());
@@ -254,7 +255,7 @@ impl<SK: StoreKey> Keeper<SK> {
         }
 
         info!(
-            "CONTRIB TX: new data. Round: {:?}, Scheme: {:?}",
+            "NEW CONTRIB TX: new data. Round: {:?}, Scheme: {:?}",
             msg.round, msg.scheme
         );
 
@@ -544,8 +545,8 @@ impl<SK: StoreKey> Keeper<SK> {
         ctx: &mut TxContext<T, SK>,
         config: Config,
     ) -> Result<()> {
-        let mut list_of_key_requests: BTreeMap<u64, RawMsgKeyPair> = BTreeMap::new();
-        let mut list_of_contrib_data: BTreeMap<u64, RawMsgContribution> = BTreeMap::new();
+        let mut list_of_key_requests: BTreeMap<Vec<u8>, RawMsgKeyPair> = BTreeMap::new();
+        let mut list_of_contrib_data: BTreeMap<Vec<u8>, RawMsgContribution> = BTreeMap::new();
 
         let tlcs_store = ctx.get_kv_store(&self.store_key);
 
@@ -554,11 +555,12 @@ impl<SK: StoreKey> Keeper<SK> {
         let keypairs = prefix_store.range(..);
 
         // Get all keypairs that have a blank public key
-        for (_index, keypair) in keypairs {
+        for (index, keypair) in keypairs {
             let the_keys: RawMsgKeyPair = RawMsgKeyPair::decode::<Bytes>(keypair.into())
                 .expect("invalid data in database - possible database corruption");
             if the_keys.public_key.is_empty() {
-                list_of_key_requests.insert(the_keys.round, the_keys);
+                list_of_key_requests.insert(index, the_keys);
+                //list_of_key_requests.insert(the_keys.round, the_keys);
                 // Needed fields
                 // round, scheme, id
             }
@@ -568,16 +570,6 @@ impl<SK: StoreKey> Keeper<SK> {
         let contrib_store_key = PARTICIPANT_DATA_KEY.to_vec();
         let cdata_store = tlcs_store.get_immutable_prefix_store(contrib_store_key);
         let cdata_range = cdata_store.range(..);
-
-        /*
-        let Config {
-            node,
-            home,
-            from,
-            chain_id,
-            delay,
-        } = &config;
-        */
 
         let key_store: DiskStore<Secp256k1KeyPair> = DiskStore::new(config.home.clone())?;
         let key = key_store.get_key(&config.from)?;
@@ -594,24 +586,25 @@ impl<SK: StoreKey> Keeper<SK> {
             data: vec![],
         };
 
-        for (_, cdata) in cdata_range {
+        for (index, cdata) in cdata_range {
             let the_data: RawMsgContribution = RawMsgContribution::decode::<Bytes>(cdata.into())
                 .expect("invalid data in database - possible database corruption");
             if the_data.address == myaddress.to_string() {
-                list_of_contrib_data.insert(the_data.round, the_data);
+                //list_of_contrib_data.insert(the_data.round, the_data);
+                list_of_contrib_data.insert(index, the_data);
             }
         }
 
         // For the first keypair that we haven't contributed data to, send a contribution
-        for (round, value) in list_of_key_requests.iter() {
-            if !list_of_contrib_data.contains_key(round) {
-                contrib_to_send = MsgContribution {
-                    address: myaddress,
-                    round: value.round,
-                    scheme: value.scheme,
-                    id: value.id,
-                    data: vec![],
-                };
+        for (index, value) in list_of_key_requests.iter() {
+            // TODO: Have to also check scheme
+            // the contrib data will be there for the other scheme and so no new data will be
+            // generated
+            if !list_of_contrib_data.contains_key(index) {
+                contrib_to_send.round = value.round;
+                contrib_to_send.scheme = value.scheme;
+                contrib_to_send.id = value.id;
+
                 break;
             }
         }
@@ -622,7 +615,7 @@ impl<SK: StoreKey> Keeper<SK> {
                 contrib_to_send.round
             );
 
-            let round_data_vec = make_keyshare(
+            contrib_to_send.data = make_keyshare(
                 LOE_PUBLIC_KEY.into(),
                 contrib_to_send.round,
                 scheme_to_string(contrib_to_send.scheme),
@@ -633,7 +626,10 @@ impl<SK: StoreKey> Keeper<SK> {
                 // This must be run inside a thread since it will block until it receives a response
                 // which won't happen until this transaction has been processed.
 
-                match run_tx_command(config, |addr| {
+                //match run_tx_command(config, |addr| {
+                match run_tx_command(config, |_| {
+                    crate::Message::Participate(contrib_to_send.clone())
+                    /*
                     crate::Message::Participate(MsgContribution {
                         address: addr,
                         round: contrib_to_send.round,
@@ -641,6 +637,7 @@ impl<SK: StoreKey> Keeper<SK> {
                         id: contrib_to_send.id,
                         data: round_data_vec,
                     })
+                        */
                 }) {
                     Ok(_) => info!(
                         "Successfully submitted keyshare data for {:?}",
