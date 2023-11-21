@@ -106,7 +106,7 @@ impl<SK: StoreKey> Keeper<SK> {
         let prefix_store = tlcs_store.get_immutable_prefix_store(store_key);
         let the_keys = prefix_store.range(..);
 
-        (the_keys.count() + 1) as u32 // from usize
+        the_keys.count() as u32 // from usize
     }
 
     pub fn open_new_process<T: Database>(
@@ -126,6 +126,7 @@ impl<SK: StoreKey> Keeper<SK> {
             let mut store_key = KEYPAIR_DATA_KEY.to_vec();
             store_key.append(&mut msg.round.to_le_bytes().to_vec());
             store_key.append(&mut msg.scheme.to_le_bytes().to_vec());
+            store_key.append(&mut keycount.to_le_bytes().to_vec());
 
             let tlcs_store = ctx.get_mutable_kv_store(&self.store_key);
 
