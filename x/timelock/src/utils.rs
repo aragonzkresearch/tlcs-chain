@@ -42,9 +42,8 @@ where
     } = config;
 
     if delay > 0 {
-        //let ten_secs = time::Duration::from_secs(10);
-        let ten_secs = time::Duration::from_secs(delay as u64);
-        thread::sleep(ten_secs);
+        let _ten_secs = time::Duration::from_secs(delay as u64);
+        //thread::sleep(ten_secs);
     }
 
     let key_store: DiskStore<Secp256k1KeyPair> = DiskStore::new(home)?;

@@ -283,11 +283,6 @@ impl<SK: StoreKey> Keeper<SK> {
             ));
         }
 
-        info!(
-            "NEW CONTRIB TX: SAVED. Round: {:?}, Scheme: {:?}",
-            msg.round, msg.scheme
-        );
-
         Ok(())
     }
 
@@ -619,8 +614,8 @@ impl<SK: StoreKey> Keeper<SK> {
                 );
 
                 info!(
-                    "MAKE_KEYSHARES: sending contribution for round: {:?}",
-                    contrib_to_send.round
+                    "MAKE_KEYSHARES: sending contribution for round: {:?}, scheme: {:?}",
+                    contrib_to_send.round, contrib_to_send.scheme
                 );
 
                 thread::spawn(move || {
