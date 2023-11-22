@@ -202,9 +202,6 @@ impl<SK: StoreKey> Keeper<SK> {
             let mut this_round = msg.startround;
 
             while counter < msg.reqnum {
-                this_round += msg.roundstep as u64;
-                counter += 1;
-
                 for this_scheme in msg.schemes.clone().into_iter() {
                     let keycount = self.open_process_count(ctx, this_round, this_scheme);
 
@@ -226,6 +223,9 @@ impl<SK: StoreKey> Keeper<SK> {
 
                     tlcs_store.set(store_key, key_data.encode_to_vec());
                 }
+
+                counter += 1;
+                this_round += msg.roundstep as u64;
             }
         } else {
             return Err(AppError::InvalidRequest(

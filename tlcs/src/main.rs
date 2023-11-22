@@ -80,7 +80,7 @@ fn main() -> Result<()> {
         //chain_id: tendermint_informal::chain::Id::try_from("test-chain").unwrap(),
         from: file_conf.from_user,
         chain_id: tendermint_informal::chain::Id::try_from(file_conf.chain_id).unwrap(),
-        delay: 10,
+        delay: 6,
     };
 
     gears::app::run(
