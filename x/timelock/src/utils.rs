@@ -42,7 +42,8 @@ where
     } = config;
 
     if delay > 0 {
-        let ten_secs = time::Duration::from_secs(10);
+        //let ten_secs = time::Duration::from_secs(10);
+        let ten_secs = time::Duration::from_secs(delay as u64);
         thread::sleep(ten_secs);
     }
 

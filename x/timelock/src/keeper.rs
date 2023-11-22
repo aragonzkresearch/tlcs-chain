@@ -555,12 +555,15 @@ impl<SK: StoreKey> Keeper<SK> {
         let keypairs = prefix_store.range(..);
 
         // Get all keypairs that have a blank public key
-        for (index, keypair) in keypairs {
+        for (_, keypair) in keypairs {
             let the_keys: RawMsgKeyPair = RawMsgKeyPair::decode::<Bytes>(keypair.into())
                 .expect("invalid data in database - possible database corruption");
             if the_keys.public_key.is_empty() {
-                list_of_key_requests.insert(index, the_keys);
-                //list_of_key_requests.insert(the_keys.round, the_keys);
+                let mut collection_index = PARTICIPANT_DATA_KEY.to_vec();
+                collection_index.append(&mut the_keys.round.to_le_bytes().to_vec());
+                collection_index.append(&mut the_keys.scheme.to_le_bytes().to_vec());
+
+                list_of_key_requests.insert(collection_index, the_keys);
                 // Needed fields
                 // round, scheme, id
             }
@@ -578,19 +581,10 @@ impl<SK: StoreKey> Keeper<SK> {
         //    .map_err(|e| Error::DecodeAddress(e.to_string()))?;
         //let account = get_account_latest(address.clone(), node.clone())?;
 
-        let mut contrib_to_send = MsgContribution {
-            address: myaddress.clone(),
-            round: 0,
-            scheme: 0,
-            id: 0,
-            data: vec![],
-        };
-
         for (index, cdata) in cdata_range {
             let the_data: RawMsgContribution = RawMsgContribution::decode::<Bytes>(cdata.into())
                 .expect("invalid data in database - possible database corruption");
             if the_data.address == myaddress.to_string() {
-                //list_of_contrib_data.insert(the_data.round, the_data);
                 list_of_contrib_data.insert(index, the_data);
             }
         }
@@ -601,52 +595,45 @@ impl<SK: StoreKey> Keeper<SK> {
             // the contrib data will be there for the other scheme and so no new data will be
             // generated
             if !list_of_contrib_data.contains_key(index) {
-                contrib_to_send.round = value.round;
-                contrib_to_send.scheme = value.scheme;
-                contrib_to_send.id = value.id;
+                let mut contrib_to_send = MsgContribution {
+                    address: myaddress.clone(),
+                    round: value.round,
+                    scheme: value.scheme,
+                    id: value.id,
+                    data: vec![],
+                };
 
+                contrib_to_send.data = make_keyshare(
+                    LOE_PUBLIC_KEY.into(),
+                    contrib_to_send.round,
+                    scheme_to_string(contrib_to_send.scheme),
+                    SECURITY_PARAM,
+                );
+
+                info!(
+                    "MAKE_KEYSHARES: sending contribution for round: {:?}",
+                    contrib_to_send.round
+                );
+
+                thread::spawn(move || {
+                    // This must be run inside a thread since it will block until it receives a response
+                    // which won't happen until this transaction has been processed.
+
+                    //match run_tx_command(config, |addr| {
+                    match run_tx_command(config, |_| {
+                        crate::Message::Participate(contrib_to_send.clone())
+                    }) {
+                        Ok(_) => info!(
+                            "Successfully submitted keyshare data for {:?}",
+                            contrib_to_send.round
+                        ),
+                        Err(e) => info!("Failed to submit keyshare: {:?}", e),
+                    }
+                });
                 break;
             }
         }
 
-        if contrib_to_send.round > 0 {
-            info!(
-                "MAKE_KEYSHARES: sending contribution for round: {:?}",
-                contrib_to_send.round
-            );
-
-            contrib_to_send.data = make_keyshare(
-                LOE_PUBLIC_KEY.into(),
-                contrib_to_send.round,
-                scheme_to_string(contrib_to_send.scheme),
-                SECURITY_PARAM,
-            );
-
-            thread::spawn(move || {
-                // This must be run inside a thread since it will block until it receives a response
-                // which won't happen until this transaction has been processed.
-
-                //match run_tx_command(config, |addr| {
-                match run_tx_command(config, |_| {
-                    crate::Message::Participate(contrib_to_send.clone())
-                    /*
-                    crate::Message::Participate(MsgContribution {
-                        address: addr,
-                        round: contrib_to_send.round,
-                        scheme: contrib_to_send.scheme,
-                        id: contrib_to_send.id,
-                        data: round_data_vec,
-                    })
-                        */
-                }) {
-                    Ok(_) => info!(
-                        "Successfully submitted keyshare data for {:?}",
-                        contrib_to_send.round
-                    ),
-                    Err(e) => info!("Failed to submit keyshare: {:?}", e),
-                }
-            });
-        }
         Ok(())
     }
 
