@@ -245,7 +245,6 @@ impl<SK: StoreKey> Keeper<SK> {
         let mut store_key = PARTICIPANT_DATA_KEY.to_vec();
         store_key.append(&mut msg.round.to_le_bytes().to_vec());
         store_key.append(&mut msg.scheme.to_le_bytes().to_vec());
-        store_key.append(&mut msg.id.to_le_bytes().to_vec());
 
         let addr: Vec<u8> = msg.address.clone().into();
         store_key.append(&mut addr.to_vec());
@@ -283,6 +282,11 @@ impl<SK: StoreKey> Keeper<SK> {
                 "Can't contribute data without existing keypair request.".into(),
             ));
         }
+
+        info!(
+            "NEW CONTRIB TX: SAVED. Round: {:?}, Scheme: {:?}",
+            msg.round, msg.scheme
+        );
 
         Ok(())
     }
@@ -581,11 +585,15 @@ impl<SK: StoreKey> Keeper<SK> {
         //    .map_err(|e| Error::DecodeAddress(e.to_string()))?;
         //let account = get_account_latest(address.clone(), node.clone())?;
 
-        for (index, cdata) in cdata_range {
+        for (_, cdata) in cdata_range {
             let the_data: RawMsgContribution = RawMsgContribution::decode::<Bytes>(cdata.into())
                 .expect("invalid data in database - possible database corruption");
             if the_data.address == myaddress.to_string() {
-                list_of_contrib_data.insert(index, the_data);
+                let mut contrib_index = PARTICIPANT_DATA_KEY.to_vec();
+                contrib_index.append(&mut the_keys.round.to_le_bytes().to_vec());
+                contrib_index.append(&mut the_keys.scheme.to_le_bytes().to_vec());
+
+                list_of_contrib_data.insert(contrib_index, the_data);
             }
         }
 
