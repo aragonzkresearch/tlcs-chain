@@ -590,8 +590,8 @@ impl<SK: StoreKey> Keeper<SK> {
                 .expect("invalid data in database - possible database corruption");
             if the_data.address == myaddress.to_string() {
                 let mut contrib_index = PARTICIPANT_DATA_KEY.to_vec();
-                contrib_index.append(&mut the_keys.round.to_le_bytes().to_vec());
-                contrib_index.append(&mut the_keys.scheme.to_le_bytes().to_vec());
+                contrib_index.append(&mut the_data.round.to_le_bytes().to_vec());
+                contrib_index.append(&mut the_data.scheme.to_le_bytes().to_vec());
 
                 list_of_contrib_data.insert(contrib_index, the_data);
             }
